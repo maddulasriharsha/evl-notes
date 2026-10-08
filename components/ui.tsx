@@ -59,12 +59,9 @@ export function Empty({ title, children }: { title: string; children?: React.Rea
 }
 
 export function ButtonLink({ href, children, variant = 'primary' }: { href: string; children: React.ReactNode; variant?: 'primary' | 'ghost' }) {
-  const cls =
-    variant === 'primary'
-      ? 'bg-ink text-bg hover:opacity-90 shadow-card'
-      : 'border border-line bg-surface hover:border-line-strong'
+  const cls = variant === 'primary' ? 'btn-primary' : 'btn-ghost'
   return (
-    <Link href={href} className={`inline-flex h-11 items-center gap-2 rounded-xl px-4 text-sm font-medium transition ${cls}`}>
+    <Link href={href} className={`inline-flex h-11 items-center gap-2 rounded-xl px-4 text-sm font-semibold transition ${cls}`}>
       {children}
     </Link>
   )

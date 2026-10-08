@@ -1,19 +1,23 @@
 import Link from 'next/link'
+import { LogoMark } from '@/components/logo'
 
 export function SiteFooter() {
   return (
-    <footer className="mt-24 border-t border-line">
-      <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-8 text-sm text-ink-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+    <footer className="mt-28">
+      <div className="mx-auto flex max-w-5xl flex-col gap-4 border-t border-white/[0.06] px-4 py-8 text-sm text-ink-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <div className="flex items-center gap-2.5">
+          <LogoMark className="size-5" />
+          <span>EVL Notes · B.Tech EVL R25, VNR VJIET</span>
+        </div>
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-          <span className="font-medium text-ink-2">EVL Notes</span>
-          <Link href="/" className="hover:text-ink">Semesters</Link>
+          <Link href="/#semesters" className="hover:text-ink">Semesters</Link>
           <Link href="/contributors" className="hover:text-ink">Contributors</Link>
           <Link href="/search" className="hover:text-ink">Search</Link>
           <Link href="/upload" className="hover:text-ink">Upload</Link>
           <Link href="/privacy" className="hover:text-ink">Privacy</Link>
         </div>
-        <p className="text-xs tracking-wide">Created by: Sriharsha Reddy (EVL)</p>
       </div>
+      <p className="pb-8 text-center text-xs tracking-wide text-ink-3">Created by: Sriharsha Reddy (EVL)</p>
     </footer>
   )
 }

@@ -1,78 +1,27 @@
 @import 'tailwindcss';
 
-@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
-
+/* Cinematic dark theme: near-black canvas, violet light, soft glass surfaces. */
 :root {
-  --bg: #f7f6f2;
-  --surface: #ffffff;
-  --surface-2: #f1efe9;
-  --ink: #16161d;
-  --ink-2: #4a4a57;
-  --ink-3: #82828f;
-  --line: #e4e1d8;
-  --line-strong: #d2cec2;
-  --accent: #3446d4;
-  --accent-ink: #ffffff;
-  --accent-soft: #e9ebfc;
-  --chart: #3446d4;
-  --gold: #b7791f;
-  --gold-soft: #fbf1df;
-  --ok: #1f7a4d;
-  --ok-soft: #e3f4ea;
-  --danger: #b42318;
-  --danger-soft: #fdecea;
-  --shadow: 0 1px 2px rgb(22 22 29 / 0.04), 0 8px 24px -12px rgb(22 22 29 / 0.12);
-  --shadow-lg: 0 2px 4px rgb(22 22 29 / 0.04), 0 24px 48px -20px rgb(22 22 29 / 0.25);
-  color-scheme: light;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    --bg: #0c0d11;
-    --surface: #14161c;
-    --surface-2: #1b1e26;
-    --ink: #ecebf2;
-    --ink-2: #b4b3c0;
-    --ink-3: #7d7c8b;
-    --line: #262934;
-    --line-strong: #343846;
-    --accent: #7d8bff;
-    --accent-ink: #0c0d11;
-    --accent-soft: #1d2140;
-    --chart: #6e7cf2;
-    --gold: #e0a84a;
-    --gold-soft: #2a2215;
-    --ok: #4cc38a;
-    --ok-soft: #12271d;
-    --danger: #f97066;
-    --danger-soft: #2c1513;
-    --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px -12px rgb(0 0 0 / 0.6);
-    --shadow-lg: 0 2px 4px rgb(0 0 0 / 0.3), 0 24px 48px -20px rgb(0 0 0 / 0.8);
-    color-scheme: dark;
-  }
-}
-
-:root[data-theme='dark'] {
-  --bg: #0c0d11;
-  --surface: #14161c;
-  --surface-2: #1b1e26;
-  --ink: #ecebf2;
-  --ink-2: #b4b3c0;
-  --ink-3: #7d7c8b;
-  --line: #262934;
-  --line-strong: #343846;
-  --accent: #7d8bff;
-  --accent-ink: #0c0d11;
-  --accent-soft: #1d2140;
-  --chart: #6e7cf2;
-  --gold: #e0a84a;
-  --gold-soft: #2a2215;
+  --bg: #050506;
+  --surface: #0d0d11;
+  --surface-2: #17171d;
+  --ink: #f5f5f7;
+  --ink-2: #a3a3ad;
+  --ink-3: #6d6d78;
+  --line: #1d1d24;
+  --line-strong: #2d2d36;
+  --accent: #a78bfa;
+  --accent-ink: #0b0712;
+  --accent-soft: #1c1530;
+  --chart: #8b7cf6;
+  --gold: #e9b44c;
+  --gold-soft: #2a2112;
   --ok: #4cc38a;
-  --ok-soft: #12271d;
+  --ok-soft: #10251b;
   --danger: #f97066;
-  --danger-soft: #2c1513;
-  --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px -12px rgb(0 0 0 / 0.6);
-  --shadow-lg: 0 2px 4px rgb(0 0 0 / 0.3), 0 24px 48px -20px rgb(0 0 0 / 0.8);
+  --danger-soft: #2a1412;
+  --shadow: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 12px 32px -16px rgb(0 0 0 / 0.9);
+  --shadow-lg: 0 1px 0 rgb(255 255 255 / 0.06) inset, 0 30px 60px -24px rgb(0 0 0 / 0.95), 0 0 0 1px rgb(167 139 250 / 0.08);
   color-scheme: dark;
 }
 
@@ -96,7 +45,7 @@
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
+  --font-display: var(--font-syne), var(--font-inter), ui-sans-serif, sans-serif;
   --shadow-card: var(--shadow);
   --shadow-pop: var(--shadow-lg);
 }
@@ -115,39 +64,175 @@ body {
 }
 
 ::selection {
-  background: var(--accent-soft);
-  color: var(--ink);
+  background: rgb(167 139 250 / 0.35);
+  color: #fff;
 }
 
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
-  border-radius: 6px;
+  border-radius: 8px;
 }
 
+/* Soft violet wash used at the top of inner pages. */
 .grain {
-  background-image:
-    radial-gradient(1200px 400px at 10% -10%, color-mix(in oklab, var(--accent) 14%, transparent), transparent 70%),
-    radial-gradient(900px 360px at 100% 0%, color-mix(in oklab, var(--gold) 12%, transparent), transparent 70%);
+  background:
+    radial-gradient(900px 300px at 50% -120px, rgb(139 92 246 / 0.22), transparent 70%),
+    radial-gradient(600px 240px at 90% 0%, rgb(167 139 250 / 0.08), transparent 70%);
 }
 
+/* ---------- Hero: the glowing planet horizon ---------- */
+.horizon {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: max(1400px, 170vw);
+  aspect-ratio: 1;
+  transform: translate(-50%, calc(-100% + 680px));
+  border-radius: 9999px;
+  background: radial-gradient(closest-side, #050506 96%, #0b0614 99%);
+  box-shadow:
+    0 2px 0 0 rgb(255 255 255 / 0.85),
+    0 6px 24px 2px rgb(196 181 253 / 0.9),
+    0 18px 80px 12px rgb(139 92 246 / 0.75),
+    0 40px 220px 60px rgb(109 40 217 / 0.45);
+  animation: horizon-in 1.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (max-width: 640px) {
+  .horizon {
+    width: 1100px;
+    transform: translate(-50%, calc(-100% + 650px));
+  }
+}
+
+@keyframes horizon-in {
+  from {
+    opacity: 0;
+    filter: blur(40px);
+    scale: 1.15;
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    scale: 1;
+  }
+}
+
+.horizon-haze {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(60% 50% at 50% 0%, rgb(167 139 250 / 0.12), transparent 70%),
+    linear-gradient(to bottom, transparent 70%, var(--bg));
+  pointer-events: none;
+}
+
+/* ---------- Motion ---------- */
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(14px);
+    filter: blur(6px);
   }
   to {
     opacity: 1;
     transform: none;
+    filter: blur(0);
   }
 }
 
 .rise {
-  animation: rise 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation: rise 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.rise-1 {
+  animation-delay: 0.15s;
+}
+.rise-2 {
+  animation-delay: 0.3s;
+}
+.rise-3 {
+  animation-delay: 0.45s;
+}
+.rise-4 {
+  animation-delay: 0.6s;
+}
+
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 60s linear infinite;
+}
+.marquee-wrap:hover .marquee {
+  animation-play-state: paused;
+}
+.marquee-mask {
+  mask-image: linear-gradient(to right, transparent, #000 10%, #000 90%, transparent);
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+.float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Dotted glow panel, like a lit-up map. */
+.dots {
+  background-image: radial-gradient(rgb(167 139 250 / 0.55) 1px, transparent 1.4px);
+  background-size: 9px 9px;
+  mask-image: radial-gradient(60% 70% at 60% 50%, #000, transparent 75%);
+}
+
+/* Tactile buttons */
+.btn-primary {
+  background: linear-gradient(to bottom, #ffffff, #d9d9de);
+  color: #0a0a0c;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.9),
+    inset 0 -1px 0 rgb(0 0 0 / 0.15),
+    0 1px 2px rgb(0 0 0 / 0.6),
+    0 8px 24px -8px rgb(167 139 250 / 0.45);
+}
+.btn-primary:hover {
+  background: linear-gradient(to bottom, #ffffff, #e9e9ee);
+}
+.btn-ghost {
+  background: rgb(255 255 255 / 0.04);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06), 0 0 0 1px rgb(255 255 255 / 0.08);
+}
+.btn-ghost:hover {
+  background: rgb(255 255 255 / 0.08);
+}
+
+/* Bezel frame around feature panels */
+.bezel {
+  background: linear-gradient(to bottom, rgb(255 255 255 / 0.1), rgb(255 255 255 / 0.02));
+  padding: 6px;
+  border-radius: 28px;
+}
+
+.text-glow {
+  text-shadow: 0 0 40px rgb(167 139 250 / 0.35);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .rise {
+  .rise,
+  .horizon,
+  .float,
+  .marquee {
     animation: none;
   }
 }

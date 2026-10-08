@@ -14,7 +14,7 @@ export interface ViewerNav {
 /** Full-height frame shared by every viewer: back link, title, prev / next, actions. */
 export function ViewerShell({ nav, children }: { nav: ViewerNav; children: React.ReactNode }) {
   return (
-    <div className="flex h-[calc(100dvh-4rem)] flex-col">
+    <div className="mt-3 flex h-[calc(100dvh-5rem)] flex-col sm:h-[calc(100dvh-5.5rem)]">
       <div className="border-b border-line bg-surface">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-4 py-3 sm:px-6">
           <Link href={nav.back.href} className="grid size-10 shrink-0 place-items-center rounded-xl border border-line hover:bg-surface-2" aria-label={`Back to ${nav.back.label}`}>
