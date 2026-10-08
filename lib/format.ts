@@ -13,11 +13,11 @@ export function timeAgo(iso: string, now = Date.now()) {
   if (abs < 3600) return rtf.format(Math.round(s / 60), 'minute')
   if (abs < 86400) return rtf.format(Math.round(s / 3600), 'hour')
   if (abs < 86400 * 30) return rtf.format(Math.round(s / 86400), 'day')
-  return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+  return new Date(iso).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 export function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+  return new Date(iso).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 export function plural(n: number, word: string) {

@@ -3,15 +3,17 @@ import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { CommentModButtons, FileModButtons, UserModButtons } from '@/components/admin-actions'
 import { AdminHideToggle } from '@/components/admin-hide-toggle'
+import { DailyChart } from '@/components/daily-chart'
 import { Container, OwnerName } from '@/components/ui'
 import { findSubject, sectionHref, sectionLabel } from '@/lib/curriculum'
-import { formatBytes, plural, timeAgo } from '@/lib/format'
+import { formatBytes, formatDate, plural, timeAgo } from '@/lib/format'
 import { currentProfile, supabaseServer } from '@/lib/supabase/server'
 
 export const metadata: Metadata = { title: 'Admin' }
 export const dynamic = 'force-dynamic'
 
 const tabs = [
+  { id: 'overview', label: 'Dashboard' },
   { id: 'files', label: 'Files' },
   { id: 'comments', label: 'Comments' },
   { id: 'people', label: 'People' },
@@ -39,6 +41,26 @@ function Table({ head, children }: { head: string[]; children: React.ReactNode }
 }
 
 const td = 'px-4 py-3 align-middle'
+
+interface PersonRow {
+  id: string
+  display_name: string
+  email: string
+  role: string
+  banned_at: string | null
+  joined: string
+  provider: string
+  last_sign_in: string | null
+  sign_ins: number
+  files: number
+  pages: number
+  bytes: number
+  chapters: number
+  subjects: number
+  comments: number
+  last_upload: string | null
+}
+
 const rowCls = (off: boolean) => `border-b border-line last:border-0 ${off ? 'bg-danger-soft/40' : ''}`
 
 export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
@@ -46,10 +68,123 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
   if (!me) redirect('/login?next=/admin')
   if (me.profile?.role !== 'admin') notFound()
   const sp = await searchParams
-  const tab: Tab = tabs.some((t) => t.id === sp.tab) ? (sp.tab as Tab) : 'files'
+  const tab: Tab = tabs.some((t) => t.id === sp.tab) ? (sp.tab as Tab) : 'overview'
   const supabase = await supabaseServer()
 
   let body: React.ReactNode = null
+
+  if (tab === 'overview') {
+    const [overview, daily, logins, people] = await Promise.all([
+      supabase.rpc('admin_overview'),
+      supabase.rpc('admin_daily', { p_days: 30 }),
+      supabase.rpc('admin_recent_logins', { p_limit: 25 }),
+      supabase.rpc('admin_people'),
+    ])
+    if (overview.error) {
+      body = <p className="text-danger">{overview.error.message}. Has the dashboard SQL migration been run?</p>
+    } else {
+      const o = overview.data as Record<string, number>
+      const days = (daily.data ?? []) as { day: string; uploads: number; signins: number; comments: number }[]
+      const recent = (logins.data ?? []) as {
+        user_id: string
+        display_name: string | null
+        email: string
+        method: string
+        device: string
+        at: string
+      }[]
+      const top = ((people.data ?? []) as PersonRow[]).filter((p) => Number(p.files) > 0).slice(0, 10)
+      const used = Number(o.storage_bytes)
+      const limit = 1024 ** 3
+      const share = used / limit
+      const tiles = [
+        { label: 'Members', value: o.members, sub: `+${o.members_7d} this week` },
+        { label: 'Active this week', value: o.active_7d, sub: plural(Number(o.signins_7d), 'sign-in') },
+        { label: 'Files', value: o.files, sub: `+${o.files_7d} this week · ${o.pages} pages` },
+        { label: 'Contributors', value: o.contributors, sub: `${o.chapters_covered} chapters covered` },
+        { label: 'Comments', value: o.comments, sub: `+${o.comments_7d} this week` },
+        { label: 'Blocked', value: o.blocked, sub: `${o.hidden_files} hidden files` },
+      ]
+      body = (
+        <div className="space-y-8">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+            {tiles.map((t) => (
+              <div key={t.label} className="rounded-2xl border border-line bg-surface p-4 shadow-card">
+                <p className="text-xs text-ink-3">{t.label}</p>
+                <p className="mt-1 font-display text-3xl font-semibold tabular-nums">{t.value}</p>
+                <p className="mt-1 text-xs text-ink-3">{t.sub}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="rounded-2xl border border-line bg-surface p-4 shadow-card">
+            <div className="flex flex-wrap items-baseline justify-between gap-2 text-sm">
+              <span className="font-semibold">Storage used</span>
+              <span className="tabular-nums text-ink-2">
+                {formatBytes(used)} of 1 GB (free plan) · {Math.round(share * 100)}%
+              </span>
+            </div>
+            <div className="mt-3 h-2 overflow-hidden rounded-full bg-surface-2">
+              <div className={`h-full rounded-full ${share > 0.85 ? 'bg-danger' : 'bg-chart'}`} style={{ width: `${Math.min(100, share * 100)}%` }} />
+            </div>
+            <p className="mt-2 text-xs text-ink-3">Includes hidden files. Use &ldquo;Delete forever&rdquo; on the Files tab to free space.</p>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            <DailyChart title="Files uploaded per day" unit="files" points={days.map((d) => ({ day: d.day, value: Number(d.uploads) }))} />
+            <DailyChart title="Sign-ins per day" unit="sign-ins" points={days.map((d) => ({ day: d.day, value: Number(d.signins) }))} />
+          </div>
+
+          <div className="grid gap-6 xl:grid-cols-2">
+            <section>
+              <h2 className="mb-3 font-semibold">Top contributors</h2>
+              {top.length === 0 ? (
+                <p className="text-sm text-ink-3">No uploads yet.</p>
+              ) : (
+                <Table head={['Person', 'Files', 'Pages', 'Chapters', 'Last upload']}>
+                  {top.map((p) => (
+                    <tr key={p.id} className={rowCls(!!p.banned_at)}>
+                      <td className={td}>
+                        <Link href={`/admin/people/${p.id}`} className="hover:text-accent">
+                          <OwnerName name={p.display_name} admin={p.role === 'admin'} className="font-medium" />
+                        </Link>
+                      </td>
+                      <td className={`${td} tabular-nums`}>{p.files}</td>
+                      <td className={`${td} tabular-nums`}>{p.pages}</td>
+                      <td className={`${td} tabular-nums`}>{p.chapters}</td>
+                      <td className={`${td} whitespace-nowrap text-ink-3`}>{p.last_upload ? timeAgo(p.last_upload) : '—'}</td>
+                    </tr>
+                  ))}
+                </Table>
+              )}
+            </section>
+            <section>
+              <h2 className="mb-3 font-semibold">Recent sign-ins</h2>
+              {recent.length === 0 ? (
+                <p className="text-sm text-ink-3">No sign-ins recorded yet. They appear here from the next sign-in on.</p>
+              ) : (
+                <Table head={['Person', 'How', 'Device', 'When']}>
+                  {recent.map((l, i) => (
+                    <tr key={i} className="border-b border-line last:border-0">
+                      <td className={td}>
+                        <Link href={`/admin/people/${l.user_id}`} className="font-medium hover:text-accent">
+                          {l.display_name ?? l.email}
+                        </Link>
+                        <p className="text-xs text-ink-3">{l.email}</p>
+                      </td>
+                      <td className={`${td} capitalize`}>{l.method}</td>
+                      <td className={`${td} capitalize`}>{l.device}</td>
+                      <td className={`${td} whitespace-nowrap text-ink-3`}>{timeAgo(l.at)}</td>
+                    </tr>
+                  ))}
+                </Table>
+              )}
+            </section>
+          </div>
+        </div>
+      )
+    }
+  }
 
   if (tab === 'files') {
     const { data } = await supabase
@@ -133,32 +268,32 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
   }
 
   if (tab === 'people') {
-    const { data, error } = await supabase.rpc('admin_users')
-    const rows = (data ?? []) as {
-      id: string
-      display_name: string
-      email: string
-      role: string
-      banned_at: string | null
-      created_at: string
-      files: number
-      comments: number
-    }[]
+    const { data, error } = await supabase.rpc('admin_people')
+    const rows = (data ?? []) as PersonRow[]
     body = error ? (
       <p className="text-danger">{error.message}</p>
     ) : (
-      <Table head={['Person', 'Email', 'Activity', 'Joined', '']}>
+      <Table head={['Person', 'Email', 'Contribution', 'Last sign-in', 'Joined', '']}>
         {rows.map((u) => (
           <tr key={u.id} className={rowCls(!!u.banned_at)}>
             <td className={td}>
-              <OwnerName name={u.display_name} admin={u.role === 'admin'} className="font-medium" />
+              <Link href={`/admin/people/${u.id}`} className="hover:text-accent">
+                <OwnerName name={u.display_name} admin={u.role === 'admin'} className="font-medium" />
+              </Link>
               {u.banned_at && <p className="text-xs text-danger">Blocked {timeAgo(u.banned_at)}</p>}
             </td>
-            <td className={`${td} text-ink-2`}>{u.email}</td>
+            <td className={`${td} text-ink-2`}>
+              {u.email}
+              <p className="text-xs text-ink-3 capitalize">{u.provider}</p>
+            </td>
             <td className={`${td} whitespace-nowrap text-ink-3`}>
               {plural(Number(u.files), 'file')} · {plural(Number(u.comments), 'comment')}
             </td>
-            <td className={`${td} whitespace-nowrap text-ink-3`}>{timeAgo(u.created_at)}</td>
+            <td className={`${td} whitespace-nowrap text-ink-3`}>
+              {u.last_sign_in ? timeAgo(u.last_sign_in) : '—'}
+              <p className="text-xs">{plural(Number(u.sign_ins), 'sign-in')}</p>
+            </td>
+            <td className={`${td} whitespace-nowrap text-ink-3`}>{formatDate(u.joined)}</td>
             <td className={td}>
               <UserModButtons id={u.id} banned={!!u.banned_at} role={u.role} self={u.id === me.user.id} />
             </td>

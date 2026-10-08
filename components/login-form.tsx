@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowRight, Eye, EyeOff, KeyRound, Loader2, Mail } from 'lucide-react'
+import { deviceFromUserAgent } from '@/lib/device'
 import { supabaseBrowser } from '@/lib/supabase/browser'
 
 function GoogleIcon() {
@@ -32,7 +33,10 @@ export function LoginForm({ next }: { next: string }) {
   const [info, setInfo] = useState<string | null>(null)
 
   const callback = () => `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`
-  const done = () => {
+  const done = async (method: 'password' | 'email') => {
+    await supabaseBrowser()
+      .rpc('record_login', { p_method: method, p_device: deviceFromUserAgent(navigator.userAgent) })
+      .then(() => undefined, () => undefined)
     router.replace(next)
     router.refresh()
   }
@@ -62,14 +66,14 @@ export function LoginForm({ next }: { next: string }) {
     if (mode === 'signin') {
       const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
       setBusy(false)
-      if (!error) return done()
+      if (!error) return done('password')
       if (/confirm/i.test(error.message)) return setError('Confirm your email first: open the link we sent when you created the account.')
       return setError('Wrong email or password. If you used to sign in with an email link, use that once and set a password on “My notes”.')
     }
     const { data, error } = await supabase.auth.signUp({ email: email.trim(), password, options: { emailRedirectTo: callback() } })
     setBusy(false)
     if (error) return setError(/registered|exists/i.test(error.message) ? 'That email already has an account. Sign in instead.' : error.message)
-    if (data.session) return done()
+    if (data.session) return done('password')
     setInfo('Account created. Open the confirmation link we just emailed you (only needed once), then sign in with your password.')
     setMode('signin')
   }
@@ -94,7 +98,7 @@ export function LoginForm({ next }: { next: string }) {
     const { error } = await supabaseBrowser().auth.verifyOtp({ email: email.trim(), token: code.trim(), type: 'email' })
     setBusy(false)
     if (error) return setError('That code did not work. Check it, or use the link in the email.')
-    done()
+    await done('email')
   }
 
   const emailField = (

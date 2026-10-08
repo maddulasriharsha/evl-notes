@@ -14,6 +14,7 @@
   --accent: #3446d4;
   --accent-ink: #ffffff;
   --accent-soft: #e9ebfc;
+  --chart: #3446d4;
   --gold: #b7791f;
   --gold-soft: #fbf1df;
   --ok: #1f7a4d;
@@ -38,6 +39,7 @@
     --accent: #7d8bff;
     --accent-ink: #0c0d11;
     --accent-soft: #1d2140;
+    --chart: #6e7cf2;
     --gold: #e0a84a;
     --gold-soft: #2a2215;
     --ok: #4cc38a;
@@ -62,6 +64,7 @@
   --accent: #7d8bff;
   --accent-ink: #0c0d11;
   --accent-soft: #1d2140;
+  --chart: #6e7cf2;
   --gold: #e0a84a;
   --gold-soft: #2a2215;
   --ok: #4cc38a;
@@ -85,6 +88,7 @@
   --color-accent: var(--accent);
   --color-accent-ink: var(--accent-ink);
   --color-accent-soft: var(--accent-soft);
+  --color-chart: var(--chart);
   --color-gold: var(--gold);
   --color-gold-soft: var(--gold-soft);
   --color-ok: var(--ok);

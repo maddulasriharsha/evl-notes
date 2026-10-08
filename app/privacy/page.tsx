@@ -21,6 +21,7 @@ const sections: { title: string; body: string[] }[] = [
       'The display name you choose. It is shown publicly next to the notes you upload.',
       'If you use “Continue with Google”, we receive your name, email address and profile picture from Google. We only use the email to sign you in and the name to suggest a display name.',
       'A sign-in cookie that keeps you logged in. It is required for uploading and is not used for anything else.',
+      'When you sign in, the time, the sign-in method and whether you used a phone or computer. Only the site admin can see this.',
     ],
   },
   {

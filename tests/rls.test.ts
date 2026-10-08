@@ -16,7 +16,7 @@ const SUPABASE_STUBS = `
   create role anon nologin;
   create role authenticated nologin;
   create schema auth;
-  create table auth.users (id uuid primary key, email text);
+  create table auth.users (id uuid primary key, email text, last_sign_in_at timestamptz, raw_app_meta_data jsonb default '{}');
   create function auth.uid() returns uuid language sql stable as
     $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
   grant usage on schema auth to anon, authenticated;
@@ -301,5 +301,42 @@ describe('admin powers', () => {
     expect((await db.query(`select count(*)::int as n from public.comments`)).rows[0]).toEqual({ n: 0 })
     expect((await as(A, `delete from storage.objects returning id`)).rows).toHaveLength(0)
     expect((await as(ADMIN, `delete from storage.objects returning id`)).rows).toHaveLength(1)
+  })
+})
+
+describe('admin dashboard', () => {
+  it('records sign-ins for the signed-in person only, ignoring rapid repeats', async () => {
+    await as(A, `select public.record_login('password', 'mobile')`)
+    await as(A, `select public.record_login('password', 'mobile')`)
+    await as(B, `select public.record_login('google', 'phone-ish')`)
+    await fails(null, `select public.record_login('password', 'desktop')`)
+    const r = await db.query(`select user_id, method, device from public.login_events order by id`)
+    expect(r.rows).toEqual([
+      { user_id: A, method: 'password', device: 'mobile' },
+      { user_id: B, method: 'google', device: 'desktop' },
+    ])
+  })
+
+  it('keeps sign-in history private to admins', async () => {
+    await fails(A, `select * from public.login_events`)
+    await fails(A, `select public.admin_overview()`)
+    await fails(A, `select * from public.admin_recent_logins(10)`)
+    await fails(A, `select * from public.admin_people()`)
+    await fails(A, `select * from public.admin_user_logins($1)`, [B])
+    await fails(A, `select * from public.admin_daily(7)`)
+  })
+
+  it('gives admins totals, daily activity, people and history', async () => {
+    const o = (await as(ADMIN, `select public.admin_overview() as o`)).rows[0]!.o as Record<string, number>
+    expect(o.members).toBe(3)
+    expect(o.active_7d).toBe(2)
+    const daily = await as(ADMIN, `select * from public.admin_daily(30)`)
+    expect(daily.rows).toHaveLength(30)
+    expect(daily.rows.reduce((n, r) => n + Number(r.signins), 0)).toBe(2)
+    const people = await as(ADMIN, `select email, sign_ins from public.admin_people() order by email`)
+    expect(people.rows.map((r) => [r.email, Number(r.sign_ins)])).toEqual([['a@x.in', 1], ['b@x.in', 1], ['owner@x.in', 0]])
+    const recent = await as(ADMIN, `select email from public.admin_recent_logins(10)`)
+    expect(recent.rows).toHaveLength(2)
+    expect((await as(ADMIN, `select * from public.admin_user_logins($1)`, [A])).rows).toHaveLength(1)
   })
 })

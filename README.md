@@ -40,7 +40,7 @@ can never overwrite another.
 
 1. Create a free project at <https://supabase.com> (region: Mumbai `ap-south-1`).
 2. **SQL Editor → New query**: paste and run each file in `supabase/migrations/`, oldest first
-   (`20261009000000_init.sql`, then `20261010000000_comments.sql`).
+   (`…_init.sql`, `…_comments.sql`, `…_admin_powers.sql`, `…_dashboard.sql`).
 3. **Project Settings → API**: copy the *Project URL* and the *anon / publishable* key.
 4. **Authentication → URL Configuration**: set *Site URL* to your live address (for example
    `https://evl-notes.vercel.app`) and add `https://evl-notes.vercel.app/auth/callback` and
@@ -92,7 +92,13 @@ update public.profiles set role = 'admin'
 where id = (select id from auth.users where email = 'YOUR-EMAIL@example.com');
 ```
 
-An **Admin** button then appears on *My notes*. From there you can hide spam shelves and show them again.
+An **Admin** button then appears on *My notes*. The admin area has:
+
+- **Dashboard**: members, weekly activity, uploads and sign-ins per day, storage used, top contributors,
+  recent sign-ins. Click a name for that person's uploads, comments and full sign-in history.
+- **Files / Comments**: hide or restore anything; "Delete forever" (hidden files only) frees storage.
+- **People**: emails, contribution, last sign-in; block someone from uploading and commenting; add co-admins.
+- **Shelves**: hide or show a person's whole shelf for a chapter.
 
 ## Changing the site later
 
