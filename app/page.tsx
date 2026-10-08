@@ -3,7 +3,8 @@ import { ArrowRight, BookMarked, CloudUpload, Eye, ShieldCheck } from 'lucide-re
 import { Thumb } from '@/components/thumb'
 import { Container, OwnerName, SectionHeading } from '@/components/ui'
 import { allSubjects, findSubject, regularSemesters, sectionHref, sectionLabel, semesterLabel } from '@/lib/curriculum'
-import { contributors, countsBySubject, recentlyUpdated } from '@/lib/data'
+import { contributors, countsBySubject, recentlyUpdated, uploadTotals } from '@/lib/data'
+import { DRIVE_LIBRARY } from '@/lib/drive-stats'
 import { publicFileUrl } from '@/lib/env'
 import { plural, timeAgo } from '@/lib/format'
 
@@ -17,8 +18,10 @@ const features = [
 ]
 
 export default async function Home() {
-  const [counts, recent, people] = await Promise.all([countsBySubject(), recentlyUpdated(6), contributors()])
-  const communityFiles = Object.values(counts).reduce((a, b) => a + b, 0)
+  const [counts, recent, people, uploads] = await Promise.all([countsBySubject(), recentlyUpdated(6), contributors(), uploadTotals()])
+  const totalMaterials = uploads.files + DRIVE_LIBRARY.files
+  const totalPages = uploads.pages + DRIVE_LIBRARY.pages
+  const n = (x: number) => x.toLocaleString('en-IN')
   const chapters = allSubjects().reduce((n, { subject }) => n + subject.units.length, 0)
   const total = (code: string) => counts[code] ?? 0
 
@@ -51,10 +54,18 @@ export default async function Home() {
             </Link>
           </div>
           <dl className="rise mt-12 grid max-w-3xl grid-cols-3 gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-[1.4fr_1fr_1fr_1fr]">
-            <div className="col-span-3 bg-accent-soft px-5 py-4 sm:col-span-1">
-              <dt className="text-xs font-medium text-accent">Total materials</dt>
-              <dd className="mt-1 font-display text-4xl font-semibold text-ink tabular-nums">{communityFiles}</dd>
-              <dd className="text-xs text-ink-3">PDFs and photos shared so far</dd>
+            <div className="col-span-3 grid grid-cols-2 gap-4 bg-accent-soft px-5 py-4 sm:col-span-1 sm:grid-cols-1 sm:gap-2">
+              <div>
+                <dt className="text-xs font-medium text-accent">Total materials</dt>
+                <dd className="mt-1 font-display text-4xl font-semibold text-ink tabular-nums">{n(totalMaterials)}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-medium text-accent">Total pages</dt>
+                <dd className="mt-1 font-display text-2xl font-semibold text-ink tabular-nums sm:text-xl">{n(totalPages)}</dd>
+              </div>
+              <dd className="col-span-2 text-xs text-ink-3 sm:col-span-1">
+                {n(uploads.files)} uploaded here + {n(DRIVE_LIBRARY.files)} in the Google Drive library
+              </dd>
             </div>
             {stats.map((s) => (
               <div key={s.label} className="bg-surface px-5 py-4">

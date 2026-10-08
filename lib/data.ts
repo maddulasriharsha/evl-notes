@@ -110,6 +110,29 @@ export async function countsBySubject(): Promise<Record<string, number>> {
   return out
 }
 
+/** Live uploaded files and their pages (a photo counts as one page). */
+export async function uploadTotals(): Promise<{ files: number; pages: number }> {
+  if (!supabaseConfigured) return { files: 0, pages: 0 }
+  const supabase = supabasePublic()
+  let files = 0
+  let pages = 0
+  // Supabase returns at most 1,000 rows per request, so read in pages.
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await supabase
+      .from('files')
+      .select('page_count, collections!inner(hidden)')
+      .is('deleted_at', null)
+      .range(from, from + 999)
+    if (error || !data) break
+    for (const f of data as { page_count: number | null }[]) {
+      files += 1
+      pages += f.page_count ?? 1
+    }
+    if (data.length < 1000) break
+  }
+  return { files, pages }
+}
+
 export interface RecentCollection {
   id: string
   subject_code: string
