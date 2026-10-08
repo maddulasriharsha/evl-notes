@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { CloudUpload, LogOut, ShieldCheck } from 'lucide-react'
+import { PasswordForm } from '@/components/password-form'
 import { ProfileForm } from '@/components/profile-form'
 import { ShelfManager, type ShelfFile } from '@/components/shelf-manager'
 import { Container, Empty } from '@/components/ui'
@@ -93,6 +94,9 @@ export default async function MePage() {
         </div>
         <aside className="h-fit rounded-2xl border border-line bg-surface p-5 shadow-card">
           <ProfileForm userId={me.user.id} initialName={me.profile.display_name} existing />
+          <div className="mt-5 border-t border-line pt-5">
+            <PasswordForm />
+          </div>
           <p className="mt-5 border-t border-line pt-4 text-xs leading-relaxed text-ink-3">
             Removing a file only hides it from the site. The original stays safely in storage and you can restore it here at any time.
           </p>
