@@ -1,46 +1,128 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
-import { UserRound } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useEffect, useRef, useState } from 'react'
+import { ChevronDown, CloudUpload, LayoutDashboard, LogIn, LogOut, NotebookText, UserRound } from 'lucide-react'
 import { supabaseConfigured } from '@/lib/env'
 import { supabaseBrowser } from '@/lib/supabase/browser'
 
+interface Account {
+  id: string
+  email: string
+  name: string
+  isAdmin: boolean
+}
+
 /** Client-side so public pages stay cacheable; reads the session from the browser. */
 export function AccountButton() {
-  const [state, setState] = useState<'unknown' | 'in' | 'out'>('unknown')
-  const [initial, setInitial] = useState<string>('')
+  const router = useRouter()
+  const [account, setAccount] = useState<Account | null | undefined>(undefined)
+  const [open, setOpen] = useState(false)
+  const box = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (!supabaseConfigured) {
-      setState('out')
-      return
-    }
+    if (!supabaseConfigured) return setAccount(null)
     const supabase = supabaseBrowser()
-    const apply = (session: { user: { email?: string; user_metadata?: Record<string, unknown> } } | null) => {
-      if (!session) return setState('out')
-      const name = String(session.user.user_metadata?.full_name ?? session.user.email ?? '?')
-      setInitial(name.trim().charAt(0).toUpperCase())
-      setState('in')
+    const load = async (user: { id: string; email?: string; user_metadata?: Record<string, unknown> } | null) => {
+      if (!user) return setAccount(null)
+      const { data } = await supabase.from('profiles').select('display_name, role').eq('id', user.id).maybeSingle()
+      const p = data as { display_name: string; role: string } | null
+      setAccount({
+        id: user.id,
+        email: user.email ?? '',
+        name: p?.display_name ?? String(user.user_metadata?.full_name ?? user.email ?? 'You'),
+        isAdmin: p?.role === 'admin',
+      })
     }
-    supabase.auth.getSession().then(({ data }) => apply(data.session))
-    const { data } = supabase.auth.onAuthStateChange((_e, session) => apply(session))
+    supabase.auth.getSession().then(({ data }) => load(data.session?.user ?? null))
+    const { data } = supabase.auth.onAuthStateChange((_e, session) => void load(session?.user ?? null))
     return () => data.subscription.unsubscribe()
   }, [])
 
-  if (state === 'in') {
+  useEffect(() => {
+    if (!open) return
+    const close = (e: MouseEvent | KeyboardEvent) => {
+      if (e instanceof KeyboardEvent ? e.key === 'Escape' : !box.current?.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', close)
+    document.addEventListener('keydown', close)
+    return () => {
+      document.removeEventListener('mousedown', close)
+      document.removeEventListener('keydown', close)
+    }
+  }, [open])
+
+  async function signOut() {
+    setOpen(false)
+    await supabaseBrowser().auth.signOut()
+    await fetch('/auth/signout', { method: 'POST', redirect: 'manual' }).catch(() => undefined)
+    router.push('/')
+    router.refresh()
+  }
+
+  if (account === undefined) return <span className="size-10" aria-hidden="true" />
+
+  if (account === null) {
     return (
-      <Link href="/me" className="grid size-10 place-items-center rounded-xl bg-accent-soft font-semibold text-accent" aria-label="My notes">
-        {initial || <UserRound className="size-4" />}
+      <Link
+        href="/login"
+        className="inline-flex h-10 items-center gap-2 rounded-xl border border-line bg-surface px-3 text-sm font-medium whitespace-nowrap hover:border-line-strong"
+      >
+        <LogIn className="size-4" />
+        <span>Sign in</span>
       </Link>
     )
   }
+
+  const item = 'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-surface-2'
   return (
-    <Link
-      href="/login"
-      className={`hidden h-10 items-center rounded-xl border border-line bg-surface px-3.5 text-sm font-medium whitespace-nowrap hover:border-line-strong sm:inline-flex ${state === 'unknown' ? 'invisible' : ''}`}
-    >
-      Sign in
-    </Link>
+    <div ref={box} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label="Account menu"
+        className="flex h-10 items-center gap-1.5 rounded-xl border border-line bg-surface pr-2 pl-1 hover:border-line-strong"
+      >
+        <span className="grid size-8 place-items-center rounded-lg bg-accent-soft text-sm font-semibold text-accent">
+          {account.name.trim().charAt(0).toUpperCase() || <UserRound className="size-4" />}
+        </span>
+        <ChevronDown className={`size-4 text-ink-3 transition ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <div role="menu" className="absolute right-0 z-50 mt-2 w-64 rounded-2xl border border-line bg-surface p-2 shadow-pop">
+          <div className="px-3 py-2">
+            <p className="flex items-center gap-1.5 truncate text-sm font-semibold">
+              <span className="truncate">{account.name}</span>
+              {account.isAdmin && (
+                <span className="rounded-md bg-gold-soft px-1.5 py-0.5 text-[10px] font-semibold tracking-wider text-gold uppercase">Admin</span>
+              )}
+            </p>
+            <p className="truncate text-xs text-ink-3">{account.email}</p>
+          </div>
+          <div className="my-1 h-px bg-line" />
+          <Link role="menuitem" href="/me#profile" onClick={() => setOpen(false)} className={item}>
+            <UserRound className="size-4 text-ink-3" /> Profile & password
+          </Link>
+          <Link role="menuitem" href="/me" onClick={() => setOpen(false)} className={item}>
+            <NotebookText className="size-4 text-ink-3" /> My notes
+          </Link>
+          <Link role="menuitem" href="/upload" onClick={() => setOpen(false)} className={item}>
+            <CloudUpload className="size-4 text-ink-3" /> Upload notes
+          </Link>
+          {account.isAdmin && (
+            <Link role="menuitem" href="/admin" onClick={() => setOpen(false)} className={item}>
+              <LayoutDashboard className="size-4 text-ink-3" /> Admin dashboard
+            </Link>
+          )}
+          <div className="my-1 h-px bg-line" />
+          <button role="menuitem" type="button" onClick={signOut} className={`${item} text-danger`}>
+            <LogOut className="size-4" /> Sign out
+          </button>
+        </div>
+      )}
+    </div>
   )
 }
