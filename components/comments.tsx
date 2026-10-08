@@ -20,6 +20,7 @@ interface Me {
   id: string
   hasProfile: boolean
   isAdmin: boolean
+  banned: boolean
 }
 
 const MAX = 1000
@@ -51,8 +52,9 @@ function CommentsPanel({ fileId, ownerId, onCount }: { fileId: string; ownerId: 
     const supabase = supabaseBrowser()
     supabase.auth.getUser().then(async ({ data }) => {
       if (!data.user) return setMe(null)
-      const { data: p } = await supabase.from('profiles').select('role').eq('id', data.user.id).maybeSingle()
-      setMe({ id: data.user.id, hasProfile: !!p, isAdmin: (p as { role: string } | null)?.role === 'admin' })
+      const { data: p } = await supabase.from('profiles').select('role, banned_at').eq('id', data.user.id).maybeSingle()
+      const prof = p as { role: string; banned_at: string | null } | null
+      setMe({ id: data.user.id, hasProfile: !!prof, isAdmin: prof?.role === 'admin', banned: !!prof?.banned_at })
     })
   }, [load])
 
@@ -118,6 +120,8 @@ function CommentsPanel({ fileId, ownerId, onCount }: { fileId: string; ownerId: 
           <p className="text-center text-sm text-ink-3">
             <Link href={`/login?next=${encodeURIComponent(`/view/u/${fileId}`)}`} className="font-medium text-accent">Sign in</Link> to comment.
           </p>
+        ) : me.banned ? (
+          <p className="text-center text-sm text-ink-3">Commenting is blocked for your account.</p>
         ) : !me.hasProfile ? (
           <p className="text-center text-sm text-ink-3">
             <Link href="/upload" className="font-medium text-accent">Choose your display name</Link> to comment.

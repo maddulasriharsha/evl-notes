@@ -16,7 +16,7 @@ const SUPABASE_STUBS = `
   create role anon nologin;
   create role authenticated nologin;
   create schema auth;
-  create table auth.users (id uuid primary key);
+  create table auth.users (id uuid primary key, email text);
   create function auth.uid() returns uuid language sql stable as
     $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
   grant usage on schema auth to anon, authenticated;
@@ -58,7 +58,7 @@ beforeAll(async () => {
   for (const f of readdirSync(dir).filter((f) => f.endsWith('.sql')).sort()) {
     await db.exec(readFileSync(join(dir, f), 'utf8'))
   }
-  await db.exec(`insert into auth.users (id) values ('${A}'), ('${B}'), ('${ADMIN}');`)
+  await db.exec(`insert into auth.users (id, email) values ('${A}', 'a@x.in'), ('${B}', 'b@x.in'), ('${ADMIN}', 'owner@x.in');`)
 })
 
 describe('profiles', () => {
@@ -246,5 +246,60 @@ describe('comments', () => {
     await as(A, `update public.files set deleted_at = now() where id = $1`, [F1])
     await fails(B, `insert into public.comments (file_id, author_id, body) values ($1, $2, 'x')`, [F1, B])
     await as(A, `update public.files set deleted_at = null where id = $1`, [F1])
+  })
+})
+
+describe('admin powers', () => {
+  it('lets admins (only) hide and restore anyone’s single file', async () => {
+    const r = await as(B, `update public.files set deleted_at = now() where id = $1 returning id`, [F1])
+    expect(r.rows).toHaveLength(0)
+    await as(ADMIN, `update public.files set deleted_at = now() where id = $1`, [F1])
+    expect((await as(null, `select id from public.files`)).rows).toHaveLength(0)
+    await as(ADMIN, `update public.files set deleted_at = null where id = $1`, [F1])
+    expect((await as(null, `select id from public.files`)).rows).toHaveLength(1)
+  })
+
+  it('lists users with emails for admins only', async () => {
+    const r = await as(ADMIN, `select email, role from public.admin_users() order by email`)
+    expect(r.rows.map((x) => x.email)).toEqual(['a@x.in', 'b@x.in', 'owner@x.in'])
+    await fails(A, `select * from public.admin_users()`)
+    await fails(null, `select * from public.admin_users()`)
+  })
+
+  it('blocks a banned person from uploading and commenting, and only admins can ban', async () => {
+    await fails(A, `select public.set_user_banned($1, true)`, [B])
+    await fails(B, `update public.profiles set banned_at = now() where id = $1`, [B])
+    await as(ADMIN, `select public.set_user_banned($1, true)`, [B])
+    await fails(B, `insert into public.comments (file_id, author_id, body) values ($1, $2, 'spam')`, [F1, B])
+    await fails(B, `insert into public.collections (owner_id, subject_code, unit) values ($1, '25ES1IT102', 1)`, [B])
+    await fails(B, `insert into storage.objects (bucket_id, name) values ('notes', $1)`, [`${B}/x/y/z.pdf`])
+    // still able to read
+    expect((await as(B, `select id from public.files`)).rows).toHaveLength(1)
+    await as(ADMIN, `select public.set_user_banned($1, false)`, [B])
+    await as(B, `insert into public.comments (file_id, author_id, body) values ($1, $2, 'back') returning id`, [F1, B])
+  })
+
+  it('does not let an admin block themselves or drop their own admin role', async () => {
+    await fails(ADMIN, `select public.set_user_banned($1, true)`, [ADMIN])
+    await fails(ADMIN, `select public.set_user_role($1, 'member')`, [ADMIN])
+  })
+
+  it('lets admins promote and demote others; members cannot', async () => {
+    await fails(A, `select public.set_user_role($1, 'admin')`, [A])
+    await as(ADMIN, `select public.set_user_role($1, 'admin')`, [A])
+    expect((await db.query(`select role from public.profiles where id = '${A}'`)).rows[0]).toEqual({ role: 'admin' })
+    await as(ADMIN, `select public.set_user_role($1, 'member')`, [A])
+  })
+
+  it('deletes forever only hidden files, only for admins, and lets admins remove the bytes', async () => {
+    await fails(ADMIN, `select public.admin_purge_file($1)`, [F1]) // still visible
+    await as(A, `update public.files set deleted_at = now() where id = $1`, [F1])
+    await fails(A, `select public.admin_purge_file($1)`, [F1])
+    const r = await as(ADMIN, `select public.admin_purge_file($1) as paths`, [F1])
+    expect(r.rows[0]!.paths).toEqual([path(A, colA, F1)])
+    expect((await db.query(`select count(*)::int as n from public.files`)).rows[0]).toEqual({ n: 0 })
+    expect((await db.query(`select count(*)::int as n from public.comments`)).rows[0]).toEqual({ n: 0 })
+    expect((await as(A, `delete from storage.objects returning id`)).rows).toHaveLength(0)
+    expect((await as(ADMIN, `delete from storage.objects returning id`)).rows).toHaveLength(1)
   })
 })

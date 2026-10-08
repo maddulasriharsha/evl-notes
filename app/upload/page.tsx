@@ -44,6 +44,15 @@ export default async function UploadPage({ searchParams }: PageProps<'/upload'>)
     )
   }
 
+  if (me.profile.banned_at) {
+    return (
+      <Container className="py-16">
+        <h1 className="font-display text-3xl font-semibold">Uploading is blocked for your account</h1>
+        <p className="mt-3 max-w-xl text-ink-2">You can still read and download everything. If you think this is a mistake, contact the site admin.</p>
+      </Container>
+    )
+  }
+
   const supabase = await supabaseServer()
   const { data: mine } = await supabase
     .from('collections')
