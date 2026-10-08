@@ -2,12 +2,10 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowRight, CloudUpload } from 'lucide-react'
-import { DriveFileCard } from '@/components/file-card'
 import { ButtonLink, Container, Crumbs, SectionHeading } from '@/components/ui'
 import { allSubjects, sectionHref, sectionLabel, sectionsOf, sectionTitle, semesterLabel, findSubject } from '@/lib/curriculum'
 import { countsForSubject } from '@/lib/data'
 import { plural } from '@/lib/format'
-import { driveFilesFor } from '@/lib/library'
 
 export const revalidate = 60
 
@@ -25,8 +23,6 @@ export default async function SubjectPage({ params }: PageProps<'/s/[code]'>) {
   if (!found) notFound()
   const { subject, semester } = found
   const counts = await countsForSubject(subject.code)
-  const library = driveFilesFor(subject.code)
-  const questions = library.filter((f) => f.kind === 'questions')
   const sections = sectionsOf(subject)
 
   return (
@@ -59,7 +55,6 @@ export default async function SubjectPage({ params }: PageProps<'/s/[code]'>) {
         <SectionHeading title={subject.units.length ? 'Chapters' : 'Sections'} hint="Open a chapter to see everyone’s notes for it." />
         <ol className="overflow-hidden rounded-2xl border border-line bg-surface shadow-card">
           {sections.map((unit) => {
-            const lib = library.filter((f) => (f.unit ?? 0) === unit).length
             const mine = counts[unit] ?? 0
             return (
               <li key={unit} className="border-b border-line last:border-0">
@@ -71,9 +66,8 @@ export default async function SubjectPage({ params }: PageProps<'/s/[code]'>) {
                     <span className="block text-xs font-semibold tracking-widest text-ink-3 uppercase">{sectionLabel(unit)}</span>
                     <span className="block truncate font-medium">{sectionTitle(subject, unit)}</span>
                   </span>
-                  <span className="hidden text-right text-xs text-ink-3 sm:block">
-                    <span className="block">{plural(mine, 'student file')}</span>
-                    <span className="block">{plural(lib, 'library file')}</span>
+                  <span className={`hidden rounded-md px-2 py-0.5 text-xs font-medium sm:block ${mine ? 'bg-accent-soft text-accent' : 'bg-surface-2 text-ink-3'}`}>
+                    {plural(mine, 'file')}
                   </span>
                   <ArrowRight className="size-4 text-ink-3 transition group-hover:translate-x-0.5 group-hover:text-ink" />
                 </Link>
@@ -82,16 +76,6 @@ export default async function SubjectPage({ params }: PageProps<'/s/[code]'>) {
           })}
         </ol>
 
-        {questions.length > 0 && (
-          <section className="mt-14">
-            <SectionHeading title="Question papers & banks" hint={`${plural(questions.length, 'file')} from the ADMIN library, across all chapters.`} />
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-              {questions.map((f) => (
-                <DriveFileCard key={f.id} file={f} />
-              ))}
-            </div>
-          </section>
-        )}
       </Container>
     </>
   )

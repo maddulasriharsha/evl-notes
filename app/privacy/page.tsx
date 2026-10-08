@@ -33,7 +33,7 @@ const sections: { title: string; body: string[] }[] = [
   {
     title: 'Where data is kept',
     body: [
-      'Accounts, the list of notes and the uploaded files are stored with Supabase. The website itself is hosted on Vercel. Library material marked ADMIN is shown from Google Drive.',
+      'Accounts, the list of notes and the uploaded files are stored with Supabase. The website itself is hosted on Vercel.',
     ],
   },
   {

@@ -1,8 +1,10 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { Download, ExternalLink } from 'lucide-react'
+import { ViewerWithComments } from '@/components/comments'
 import { ImageViewer } from '@/components/image-viewer'
 import { PdfViewer } from '@/components/pdf-viewer'
+import { OwnerName } from '@/components/ui'
 import { ActionLink, ViewerShell } from '@/components/viewer-shell'
 import { findSubject, sectionHref, sectionLabel } from '@/lib/curriculum'
 import { fileById } from '@/lib/data'
@@ -32,7 +34,14 @@ export default async function UploadViewer({ params }: PageProps<'/view/u/[id]'>
       nav={{
         back: { href: `${sectionHref(file.subject_code, file.unit)}#c-${file.collection_id}`, label: 'chapter' },
         title: file.name,
-        meta: `${file.owner_name} · ${found?.subject.short ?? file.subject_code} · ${sectionLabel(file.unit)} · ${formatBytes(file.size_bytes)} · added ${formatDate(file.created_at)}`,
+        meta: (
+          <>
+            <OwnerName name={file.owner_name} admin={file.owner_is_admin} />
+            <span className="truncate">
+              &nbsp;· {found?.subject.short ?? file.subject_code} · {sectionLabel(file.unit)} · {formatBytes(file.size_bytes)} · added {formatDate(file.created_at)}
+            </span>
+          </>
+        ),
         prev: prev && `/view/u/${prev.id}`,
         next: next && `/view/u/${next.id}`,
         position: `${i + 1}/${file.siblings.length}`,
@@ -50,11 +59,13 @@ export default async function UploadViewer({ params }: PageProps<'/view/u/[id]'>
         ),
       }}
     >
-      {isPdf ? (
-        <PdfViewer url={original} downloadHref={download} />
-      ) : (
-        <ImageViewer preview={file.preview_path ? publicFileUrl(file.preview_path) : original} original={original} alt={file.name} />
-      )}
+      <ViewerWithComments fileId={file.id} ownerId={file.owner_id} initialCount={file.comment_count}>
+        {isPdf ? (
+          <PdfViewer url={original} downloadHref={download} />
+        ) : (
+          <ImageViewer preview={file.preview_path ? publicFileUrl(file.preview_path) : original} original={original} alt={file.name} />
+        )}
+      </ViewerWithComments>
     </ViewerShell>
   )
 }

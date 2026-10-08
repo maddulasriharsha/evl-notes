@@ -208,3 +208,43 @@ describe('storage', () => {
     expect(r.rows[0]).toEqual({ public: true, file_size_limit: 52428800 })
   })
 })
+
+describe('comments', () => {
+  let commentId = ''
+
+  it('lets signed-in people comment as themselves only', async () => {
+    const r = await as(B, `insert into public.comments (file_id, author_id, body) values ($1, $2, 'Thanks, very clear!') returning id`, [F1, B])
+    commentId = r.rows[0]!.id as string
+    await fails(B, `insert into public.comments (file_id, author_id, body) values ($1, $2, 'fake')`, [F1, A])
+  })
+
+  it('refuses anonymous and empty comments', async () => {
+    await fails(null, `insert into public.comments (file_id, author_id, body) values ($1, $2, 'hi')`, [F1, A])
+    await fails(A, `insert into public.comments (file_id, author_id, body) values ($1, $2, '   ')`, [F1, A])
+  })
+
+  it('is readable by everyone', async () => {
+    expect((await as(null, `select id from public.comments`)).rows).toHaveLength(1)
+  })
+
+  it('cannot be edited or deleted by others, nor hard-deleted at all', async () => {
+    const r = await as(A, `update public.comments set deleted_at = now() where id = $1 returning id`, [commentId])
+    expect(r.rows).toHaveLength(0)
+    await fails(B, `update public.comments set body = 'changed' where id = $1`, [commentId])
+    await fails(B, `delete from public.comments where id = $1`, [commentId])
+  })
+
+  it('can be removed by its author or an admin', async () => {
+    await as(B, `update public.comments set deleted_at = now() where id = $1`, [commentId])
+    expect((await as(null, `select id from public.comments`)).rows).toHaveLength(0)
+    const r = await as(A, `insert into public.comments (file_id, author_id, body) values ($1, $2, 'second') returning id`, [F1, A])
+    await as(ADMIN, `update public.comments set deleted_at = now() where id = $1`, [r.rows[0]!.id])
+    expect((await as(null, `select id from public.comments`)).rows).toHaveLength(0)
+  })
+
+  it('cannot be added to a hidden file', async () => {
+    await as(A, `update public.files set deleted_at = now() where id = $1`, [F1])
+    await fails(B, `insert into public.comments (file_id, author_id, body) values ($1, $2, 'x')`, [F1, B])
+    await as(A, `update public.files set deleted_at = null where id = $1`, [F1])
+  })
+})

@@ -13,10 +13,11 @@ download. Students sign in (Google or any email) to upload photos or PDFs to a c
 - **One shelf per person per chapter.** When Arjun uploads to *DS · Unit II*, the files go on "Arjun's notes"
   for that chapter. Uploading again later adds to the same shelf, it never creates a second post. Only Arjun
   can add to, rename or hide files on his shelf.
-- **ADMIN library.** The owner's Google Drive folder, sorted by chapter, is shown under the name ADMIN and
-  previewed straight from Drive (no copies, no storage used). See `docs/DRIVE_IMPORT.md`.
-- **Viewing.** PDFs render in the page (also on phones), images open full screen with zoom to the original,
-  Drive files open in Google's previewer. Download is always one tap away but never required.
+- **Comments.** Every uploaded file has a comment section. Anyone can read it; signed-in people can post.
+  Authors can delete their own comments and the admin can delete any. Uploads and comments by the admin
+  show an **Admin** badge.
+- **Viewing.** PDFs render in the page (also on phones) and images open full screen with zoom. Download is
+  always one tap away but never required.
 
 ## Why uploads are permanent
 
@@ -27,7 +28,6 @@ The website and the files are separate things:
 | Website code | GitHub → Vercel | Replaced on every deploy |
 | Student files (originals, untouched) | Supabase Storage bucket `notes` | **No** |
 | Shelves, names, file list | Supabase Postgres | **No** (schema only changes through new migration files) |
-| ADMIN library | Your Google Drive | **No** |
 
 On top of that, the database rules (`supabase/migrations/…_init.sql`, tested in `tests/rls.test.ts`) make it
 impossible to delete anything through the site: there is no delete permission on any table or on storage.
@@ -39,7 +39,8 @@ can never overwrite another.
 ### 1. Supabase (database, sign-in, file storage)
 
 1. Create a free project at <https://supabase.com> (region: Mumbai `ap-south-1`).
-2. **SQL Editor → New query**: paste all of `supabase/migrations/20261009000000_init.sql` and run it.
+2. **SQL Editor → New query**: paste and run each file in `supabase/migrations/`, oldest first
+   (`20261009000000_init.sql`, then `20261010000000_comments.sql`).
 3. **Project Settings → API**: copy the *Project URL* and the *anon / publishable* key.
 4. **Authentication → URL Configuration**: set *Site URL* to your live address (for example
    `https://evl-notes.vercel.app`) and add `https://evl-notes.vercel.app/auth/callback` and
@@ -125,7 +126,7 @@ When storage gets close to 1 GB, Supabase Pro ($25/month, 100 GB) is a one-click
 | Command | What it does |
 |---|---|
 | `pnpm dev` | Local site at <http://localhost:3000> |
-| `pnpm build` | Production build (pre-renders every subject, chapter and Drive page) |
+| `pnpm build` | Production build (pre-renders every subject and chapter page) |
 | `pnpm test` | Data checks, upload helpers, and the database security rules run against a real Postgres (PGlite) |
 | `pnpm typecheck` | TypeScript check |
 
@@ -134,9 +135,8 @@ When storage gets close to 1 GB, Supabase Pro ($25/month, 100 GB) is a one-click
 ```
 app/                  pages (home, /sem/N, /s/<code>, /s/<code>/unit-N, /view, /upload, /me, /admin, /login)
 components/           UI pieces (uploader, PDF viewer, cards, header and footer)
-lib/                  curriculum + library data, Supabase clients, upload logic
-data/                 curriculum.json (from the syllabus books), drive-library.json (sorted Drive files)
+lib/                  curriculum data, Supabase clients, upload logic
+data/                 curriculum.json (from the syllabus books)
 supabase/migrations/  database schema + security rules (forward-only)
 tests/                vitest suites
-docs/                 Drive import notes + mapping.csv
 ```

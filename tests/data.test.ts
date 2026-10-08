@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { allSubjects, findSubject, regularSemesters, sectionsOf, parseSectionSlug, sectionSlug } from '@/lib/curriculum'
-import { driveFiles } from '@/lib/library'
+import { allSubjects, regularSemesters, parseSectionSlug, sectionSlug } from '@/lib/curriculum'
 import { safeNext } from '@/lib/safe-next'
 
 describe('curriculum', () => {
@@ -25,26 +24,6 @@ describe('curriculum', () => {
     for (const u of [0, 1, 2, 3, 4, 5]) expect(parseSectionSlug(sectionSlug(u))).toBe(u)
     expect(parseSectionSlug('unit-6')).toBeNull()
     expect(parseSectionSlug('../x')).toBeNull()
-  })
-})
-
-describe('Drive library', () => {
-  it('places every file in a real subject and section', () => {
-    expect(driveFiles.length).toBeGreaterThan(500)
-    for (const f of driveFiles) {
-      const found = findSubject(f.subject)
-      expect(found, f.title).toBeDefined()
-      expect(sectionsOf(found!.subject), `${f.subject} ${f.title}`).toContain(f.unit ?? 0)
-    }
-  })
-
-  it('has unique Drive ids', () => {
-    expect(new Set(driveFiles.map((f) => f.id)).size).toBe(driveFiles.length)
-  })
-
-  it('does not include published textbooks', () => {
-    const banned = /ramana|boylestad|millman|salivahanan|hayt|sahdev|deitel|nielsen|bieser|rk jain/i
-    expect(driveFiles.filter((f) => banned.test(f.title))).toEqual([])
   })
 })
 

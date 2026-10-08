@@ -1,12 +1,11 @@
 import Link from 'next/link'
 import { ArrowRight, BookMarked, CloudUpload, Eye, ShieldCheck } from 'lucide-react'
 import { Thumb } from '@/components/thumb'
-import { Container, SectionHeading } from '@/components/ui'
-import { allSubjects, extras, findSubject, regularSemesters, sectionHref, sectionLabel, semesterLabel, subjectHref } from '@/lib/curriculum'
-import { countsBySubject, recentlyUpdated } from '@/lib/data'
+import { Container, OwnerName, SectionHeading } from '@/components/ui'
+import { allSubjects, findSubject, regularSemesters, sectionHref, sectionLabel, semesterLabel } from '@/lib/curriculum'
+import { contributors, countsBySubject, recentlyUpdated } from '@/lib/data'
 import { publicFileUrl } from '@/lib/env'
 import { plural, timeAgo } from '@/lib/format'
-import { driveFiles } from '@/lib/library'
 
 export const revalidate = 60
 
@@ -18,18 +17,16 @@ const features = [
 ]
 
 export default async function Home() {
-  const [counts, recent] = await Promise.all([countsBySubject(), recentlyUpdated(6)])
+  const [counts, recent, people] = await Promise.all([countsBySubject(), recentlyUpdated(6), contributors()])
   const communityFiles = Object.values(counts).reduce((a, b) => a + b, 0)
   const chapters = allSubjects().reduce((n, { subject }) => n + subject.units.length, 0)
-  const driveBySubject = new Map<string, number>()
-  for (const f of driveFiles) driveBySubject.set(f.subject, (driveBySubject.get(f.subject) ?? 0) + 1)
-  const total = (code: string) => (driveBySubject.get(code) ?? 0) + (counts[code] ?? 0)
+  const total = (code: string) => counts[code] ?? 0
 
   const stats = [
     { label: 'Subjects', value: allSubjects().length },
     { label: 'Chapters', value: chapters },
-    { label: 'Library files', value: driveFiles.length },
-    { label: 'Student uploads', value: communityFiles },
+    { label: 'Files uploaded', value: communityFiles },
+    { label: 'Contributors', value: people.length },
   ]
 
   return (
@@ -96,16 +93,6 @@ export default async function Home() {
               )
             })}
           </div>
-          {extras && (
-            <p className="mt-4 text-sm text-ink-3">
-              Also in the library:{' '}
-              {extras.subjects.map((x) => (
-                <Link key={x.code} href={subjectHref(x.code)} className="font-medium text-ink-2 underline decoration-line-strong underline-offset-4 hover:text-ink">
-                  {x.name}
-                </Link>
-              ))}
-            </p>
-          )}
         </section>
 
         {recent.length > 0 && (
@@ -136,7 +123,7 @@ export default async function Home() {
                       <p className="truncate text-sm font-semibold">
                         {found?.subject.short ?? c.subject_code} · {sectionLabel(c.unit)}
                       </p>
-                      <p className="mt-1 truncate text-sm text-ink-2">by {c.owner_name}</p>
+                      <p className="mt-1 flex text-sm text-ink-2">by&nbsp;<OwnerName name={c.owner_name} admin={c.owner_is_admin} /></p>
                       <p className="mt-2 text-xs text-ink-3">
                         {plural(c.file_count, 'file')} · {timeAgo(c.updated_at)}
                       </p>

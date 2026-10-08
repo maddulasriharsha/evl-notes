@@ -6,6 +6,7 @@ import { supabasePublic } from '@/lib/supabase/server'
 export interface NoteFile {
   id: string
   collection_id: string
+  owner_id: string
   storage_path: string
   thumb_path: string | null
   preview_path: string | null
@@ -17,12 +18,14 @@ export interface NoteFile {
   height: number | null
   position: number
   created_at: string
+  comment_count: number
 }
 
 export interface NoteCollection {
   id: string
   owner_id: string
   owner_name: string
+  owner_is_admin: boolean
   subject_code: string
   unit: number
   description: string | null
@@ -32,11 +35,18 @@ export interface NoteCollection {
 }
 
 const FILE_COLUMNS =
-  'id, collection_id, storage_path, thumb_path, preview_path, name, mime, size_bytes, page_count, width, height, position, created_at'
+  'id, collection_id, owner_id, storage_path, thumb_path, preview_path, name, mime, size_bytes, page_count, width, height, position, created_at, comments(count)'
 
-type CollectionRow = Omit<NoteCollection, 'owner_name' | 'files'> & {
-  profiles: { display_name: string } | null
-  files: NoteFile[]
+type Owner = { display_name: string; role: string } | null
+type FileRow = Omit<NoteFile, 'comment_count'> & { comments?: { count: number }[] }
+
+function shapeFile({ comments, ...f }: FileRow): NoteFile {
+  return { ...f, comment_count: comments?.[0]?.count ?? 0 }
+}
+
+type CollectionRow = Omit<NoteCollection, 'owner_name' | 'owner_is_admin' | 'files'> & {
+  profiles: Owner
+  files: FileRow[]
 }
 
 function shape(rows: CollectionRow[]): NoteCollection[] {
@@ -44,7 +54,8 @@ function shape(rows: CollectionRow[]): NoteCollection[] {
     .map(({ profiles, files, ...c }) => ({
       ...c,
       owner_name: profiles?.display_name ?? 'Unknown',
-      files: [...files].sort(
+      owner_is_admin: profiles?.role === 'admin',
+      files: files.map(shapeFile).sort(
         (a, b) => a.position - b.position || a.created_at.localeCompare(b.created_at),
       ),
     }))
@@ -56,7 +67,7 @@ export async function collectionsFor(subject: string, unit: number): Promise<Not
   if (!supabaseConfigured) return []
   const { data, error } = await supabasePublic()
     .from('collections')
-    .select(`id, owner_id, subject_code, unit, description, created_at, updated_at, profiles(display_name), files(${FILE_COLUMNS})`)
+    .select(`id, owner_id, subject_code, unit, description, created_at, updated_at, profiles(display_name, role), files(${FILE_COLUMNS})`)
     .eq('subject_code', subject)
     .eq('unit', unit)
     .is('files.deleted_at', null)
@@ -104,6 +115,7 @@ export interface RecentCollection {
   subject_code: string
   unit: number
   owner_name: string
+  owner_is_admin: boolean
   updated_at: string
   file_count: number
   cover: NoteFile | null
@@ -113,7 +125,7 @@ export async function recentlyUpdated(limit = 8): Promise<RecentCollection[]> {
   if (!supabaseConfigured) return []
   const { data, error } = await supabasePublic()
     .from('collections')
-    .select(`id, owner_id, subject_code, unit, description, created_at, updated_at, profiles(display_name), files(${FILE_COLUMNS})`)
+    .select(`id, owner_id, subject_code, unit, description, created_at, updated_at, profiles(display_name, role), files(${FILE_COLUMNS})`)
     .is('files.deleted_at', null)
     .order('updated_at', { ascending: false })
     .limit(limit * 2)
@@ -125,6 +137,7 @@ export async function recentlyUpdated(limit = 8): Promise<RecentCollection[]> {
       subject_code: c.subject_code,
       unit: c.unit,
       owner_name: c.owner_name,
+      owner_is_admin: c.owner_is_admin,
       updated_at: c.updated_at,
       file_count: c.files.length,
       cover: c.files.find((f) => f.thumb_path) ?? c.files[0] ?? null,
@@ -134,6 +147,7 @@ export async function recentlyUpdated(limit = 8): Promise<RecentCollection[]> {
 export interface Contributor {
   id: string
   name: string
+  is_admin: boolean
   files: number
   chapters: number
   subjects: number
@@ -144,7 +158,7 @@ export async function contributors(): Promise<Contributor[]> {
   if (!supabaseConfigured) return []
   const { data, error } = await supabasePublic()
     .from('collections')
-    .select('owner_id, subject_code, updated_at, profiles(display_name), files(id)')
+    .select('owner_id, subject_code, updated_at, profiles(display_name, role), files(id)')
     .is('files.deleted_at', null)
   if (error) return []
   const map = new Map<string, Contributor & { subjectSet: Set<string> }>()
@@ -152,13 +166,14 @@ export async function contributors(): Promise<Contributor[]> {
     owner_id: string
     subject_code: string
     updated_at: string
-    profiles: { display_name: string } | null
+    profiles: Owner
     files: { id: string }[]
   }[]) {
     if (row.files.length === 0) continue
     const c = map.get(row.owner_id) ?? {
       id: row.owner_id,
       name: row.profiles?.display_name ?? 'Unknown',
+      is_admin: row.profiles?.role === 'admin',
       files: 0,
       chapters: 0,
       subjects: 0,
@@ -179,6 +194,7 @@ export async function contributors(): Promise<Contributor[]> {
 
 export interface FileWithContext extends NoteFile {
   owner_name: string
+  owner_is_admin: boolean
   subject_code: string
   unit: number
   siblings: NoteFile[]
@@ -191,18 +207,19 @@ export async function fileById(id: string): Promise<FileWithContext | null> {
   if (!file) return null
   const { data: col } = await supabase
     .from('collections')
-    .select(`subject_code, unit, profiles(display_name), files(${FILE_COLUMNS})`)
-    .eq('id', (file as NoteFile).collection_id)
+    .select(`subject_code, unit, profiles(display_name, role), files(${FILE_COLUMNS})`)
+    .eq('id', (file as unknown as FileRow).collection_id)
     .is('files.deleted_at', null)
     .maybeSingle()
   if (!col) return null
-  const c = col as unknown as { subject_code: string; unit: number; profiles: { display_name: string } | null; files: NoteFile[] }
+  const c = col as unknown as { subject_code: string; unit: number; profiles: Owner; files: FileRow[] }
   return {
-    ...(file as NoteFile),
+    ...shapeFile(file as FileRow),
     owner_name: c.profiles?.display_name ?? 'Unknown',
+    owner_is_admin: c.profiles?.role === 'admin',
     subject_code: c.subject_code,
     unit: c.unit,
-    siblings: [...c.files].sort((a, b) => a.position - b.position || a.created_at.localeCompare(b.created_at)),
+    siblings: c.files.map(shapeFile).sort((a, b) => a.position - b.position || a.created_at.localeCompare(b.created_at)),
   }
 }
 
@@ -213,6 +230,7 @@ export interface FileHit {
   subject_code: string
   unit: number
   owner_name: string
+  owner_is_admin: boolean
 }
 
 export async function searchFiles(q: string): Promise<FileHit[]> {
@@ -220,7 +238,7 @@ export async function searchFiles(q: string): Promise<FileHit[]> {
   const pattern = `%${q.replace(/[%_\\]/g, (m) => `\\${m}`)}%`
   const { data, error } = await supabasePublic()
     .from('files')
-    .select('id, name, mime, collections!inner(subject_code, unit, hidden, profiles(display_name))')
+    .select('id, name, mime, collections!inner(subject_code, unit, hidden, profiles(display_name, role))')
     .is('deleted_at', null)
     .ilike('name', pattern)
     .limit(30)
@@ -229,7 +247,7 @@ export async function searchFiles(q: string): Promise<FileHit[]> {
     id: string
     name: string
     mime: string
-    collections: { subject_code: string; unit: number; profiles: { display_name: string } | null }
+    collections: { subject_code: string; unit: number; profiles: Owner }
   }[]).map((r) => ({
     id: r.id,
     name: r.name,
@@ -237,5 +255,6 @@ export async function searchFiles(q: string): Promise<FileHit[]> {
     subject_code: r.collections.subject_code,
     unit: r.collections.unit,
     owner_name: r.collections.profiles?.display_name ?? 'Unknown',
+    owner_is_admin: r.collections.profiles?.role === 'admin',
   }))
 }

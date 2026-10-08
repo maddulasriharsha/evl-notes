@@ -506,26 +506,5 @@
     ]
    }
   ]
- },
- {
-  "year": 1,
-  "sem": 0,
-  "label": "Extras",
-  "subjects": [
-   {
-    "code": "X-BEEE",
-    "name": "Basic Electrical & Electronics Engineering (other branches)",
-    "short": "BEEE",
-    "credits": 0,
-    "kind": "extra",
-    "units": [
-     "Unit 1",
-     "Unit 2",
-     "Unit 3",
-     "Unit 4",
-     "Unit 5"
-    ]
-   }
-  ]
  }
 ]

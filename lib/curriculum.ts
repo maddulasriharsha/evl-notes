@@ -1,6 +1,6 @@
 import data from '@/data/curriculum.json'
 
-export type SubjectKind = 'theory' | 'lab' | 'extra'
+export type SubjectKind = 'theory' | 'lab'
 
 export interface Subject {
   code: string
@@ -14,17 +14,14 @@ export interface Subject {
 
 export interface Semester {
   year: number
-  /** 1–4 for regular semesters, 0 for the Extras shelf. */
+  /** 1–4 */
   sem: number
-  label?: string
   subjects: Subject[]
 }
 
 export const semesters = data as Semester[]
 
-/** Regular semesters only (Extras excluded), in order. */
-export const regularSemesters = semesters.filter((s) => s.sem > 0)
-export const extras = semesters.find((s) => s.sem === 0)
+export const regularSemesters = semesters
 
 const byCode = new Map<string, { subject: Subject; semester: Semester }>()
 for (const semester of semesters) {
@@ -39,14 +36,9 @@ export function allSubjects() {
   return [...byCode.values()]
 }
 
-export function semesterLabel(s: Pick<Semester, 'year' | 'sem' | 'label'>) {
-  if (s.sem === 0) return s.label ?? 'Extras'
+export function semesterLabel(s: Pick<Semester, 'year' | 'sem'>) {
   const roman = ['I', 'II'][s.year - 1]
   return `${roman} Year · Sem ${s.sem % 2 === 1 ? 'I' : 'II'}`
-}
-
-export function semesterSlug(sem: number) {
-  return sem === 0 ? 'extras' : String(sem)
 }
 
 /** URL slug for a section of a subject: 1–5 are chapters, 0 is "general". */

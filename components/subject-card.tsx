@@ -1,10 +1,10 @@
 import Link from 'next/link'
-import { ArrowUpRight, FlaskConical, BookOpen, Sparkles } from 'lucide-react'
+import { ArrowUpRight, FlaskConical, BookOpen } from 'lucide-react'
 import { subjectHref, type Subject } from '@/lib/curriculum'
 import { plural } from '@/lib/format'
 
 export function SubjectCard({ subject, count }: { subject: Subject; count: number }) {
-  const Icon = subject.kind === 'lab' ? FlaskConical : subject.kind === 'extra' ? Sparkles : BookOpen
+  const Icon = subject.kind === 'lab' ? FlaskConical : BookOpen
   return (
     <Link
       href={subjectHref(subject.code)}

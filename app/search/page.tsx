@@ -1,12 +1,10 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Search } from 'lucide-react'
-import { DriveFileCard } from '@/components/file-card'
-import { Container, Empty, SectionHeading } from '@/components/ui'
+import { Container, Empty, OwnerName, SectionHeading } from '@/components/ui'
 import { allSubjects, findSubject, sectionHref, sectionLabel, sectionsOf, sectionTitle, semesterLabel, subjectHref } from '@/lib/curriculum'
 import { searchFiles } from '@/lib/data'
 import { plural } from '@/lib/format'
-import { driveFiles } from '@/lib/library'
 
 export const metadata: Metadata = { title: 'Search' }
 
@@ -34,11 +32,8 @@ export default async function SearchPage({ searchParams }: PageProps<'/search'>)
           .map((u) => ({ subject, unit: u })),
       )
     : []
-  const library = terms.length
-    ? driveFiles.filter((f) => matches(`${f.title} ${findSubject(f.subject)?.subject.short ?? ''}`, terms)).slice(0, 40)
-    : []
   const uploads = terms.length ? await searchFiles(q) : []
-  const nothing = terms.length > 0 && !subjects.length && !chapters.length && !library.length && !uploads.length
+  const nothing = terms.length > 0 && !subjects.length && !chapters.length && !uploads.length
 
   return (
     <Container className="py-10">
@@ -49,12 +44,12 @@ export default async function SearchPage({ searchParams }: PageProps<'/search'>)
           type="search"
           defaultValue={q}
           autoFocus
-          placeholder="Try “laplace”, “EDC unit 2”, “question bank”"
+          placeholder="Try “laplace”, “EDC”, “unit 2”"
           className="h-14 w-full rounded-2xl border border-line bg-surface pr-4 pl-12 text-lg shadow-card outline-none focus:border-accent"
         />
       </form>
 
-      {!terms.length && <p className="mt-6 text-ink-3">Search across every subject, chapter, library file and student upload.</p>}
+      {!terms.length && <p className="mt-6 text-ink-3">Search across every subject, chapter and uploaded file.</p>}
       {nothing && (
         <div className="mt-10">
           <Empty title={`Nothing found for “${q}”`}>Try a shorter word, a subject short name like “DS”, or a topic from the syllabus.</Empty>
@@ -91,12 +86,13 @@ export default async function SearchPage({ searchParams }: PageProps<'/search'>)
 
       {uploads.length > 0 && (
         <section className="mt-10">
-          <SectionHeading title="Student uploads" hint={plural(uploads.length, 'match')} />
+          <SectionHeading title="Uploaded files" hint={plural(uploads.length, 'match')} />
           <div className="grid gap-2 sm:grid-cols-2">
             {uploads.map((u) => (
               <Link key={u.id} href={`/view/u/${u.id}`} className="rounded-xl border border-line bg-surface px-4 py-3 hover:border-line-strong">
-                <span className="block text-xs text-ink-3">
-                  {findSubject(u.subject_code)?.subject.short ?? u.subject_code} · {sectionLabel(u.unit)} · by {u.owner_name}
+                <span className="flex text-xs text-ink-3">
+                  {findSubject(u.subject_code)?.subject.short ?? u.subject_code} · {sectionLabel(u.unit)} · by&nbsp;
+                  <OwnerName name={u.owner_name} admin={u.owner_is_admin} />
                 </span>
                 <span className="block truncate font-medium">{u.name}</span>
               </Link>
@@ -105,16 +101,6 @@ export default async function SearchPage({ searchParams }: PageProps<'/search'>)
         </section>
       )}
 
-      {library.length > 0 && (
-        <section className="mt-10">
-          <SectionHeading title="ADMIN library" hint={plural(library.length, 'match')} />
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-            {library.map((f) => (
-              <DriveFileCard key={f.id} file={f} />
-            ))}
-          </div>
-        </section>
-      )}
     </Container>
   )
 }

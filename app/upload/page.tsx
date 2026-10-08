@@ -21,7 +21,7 @@ export default async function UploadPage({ searchParams }: PageProps<'/upload'>)
     return (
       <Container className="py-16">
         <h1 className="font-display text-3xl font-semibold">Uploads are not switched on yet</h1>
-        <p className="mt-3 max-w-xl text-ink-2">The site owner still needs to connect Supabase. Browsing and the ADMIN library already work.</p>
+        <p className="mt-3 max-w-xl text-ink-2">The site owner still needs to connect Supabase. Browsing already works.</p>
       </Container>
     )
   }

@@ -4,7 +4,7 @@ import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
 export interface ViewerNav {
   back: { href: string; label: string }
   title: string
-  meta: string
+  meta: React.ReactNode
   prev?: string
   next?: string
   position?: string
@@ -22,7 +22,7 @@ export function ViewerShell({ nav, children }: { nav: ViewerNav; children: React
           </Link>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold sm:text-base">{nav.title}</p>
-            <p className="truncate text-xs text-ink-3">{nav.meta}</p>
+            <div className="flex min-w-0 items-center truncate text-xs text-ink-3">{nav.meta}</div>
           </div>
           <div className="flex items-center gap-2">
             {(nav.prev || nav.next) && (

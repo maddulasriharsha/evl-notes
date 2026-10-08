@@ -69,3 +69,15 @@ export function ButtonLink({ href, children, variant = 'primary' }: { href: stri
     </Link>
   )
 }
+
+/** A person's display name, with an Admin badge for the site owner. */
+export function OwnerName({ name, admin, className = '' }: { name: string; admin?: boolean; className?: string }) {
+  return (
+    <span className={`inline-flex min-w-0 items-center gap-1.5 ${className}`}>
+      <span className="truncate">{name}</span>
+      {admin && (
+        <span className="shrink-0 rounded-md bg-gold-soft px-1.5 py-0.5 text-[10px] font-semibold tracking-wider text-gold uppercase">Admin</span>
+      )}
+    </span>
+  )
+}

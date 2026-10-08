@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowLeft, ArrowRight, CloudUpload, Library } from 'lucide-react'
-import { DriveFileCard, UploadFileCard } from '@/components/file-card'
-import { Badge, ButtonLink, Container, Crumbs, Empty } from '@/components/ui'
+import { ArrowLeft, ArrowRight, CloudUpload } from 'lucide-react'
+import { UploadFileCard } from '@/components/file-card'
+import { ButtonLink, Container, Crumbs, Empty, OwnerName } from '@/components/ui'
 import {
   findSubject,
   parseSectionSlug,
@@ -18,7 +18,6 @@ import {
 } from '@/lib/curriculum'
 import { collectionsFor } from '@/lib/data'
 import { formatDate, plural, timeAgo } from '@/lib/format'
-import { ADMIN_NAME, driveFilesFor, kindLabel, type DriveKind } from '@/lib/library'
 
 export const revalidate = 60
 
@@ -42,14 +41,11 @@ export async function generateMetadata({ params }: PageProps<'/s/[code]/[section
   return { title: `${sectionTitle(r.subject, r.unit)} · ${r.subject.short}` }
 }
 
-const kindOrder: DriveKind[] = ['notes', 'slides', 'lab', 'questions']
-
 export default async function SectionPage({ params }: PageProps<'/s/[code]/[section]'>) {
   const r = await resolve(params)
   if (!r) notFound()
   const { subject, semester, unit } = r
   const collections = await collectionsFor(subject.code, unit)
-  const library = driveFilesFor(subject.code, unit)
   const order = sectionsOf(subject)
   const idx = order.indexOf(unit)
   const prev = idx > 0 ? order[idx - 1] : undefined
@@ -78,7 +74,7 @@ export default async function SectionPage({ params }: PageProps<'/s/[code]/[sect
                 {sectionTitle(subject, unit)}
               </h1>
               <p className="mt-3 text-sm text-ink-3">
-                {plural(collections.length, 'contributor')} · {plural(studentFiles, 'student file')} · {plural(library.length, 'library file')}
+                {plural(collections.length, 'contributor')} · {plural(studentFiles, 'file')}
               </p>
             </div>
             <ButtonLink href={uploadHref}>
@@ -90,7 +86,7 @@ export default async function SectionPage({ params }: PageProps<'/s/[code]/[sect
 
       <Container className="mt-10 space-y-14">
         <section>
-          <h2 className="mb-4 font-display text-xl font-semibold tracking-tight">Class notes</h2>
+          <h2 className="mb-4 font-display text-xl font-semibold tracking-tight">Notes</h2>
           {collections.length === 0 ? (
             <Empty title="No class notes for this chapter yet">
               Took notes in class? <Link href={uploadHref} className="font-medium text-accent">Upload them</Link> and they will appear here under your name.
@@ -104,7 +100,9 @@ export default async function SectionPage({ params }: PageProps<'/s/[code]/[sect
                       {c.owner_name.charAt(0).toUpperCase()}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="font-semibold">{c.owner_name}&rsquo;s notes</p>
+                      <p className="flex items-center font-semibold">
+                        <OwnerName name={`${c.owner_name}’s notes`} admin={c.owner_is_admin} />
+                      </p>
                       <p className="text-xs text-ink-3">
                         {plural(c.files.length, 'file')} · started {formatDate(c.created_at)} · updated {timeAgo(c.updated_at)}
                       </p>
@@ -122,47 +120,6 @@ export default async function SectionPage({ params }: PageProps<'/s/[code]/[sect
           )}
         </section>
 
-        <section id="library">
-          <div className="mb-4 flex flex-wrap items-center gap-3">
-            <span className="grid size-10 place-items-center rounded-full bg-ink text-bg">
-              <Library className="size-4" />
-            </span>
-            <div>
-              <h2 className="flex items-center gap-2 font-display text-xl font-semibold tracking-tight">
-                {ADMIN_NAME} <Badge tone="gold">Library</Badge>
-              </h2>
-              <p className="text-xs text-ink-3">Collected material, previewed from Google Drive. Nothing to download unless you want to.</p>
-            </div>
-          </div>
-          {library.length === 0 ? (
-            <Empty title="Nothing in the library for this chapter">
-              {unit !== 0 && (
-                <>
-                  Some material covers the whole subject. See <Link href={sectionHref(subject.code, 0)} className="font-medium text-accent">General</Link>.
-                </>
-              )}
-            </Empty>
-          ) : (
-            <div className="space-y-8">
-              {kindOrder.map((kind) => {
-                const files = library.filter((f) => f.kind === kind)
-                if (files.length === 0) return null
-                return (
-                  <div key={kind}>
-                    <h3 className="mb-3 text-sm font-semibold tracking-widest text-ink-3 uppercase">
-                      {kindLabel[kind]} <span className="font-normal">({files.length})</span>
-                    </h3>
-                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-                      {files.map((f) => (
-                        <DriveFileCard key={f.id} file={f} />
-                      ))}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </section>
 
         <nav className="flex items-stretch justify-between gap-3 border-t border-line pt-6">
           {prev !== undefined ? (
