@@ -4,6 +4,7 @@ import { SubjectCard } from '@/components/subject-card'
 import { Container, Crumbs } from '@/components/ui'
 import { regularSemesters, semesterLabel } from '@/lib/curriculum'
 import { countsBySubject } from '@/lib/data'
+import { driveCount } from '@/lib/library'
 
 export const revalidate = 60
 
@@ -26,7 +27,7 @@ export default async function SemesterPage({ params }: PageProps<'/sem/[sem]'>) 
   const counts = await countsBySubject()
   const theory = semester.subjects.filter((s) => s.kind !== 'lab')
   const labs = semester.subjects.filter((s) => s.kind === 'lab')
-  const count = (code: string) => counts[code] ?? 0
+  const count = (code: string) => (counts[code] ?? 0) + driveCount(code)
   const others = regularSemesters.filter((s) => s.sem !== semester.sem)
 
   return (

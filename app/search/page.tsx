@@ -4,6 +4,7 @@ import { Search } from 'lucide-react'
 import { Container, Empty, OwnerName, SectionHeading } from '@/components/ui'
 import { allSubjects, findSubject, sectionHref, sectionLabel, sectionsOf, sectionTitle, semesterLabel, subjectHref } from '@/lib/curriculum'
 import { searchFiles } from '@/lib/data'
+import { driveFiles, LIBRARY_OWNER } from '@/lib/library'
 import { plural } from '@/lib/format'
 
 export const metadata: Metadata = { title: 'Search' }
@@ -32,7 +33,22 @@ export default async function SearchPage({ searchParams }: PageProps<'/search'>)
           .map((u) => ({ subject, unit: u })),
       )
     : []
-  const uploads = terms.length ? await searchFiles(q) : []
+  const uploaded = terms.length ? await searchFiles(q) : []
+  const fromDrive = terms.length
+    ? driveFiles
+        .filter((f) => matches(`${f.title} ${findSubject(f.subject)?.subject.short ?? ''}`, terms))
+        .slice(0, 40)
+        .map((f) => ({
+          id: f.id,
+          href: `/view/d/${f.id}`,
+          name: f.title,
+          subject_code: f.subject,
+          unit: f.unit ?? 0,
+          owner_name: LIBRARY_OWNER.name,
+          owner_is_admin: LIBRARY_OWNER.admin,
+        }))
+    : []
+  const uploads = [...uploaded.map((u) => ({ ...u, href: `/view/u/${u.id}` })), ...fromDrive]
   const nothing = terms.length > 0 && !subjects.length && !chapters.length && !uploads.length
 
   return (
@@ -86,10 +102,10 @@ export default async function SearchPage({ searchParams }: PageProps<'/search'>)
 
       {uploads.length > 0 && (
         <section className="mt-10">
-          <SectionHeading title="Uploaded files" hint={plural(uploads.length, 'match')} />
+          <SectionHeading title="Files" hint={plural(uploads.length, 'match')} />
           <div className="grid gap-2 sm:grid-cols-2">
             {uploads.map((u) => (
-              <Link key={u.id} href={`/view/u/${u.id}`} className="rounded-xl border border-line bg-surface px-4 py-3 hover:border-line-strong">
+              <Link key={u.id} href={u.href} className="rounded-xl border border-line bg-surface px-4 py-3 hover:border-line-strong">
                 <span className="flex text-xs text-ink-3">
                   {findSubject(u.subject_code)?.subject.short ?? u.subject_code} · {sectionLabel(u.unit)} · by&nbsp;
                   <OwnerName name={u.owner_name} admin={u.owner_is_admin} />

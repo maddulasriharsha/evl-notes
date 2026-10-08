@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowLeft, ArrowRight, CloudUpload } from 'lucide-react'
-import { UploadFileCard } from '@/components/file-card'
+import { DriveFileCard, UploadFileCard } from '@/components/file-card'
 import { ButtonLink, Container, Crumbs, Empty, OwnerName } from '@/components/ui'
 import {
   findSubject,
@@ -16,7 +16,8 @@ import {
   allSubjects,
   sectionSlug,
 } from '@/lib/curriculum'
-import { collectionsFor } from '@/lib/data'
+import { collectionsFor, type NoteCollection } from '@/lib/data'
+import { driveFilesFor, LIBRARY_OWNER, type DriveFile } from '@/lib/library'
 import { formatDate, plural, timeAgo } from '@/lib/format'
 
 export const revalidate = 60
@@ -50,7 +51,15 @@ export default async function SectionPage({ params }: PageProps<'/s/[code]/[sect
   const idx = order.indexOf(unit)
   const prev = idx > 0 ? order[idx - 1] : undefined
   const next = idx < order.length - 1 ? order[idx + 1] : undefined
-  const studentFiles = collections.reduce((n, c) => n + c.files.length, 0)
+  // The owner's Drive notes join the owner's own shelf (if any) as one card, shown first.
+  const drive = driveFilesFor(subject.code, unit)
+  const isOwner = (c: NoteCollection) => c.owner_is_admin && c.owner_name === LIBRARY_OWNER.name
+  const ownerShelf = collections.find(isOwner)
+  const cards: { key: string; collection?: NoteCollection; drive: DriveFile[] }[] = [
+    ...(ownerShelf || drive.length ? [{ key: ownerShelf?.id ?? 'owner', collection: ownerShelf, drive }] : []),
+    ...collections.filter((c) => c !== ownerShelf).map((c) => ({ key: c.id, collection: c, drive: [] as DriveFile[] })),
+  ]
+  const totalFiles = collections.reduce((n, c) => n + c.files.length, 0) + drive.length
   const uploadHref = `/upload?subject=${subject.code}&unit=${unit}`
 
   return (
@@ -74,7 +83,7 @@ export default async function SectionPage({ params }: PageProps<'/s/[code]/[sect
                 {sectionTitle(subject, unit)}
               </h1>
               <p className="mt-3 text-sm text-ink-3">
-                {plural(collections.length, 'contributor')} · {plural(studentFiles, 'file')}
+                {plural(cards.length, 'contributor')} · {plural(totalFiles, 'file')}
               </p>
             </div>
             <ButtonLink href={uploadHref}>
@@ -87,35 +96,47 @@ export default async function SectionPage({ params }: PageProps<'/s/[code]/[sect
       <Container className="mt-10 space-y-14">
         <section>
           <h2 className="mb-4 font-display text-xl font-semibold tracking-tight">Notes</h2>
-          {collections.length === 0 ? (
-            <Empty title="No class notes for this chapter yet">
+          {cards.length === 0 ? (
+            <Empty title="No notes for this chapter yet">
               Took notes in class? <Link href={uploadHref} className="font-medium text-accent">Upload them</Link> and they will appear here under your name.
             </Empty>
           ) : (
             <div className="space-y-6">
-              {collections.map((c) => (
-                <article key={c.id} id={`c-${c.id}`} className="scroll-mt-24 rounded-2xl border border-line bg-surface p-4 shadow-card sm:p-5">
-                  <header className="mb-4 flex flex-wrap items-center gap-3">
-                    <span className="grid size-10 place-items-center rounded-full bg-accent-soft font-semibold text-accent">
-                      {c.owner_name.charAt(0).toUpperCase()}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="flex items-center font-semibold">
-                        <OwnerName name={`${c.owner_name}’s notes`} admin={c.owner_is_admin} />
-                      </p>
-                      <p className="text-xs text-ink-3">
-                        {plural(c.files.length, 'file')} · started {formatDate(c.created_at)} · updated {timeAgo(c.updated_at)}
-                      </p>
+              {cards.map(({ key, collection: c, drive: driveList }) => {
+                const name = c?.owner_name ?? LIBRARY_OWNER.name
+                const admin = c ? c.owner_is_admin : LIBRARY_OWNER.admin
+                const count = (c?.files.length ?? 0) + driveList.length
+                return (
+                  <article
+                    key={key}
+                    id={c && !driveList.length ? `c-${c.id}` : 'owner-notes'}
+                    className="scroll-mt-24 rounded-2xl border border-line bg-surface p-4 shadow-card sm:p-5"
+                  >
+                    {c && driveList.length > 0 && <span id={`c-${c.id}`} className="block scroll-mt-24" />}
+                    <header className="mb-4 flex flex-wrap items-center gap-3">
+                      <span className="grid size-10 place-items-center rounded-full bg-accent-soft font-semibold text-accent">
+                        {name.charAt(0).toUpperCase()}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="flex items-center font-semibold">
+                          <OwnerName name={`${name}’s notes`} admin={admin} />
+                        </p>
+                        <p className="text-xs text-ink-3">
+                          {plural(count, 'file')}
+                          {c && ` · started ${formatDate(c.created_at)} · updated ${timeAgo(c.updated_at)}`}
+                        </p>
+                      </div>
+                    </header>
+                    {c?.description && <p className="mb-4 text-sm whitespace-pre-line text-ink-2">{c.description}</p>}
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+                      {c?.files.map((f) => <UploadFileCard key={f.id} file={f} />)}
+                      {driveList.map((f) => (
+                        <DriveFileCard key={f.id} file={f} />
+                      ))}
                     </div>
-                  </header>
-                  {c.description && <p className="mb-4 text-sm whitespace-pre-line text-ink-2">{c.description}</p>}
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-                    {c.files.map((f) => (
-                      <UploadFileCard key={f.id} file={f} />
-                    ))}
-                  </div>
-                </article>
-              ))}
+                  </article>
+                )
+              })}
             </div>
           )}
         </section>

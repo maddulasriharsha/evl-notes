@@ -5,6 +5,7 @@ import { ArrowRight, CloudUpload } from 'lucide-react'
 import { ButtonLink, Container, Crumbs, SectionHeading } from '@/components/ui'
 import { allSubjects, sectionHref, sectionLabel, sectionsOf, sectionTitle, semesterLabel, findSubject } from '@/lib/curriculum'
 import { countsForSubject } from '@/lib/data'
+import { driveCount } from '@/lib/library'
 import { plural } from '@/lib/format'
 
 export const revalidate = 60
@@ -55,7 +56,7 @@ export default async function SubjectPage({ params }: PageProps<'/s/[code]'>) {
         <SectionHeading title={subject.units.length ? 'Chapters' : 'Sections'} hint="Open a chapter to see everyone’s notes for it." />
         <ol className="overflow-hidden rounded-2xl border border-line bg-surface shadow-card">
           {sections.map((unit) => {
-            const mine = counts[unit] ?? 0
+            const mine = (counts[unit] ?? 0) + driveCount(subject.code, unit)
             return (
               <li key={unit} className="border-b border-line last:border-0">
                 <Link href={sectionHref(subject.code, unit)} className="group flex items-center gap-4 px-5 py-4 transition hover:bg-surface-2/60">

@@ -37,3 +37,17 @@ describe('safeNext', () => {
     expect(safeNext(null)).toBe('/upload')
   })
 })
+
+describe('Google Drive notes', () => {
+  it('places every file in a real subject and section, with unique ids', async () => {
+    const { driveFiles } = await import('@/lib/library')
+    const { findSubject, sectionsOf } = await import('@/lib/curriculum')
+    expect(driveFiles.length).toBe(546)
+    expect(new Set(driveFiles.map((f) => f.id)).size).toBe(driveFiles.length)
+    for (const f of driveFiles) {
+      const found = findSubject(f.subject)
+      expect(found, f.title).toBeDefined()
+      expect(sectionsOf(found!.subject), `${f.subject} ${f.title}`).toContain(f.unit ?? 0)
+    }
+  })
+})

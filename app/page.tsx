@@ -2,9 +2,10 @@ import Link from 'next/link'
 import { ArrowRight, BookMarked, CloudUpload, Eye, ShieldCheck } from 'lucide-react'
 import { Thumb } from '@/components/thumb'
 import { Container, OwnerName, SectionHeading } from '@/components/ui'
-import { allSubjects, findSubject, regularSemesters, sectionHref, sectionLabel, semesterLabel } from '@/lib/curriculum'
+import { allSubjects, extras, findSubject, regularSemesters, sectionHref, sectionLabel, semesterLabel, subjectHref } from '@/lib/curriculum'
 import { contributors, countsBySubject, recentlyUpdated, uploadTotals } from '@/lib/data'
 import { DRIVE_LIBRARY } from '@/lib/drive-stats'
+import { driveCount } from '@/lib/library'
 import { publicFileUrl } from '@/lib/env'
 import { plural, timeAgo } from '@/lib/format'
 
@@ -23,7 +24,7 @@ export default async function Home() {
   const totalPages = uploads.pages + DRIVE_LIBRARY.pages
   const n = (x: number) => x.toLocaleString('en-IN')
   const chapters = allSubjects().reduce((n, { subject }) => n + subject.units.length, 0)
-  const total = (code: string) => counts[code] ?? 0
+  const total = (code: string) => (counts[code] ?? 0) + driveCount(code)
 
   const stats = [
     { label: 'Contributors', value: people.length },
@@ -64,7 +65,7 @@ export default async function Home() {
                 <dd className="mt-1 font-display text-2xl font-semibold text-ink tabular-nums sm:text-xl">{n(totalPages)}</dd>
               </div>
               <dd className="col-span-2 text-xs text-ink-3 sm:col-span-1">
-                {n(uploads.files)} uploaded here + {n(DRIVE_LIBRARY.files)} in the Google Drive library
+                {n(uploads.files)} uploaded + {n(DRIVE_LIBRARY.files)} from the Google Drive notes
               </dd>
             </div>
             {stats.map((s) => (
@@ -108,6 +109,16 @@ export default async function Home() {
               )
             })}
           </div>
+          {extras && (
+            <p className="mt-4 text-sm text-ink-3">
+              Also available:{' '}
+              {extras.subjects.map((x) => (
+                <Link key={x.code} href={subjectHref(x.code)} className="font-medium text-ink-2 underline decoration-line-strong underline-offset-4 hover:text-ink">
+                  {x.name}
+                </Link>
+              ))}
+            </p>
+          )}
         </section>
 
         {recent.length > 0 && (

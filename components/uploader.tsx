@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ArrowDown, ArrowUp, Camera, Check, CloudUpload, FileStack, FileText, Loader2, TriangleAlert, X } from 'lucide-react'
 import { refreshChapter } from '@/app/upload/actions'
-import { regularSemesters, sectionHref, sectionLabel, sectionsOf, sectionTitle, findSubject, type Semester } from '@/lib/curriculum'
+import { regularSemesters, extras, sectionHref, sectionLabel, sectionsOf, sectionTitle, findSubject, type Semester } from '@/lib/curriculum'
 import { formatBytes, plural } from '@/lib/format'
 import { CameraCapture, cameraSupported } from '@/components/camera-capture'
 import { photosToPdf } from '@/lib/photos-to-pdf'
@@ -20,7 +20,7 @@ interface Item {
   error?: string
 }
 
-const allSemesters: Semester[] = regularSemesters
+const allSemesters: Semester[] = extras ? [...regularSemesters, extras] : regularSemesters
 
 const stageLabel: Record<Stage, string> = {
   queued: 'Ready',
@@ -192,7 +192,7 @@ export function Uploader({
               }}
               className={`rounded-lg px-3 py-1.5 text-sm font-medium ${s.sem === sem ? 'bg-ink text-bg' : 'bg-surface-2 text-ink-2 hover:text-ink'}`}
             >
-              {`Sem ${s.sem}`}
+              {s.sem === 0 ? 'Extras' : `Sem ${s.sem}`}
             </button>
           ))}
         </div>
