@@ -10,6 +10,7 @@ export function SiteFooter() {
           <Link href="/contributors" className="hover:text-ink">Contributors</Link>
           <Link href="/search" className="hover:text-ink">Search</Link>
           <Link href="/upload" className="hover:text-ink">Upload</Link>
+          <Link href="/privacy" className="hover:text-ink">Privacy</Link>
         </div>
         <p className="text-xs tracking-wide">Created by: Sriharsha Reddy (EVL)</p>
       </div>
