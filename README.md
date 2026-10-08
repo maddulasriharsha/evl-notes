@@ -47,8 +47,16 @@ can never overwrite another.
 5. **Authentication → Providers → Google**: turn it on. Create an OAuth client in Google Cloud Console
    (APIs & Services → Credentials → OAuth client ID → Web application) with the redirect URI that Supabase
    shows you, then paste the client ID and secret back into Supabase.
-6. **Authentication → Email Templates → Magic Link**: add the line `Your code: {{ .Token }}` so people can
-   type the code on their phone instead of opening the link.
+6. **Authentication → Email Templates → Magic Link** (do the same for **Confirm signup**): replace the
+   message body with
+
+   ```html
+   <h2>Sign in to EVL Notes</h2>
+   <p><a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next=/upload">Sign in</a></p>
+   <p>Or type this code on the sign-in page: <strong>{{ .Token }}</strong></p>
+   ```
+
+   This link works even when opened from the Gmail app or another phone.
 7. Supabase's built-in email only sends a few sign-in emails per hour. Before sharing the site widely, add a
    free SMTP sender (for example Resend or Brevo) under **Authentication → SMTP Settings**. Google sign-in
    is not affected by this limit.
