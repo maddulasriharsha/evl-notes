@@ -1,0 +1,364 @@
+'use client'
+
+import { useEffect, useMemo, useRef, useState } from 'react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { ArrowDown, ArrowUp, Camera, Check, CloudUpload, FileText, Loader2, TriangleAlert, X } from 'lucide-react'
+import { refreshChapter } from '@/app/upload/actions'
+import { regularSemesters, extras, sectionHref, sectionLabel, sectionsOf, sectionTitle, findSubject, type Semester } from '@/lib/curriculum'
+import { formatBytes, plural } from '@/lib/format'
+import { checkFile, ensureCollection, MAX_FILES, nextPosition, uploadOne, type Stage } from '@/lib/upload'
+
+interface Item {
+  key: string
+  file: File
+  name: string
+  url: string | null
+  stage: Stage
+  error?: string
+}
+
+const allSemesters: Semester[] = extras ? [...regularSemesters, extras] : regularSemesters
+
+const stageLabel: Record<Stage, string> = {
+  queued: 'Ready',
+  preparing: 'Preparing preview…',
+  uploading: 'Uploading…',
+  saving: 'Saving…',
+  done: 'Uploaded',
+  error: 'Failed',
+}
+
+export function Uploader({
+  userId,
+  initialSubject,
+  initialUnit,
+  existing,
+}: {
+  userId: string
+  initialSubject?: string
+  initialUnit?: number
+  existing: { id: string; subject: string; unit: number; files: number }[]
+}) {
+  const initial = initialSubject ? findSubject(initialSubject) : undefined
+  const [sem, setSem] = useState<number>(initial?.semester.sem ?? 1)
+  const [subject, setSubject] = useState<string | undefined>(initial?.subject.code)
+  const [unit, setUnit] = useState<number | undefined>(
+    initial && initialUnit !== undefined && sectionsOf(initial.subject).includes(initialUnit) ? initialUnit : undefined,
+  )
+  const [items, setItems] = useState<Item[]>([])
+  const [description, setDescription] = useState('')
+  const [running, setRunning] = useState(false)
+  const [finished, setFinished] = useState(false)
+  const [rejected, setRejected] = useState<string[]>([])
+  const [dragging, setDragging] = useState(false)
+  const router = useRouter()
+  const picker = useRef<HTMLInputElement>(null)
+  const camera = useRef<HTMLInputElement>(null)
+
+  const semester = allSemesters.find((s) => s.sem === sem) ?? allSemesters[0]!
+  const chosen = subject ? findSubject(subject) : undefined
+  const shelf = existing.find((c) => c.subject === subject && c.unit === unit)
+
+  useEffect(() => () => items.forEach((i) => i.url && URL.revokeObjectURL(i.url)), []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  function add(list: FileList | null) {
+    if (!list) return
+    const bad: string[] = []
+    const next: Item[] = []
+    for (const file of Array.from(list)) {
+      const problem = checkFile(file)
+      if (problem) {
+        bad.push(`${file.name}: ${problem}`)
+        continue
+      }
+      next.push({
+        key: crypto.randomUUID(),
+        file,
+        name: file.name.replace(/\.[^.]+$/, ''),
+        url: file.type.startsWith('image/') ? URL.createObjectURL(file) : null,
+        stage: 'queued',
+      })
+    }
+    setFinished(false)
+    setRejected(bad)
+    setItems((cur) => [...cur.filter((i) => i.stage !== 'done'), ...next].slice(0, MAX_FILES))
+  }
+
+  function move(key: string, dir: -1 | 1) {
+    setItems((cur) => {
+      const i = cur.findIndex((x) => x.key === key)
+      const j = i + dir
+      if (i < 0 || j < 0 || j >= cur.length) return cur
+      const copy = [...cur]
+      ;[copy[i], copy[j]] = [copy[j]!, copy[i]!]
+      return copy
+    })
+  }
+
+  function patch(key: string, p: Partial<Item>) {
+    setItems((cur) => cur.map((x) => (x.key === key ? { ...x, ...p } : x)))
+  }
+
+  const pending = useMemo(() => items.filter((i) => i.stage === 'queued' || i.stage === 'error'), [items])
+  const totalBytes = pending.reduce((n, i) => n + i.file.size, 0)
+  const ready = subject !== undefined && unit !== undefined && pending.length > 0 && !running
+
+  async function start() {
+    if (!ready || subject === undefined || unit === undefined) return
+    setRunning(true)
+    try {
+      const collectionId = await ensureCollection(userId, subject, unit, description)
+      const base = await nextPosition(collectionId)
+      const queue = [...pending]
+      let cursor = 0
+      // Three at a time keeps phones responsive on college Wi-Fi.
+      await Promise.all(
+        Array.from({ length: Math.min(3, queue.length) }, async () => {
+          while (cursor < queue.length) {
+            const item = queue[cursor]!
+            const position = base + queue.indexOf(item)
+            cursor++
+            try {
+              await uploadOne(item.file, { userId, collectionId, position, name: item.name }, (stage) => patch(item.key, { stage }))
+            } catch (e) {
+              patch(item.key, { stage: 'error', error: e instanceof Error ? e.message : 'Upload failed' })
+            }
+          }
+        }),
+      )
+      await refreshChapter(subject, unit)
+      setFinished(true)
+      router.refresh()
+    } catch (e) {
+      setRejected([e instanceof Error ? e.message : 'Something went wrong'])
+    } finally {
+      setRunning(false)
+    }
+  }
+
+  const doneCount = items.filter((i) => i.stage === 'done').length
+  const failed = items.filter((i) => i.stage === 'error').length
+
+  return (
+    <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_1.15fr]">
+      {/* Where */}
+      <section className="rounded-3xl border border-line bg-surface p-5 shadow-card sm:p-6">
+        <Step n={1} title="Where do these notes go?" />
+        <div className="mt-4 flex flex-wrap gap-1.5">
+          {allSemesters.map((s) => (
+            <button
+              key={s.sem}
+              type="button"
+              disabled={running}
+              onClick={() => {
+                setSem(s.sem)
+                setSubject(undefined)
+                setUnit(undefined)
+              }}
+              className={`rounded-lg px-3 py-1.5 text-sm font-medium ${s.sem === sem ? 'bg-ink text-bg' : 'bg-surface-2 text-ink-2 hover:text-ink'}`}
+            >
+              {s.sem === 0 ? 'Extras' : `Sem ${s.sem}`}
+            </button>
+          ))}
+        </div>
+        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          {semester.subjects.map((s) => (
+            <button
+              key={s.code}
+              type="button"
+              disabled={running}
+              onClick={() => {
+                setSubject(s.code)
+                setUnit(s.units.length ? undefined : 0)
+              }}
+              className={`rounded-xl border px-3 py-2.5 text-left transition ${subject === s.code ? 'border-accent bg-accent-soft' : 'border-line hover:border-line-strong'}`}
+            >
+              <span className="block text-xs font-semibold tracking-widest text-ink-3 uppercase">{s.short}</span>
+              <span className="block truncate text-sm font-medium">{s.name}</span>
+            </button>
+          ))}
+        </div>
+        {chosen && (
+          <div className="mt-5">
+            <p className="mb-2 text-sm font-medium">Chapter</p>
+            <div className="space-y-1.5">
+              {sectionsOf(chosen.subject).map((u) => {
+                const has = existing.find((c) => c.subject === chosen.subject.code && c.unit === u)
+                return (
+                  <button
+                    key={u}
+                    type="button"
+                    disabled={running}
+                    onClick={() => setUnit(u)}
+                    className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition ${unit === u ? 'border-accent bg-accent-soft' : 'border-line hover:border-line-strong'}`}
+                  >
+                    <span className="w-16 shrink-0 text-xs font-semibold tracking-wide text-ink-3 uppercase">{sectionLabel(u)}</span>
+                    <span className="min-w-0 flex-1 truncate text-sm">{sectionTitle(chosen.subject, u)}</span>
+                    {has && has.files > 0 && <span className="shrink-0 rounded-md bg-ok-soft px-1.5 py-0.5 text-[11px] font-medium text-ok">yours: {has.files}</span>}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* Files */}
+      <section className="rounded-3xl border border-line bg-surface p-5 shadow-card sm:p-6">
+        <Step n={2} title="Add photos or PDFs" />
+        <div
+          onDragOver={(e) => {
+            e.preventDefault()
+            setDragging(true)
+          }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={(e) => {
+            e.preventDefault()
+            setDragging(false)
+            add(e.dataTransfer.files)
+          }}
+          className={`mt-4 rounded-2xl border-2 border-dashed p-6 text-center transition ${dragging ? 'border-accent bg-accent-soft' : 'border-line-strong bg-bg'}`}
+        >
+          <CloudUpload className="mx-auto size-8 text-ink-3" strokeWidth={1.5} />
+          <p className="mt-2 font-medium">Drop files here</p>
+          <p className="text-sm text-ink-3">High-quality originals are kept exactly as uploaded. Up to 50 MB each.</p>
+          <div className="mt-4 flex flex-wrap justify-center gap-2">
+            <button type="button" onClick={() => picker.current?.click()} disabled={running} className="inline-flex h-10 items-center gap-2 rounded-xl bg-ink px-4 text-sm font-medium text-bg hover:opacity-90">
+              <FileText className="size-4" /> Choose files
+            </button>
+            <button type="button" onClick={() => camera.current?.click()} disabled={running} className="inline-flex h-10 items-center gap-2 rounded-xl border border-line bg-surface px-4 text-sm font-medium hover:border-line-strong">
+              <Camera className="size-4" /> Take photo
+            </button>
+          </div>
+          <input ref={picker} type="file" multiple accept="application/pdf,image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={(e) => (add(e.target.files), (e.target.value = ''))} />
+          <input ref={camera} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => (add(e.target.files), (e.target.value = ''))} />
+        </div>
+
+        {rejected.length > 0 && (
+          <ul className="mt-3 space-y-1 rounded-xl bg-danger-soft px-3 py-2 text-sm text-danger">
+            {rejected.map((r) => (
+              <li key={r}>{r}</li>
+            ))}
+          </ul>
+        )}
+
+        {items.length > 0 && (
+          <ul className="mt-4 space-y-2">
+            {items.map((item, i) => (
+              <li key={item.key} className="flex items-center gap-3 rounded-xl border border-line bg-bg p-2">
+                <div className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-lg bg-surface-2">
+                  {item.url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={item.url} alt="" className="size-full object-cover" />
+                  ) : (
+                    <FileText className="size-6 text-ink-3" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <input
+                    value={item.name}
+                    disabled={running || item.stage === 'done'}
+                    onChange={(e) => patch(item.key, { name: e.target.value })}
+                    aria-label="File title"
+                    className="w-full truncate rounded-md bg-transparent px-1 py-0.5 text-sm font-medium outline-none focus:bg-surface"
+                  />
+                  <p className={`px-1 text-xs ${item.stage === 'error' ? 'text-danger' : item.stage === 'done' ? 'text-ok' : 'text-ink-3'}`}>
+                    {item.stage === 'error' ? item.error : stageLabel[item.stage]} · {formatBytes(item.file.size)}
+                  </p>
+                </div>
+                {item.stage === 'done' ? (
+                  <Check className="size-5 shrink-0 text-ok" />
+                ) : ['preparing', 'uploading', 'saving'].includes(item.stage) ? (
+                  <Loader2 className="size-5 shrink-0 animate-spin text-ink-3" />
+                ) : (
+                  <div className="flex shrink-0 items-center">
+                    <IconBtn label="Move up" disabled={running || i === 0} onClick={() => move(item.key, -1)}>
+                      <ArrowUp className="size-4" />
+                    </IconBtn>
+                    <IconBtn label="Move down" disabled={running || i === items.length - 1} onClick={() => move(item.key, 1)}>
+                      <ArrowDown className="size-4" />
+                    </IconBtn>
+                    <IconBtn label="Remove" disabled={running} onClick={() => setItems((cur) => cur.filter((x) => x.key !== item.key))}>
+                      <X className="size-4" />
+                    </IconBtn>
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {!shelf && subject && unit !== undefined && (
+          <label className="mt-5 block">
+            <span className="text-sm font-medium">Note for classmates <span className="font-normal text-ink-3">(optional)</span></span>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value.slice(0, 500))}
+              rows={2}
+              placeholder="e.g. Covers 12–19 Sept lectures, section B"
+              className="mt-1.5 w-full rounded-xl border border-line bg-bg px-3 py-2 text-sm outline-none focus:border-accent"
+            />
+          </label>
+        )}
+
+        <div className="mt-5 border-t border-line pt-5">
+          {chosen && unit !== undefined && (
+            <p className="mb-3 text-sm text-ink-2">
+              {shelf
+                ? `Adding to your existing shelf (${plural(shelf.files, 'file')}) in `
+                : 'Starting your shelf in '}
+              <strong>
+                {chosen.subject.short} · {sectionLabel(unit)}
+              </strong>
+              .
+            </p>
+          )}
+          <button
+            type="button"
+            onClick={start}
+            disabled={!ready}
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-accent font-medium text-accent-ink shadow-card transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {running ? <Loader2 className="size-4 animate-spin" /> : <CloudUpload className="size-4" />}
+            {running
+              ? `Uploading ${doneCount}/${items.length}…`
+              : pending.length
+                ? `Upload ${plural(pending.length, 'file')} (${formatBytes(totalBytes)})`
+                : subject === undefined || unit === undefined
+                  ? 'Choose a chapter first'
+                  : 'Add files to upload'}
+          </button>
+          {finished && subject && unit !== undefined && (
+            <div className={`mt-4 flex flex-wrap items-center gap-3 rounded-xl px-4 py-3 text-sm ${failed ? 'bg-gold-soft text-gold' : 'bg-ok-soft text-ok'}`}>
+              {failed ? <TriangleAlert className="size-4" /> : <Check className="size-4" />}
+              <span className="flex-1">
+                {failed ? `${plural(doneCount, 'file')} uploaded, ${failed} failed. Press upload again to retry.` : `All ${plural(doneCount, 'file')} uploaded.`}
+              </span>
+              <Link href={sectionHref(subject, unit)} className="font-semibold underline underline-offset-4">
+                View chapter
+              </Link>
+            </div>
+          )}
+        </div>
+      </section>
+    </div>
+  )
+}
+
+function Step({ n, title }: { n: number; title: string }) {
+  return (
+    <div className="flex items-center gap-3">
+      <span className="grid size-7 place-items-center rounded-full bg-ink text-xs font-semibold text-bg">{n}</span>
+      <h2 className="font-display text-lg font-semibold tracking-tight">{title}</h2>
+    </div>
+  )
+}
+
+function IconBtn({ label, onClick, disabled, children }: { label: string; onClick: () => void; disabled?: boolean; children: React.ReactNode }) {
+  return (
+    <button type="button" aria-label={label} onClick={onClick} disabled={disabled} className="grid size-8 place-items-center rounded-lg text-ink-3 hover:bg-surface-2 hover:text-ink disabled:opacity-30">
+      {children}
+    </button>
+  )
+}

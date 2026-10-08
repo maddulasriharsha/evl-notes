@@ -1,0 +1,41 @@
+{
+  "name": "evl-notes",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Class notes for B.Tech EVL (R25), VNR VJIET",
+  "packageManager": "pnpm@12.10.1",
+  "engines": {
+    "node": ">=20.9.0"
+  },
+  "scripts": {
+    "predev": "node scripts/copy-pdf-worker.mjs",
+    "dev": "next dev",
+    "prebuild": "node scripts/copy-pdf-worker.mjs",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "vitest run",
+    "check": "pnpm typecheck && pnpm test"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.7.0",
+    "@supabase/supabase-js": "^2.58.0",
+    "lucide-react": "^0.544.0",
+    "next": "^16.4.0",
+    "pdfjs-dist": "^6.4.299",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "server-only": "^0.0.1"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.3.10",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^26.6.4",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "postcss": "^8.5.29",
+    "tailwindcss": "^4.3.3",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.3"
+  }
+}
