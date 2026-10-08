@@ -7,7 +7,7 @@ import { supabaseBrowser } from '@/lib/supabase/browser'
 
 export const ACCEPTED = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/gif'] as const
 export const MAX_BYTES = 50 * 1024 * 1024
-export const MAX_FILES = 40
+export const MAX_FILES = 60
 
 export function checkFile(file: File): string | null {
   if (!(ACCEPTED as readonly string[]).includes(file.type)) return 'Only PDF, JPG, PNG, WebP or GIF files'

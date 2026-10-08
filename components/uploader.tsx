@@ -7,6 +7,7 @@ import { ArrowDown, ArrowUp, Camera, Check, CloudUpload, FileStack, FileText, Lo
 import { refreshChapter } from '@/app/upload/actions'
 import { regularSemesters, sectionHref, sectionLabel, sectionsOf, sectionTitle, findSubject, type Semester } from '@/lib/curriculum'
 import { formatBytes, plural } from '@/lib/format'
+import { CameraCapture, cameraSupported } from '@/components/camera-capture'
 import { photosToPdf } from '@/lib/photos-to-pdf'
 import { checkFile, ensureCollection, MAX_FILES, nextPosition, uploadOne, type Stage } from '@/lib/upload'
 
@@ -59,6 +60,7 @@ export function Uploader({
   const router = useRouter()
   const picker = useRef<HTMLInputElement>(null)
   const camera = useRef<HTMLInputElement>(null)
+  const [cameraOpen, setCameraOpen] = useState(false)
 
   const semester = allSemesters.find((s) => s.sem === sem) ?? allSemesters[0]!
   const chosen = subject ? findSubject(subject) : undefined
@@ -66,7 +68,7 @@ export function Uploader({
 
   useEffect(() => () => items.forEach((i) => i.url && URL.revokeObjectURL(i.url)), []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  function add(list: FileList | null) {
+  function add(list: FileList | File[] | null) {
     if (!list) return
     const bad: string[] = []
     const next: Item[] = []
@@ -259,12 +261,18 @@ export function Uploader({
             <button type="button" onClick={() => picker.current?.click()} disabled={running} className="inline-flex h-10 items-center gap-2 rounded-xl bg-ink px-4 text-sm font-medium text-bg hover:opacity-90">
               <FileText className="size-4" /> Choose files
             </button>
-            <button type="button" onClick={() => camera.current?.click()} disabled={running} className="inline-flex h-10 items-center gap-2 rounded-xl border border-line bg-surface px-4 text-sm font-medium hover:border-line-strong">
-              <Camera className="size-4" /> Take photo
+            <button
+              type="button"
+              onClick={() => (cameraSupported() ? setCameraOpen(true) : camera.current?.click())}
+              disabled={running}
+              className="inline-flex h-10 items-center gap-2 rounded-xl border border-line bg-surface px-4 text-sm font-medium hover:border-line-strong"
+            >
+              <Camera className="size-4" /> Take photos
             </button>
           </div>
           <input ref={picker} type="file" multiple accept="application/pdf,image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={(e) => (add(e.target.files), (e.target.value = ''))} />
           <input ref={camera} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => (add(e.target.files), (e.target.value = ''))} />
+          {cameraOpen && <CameraCapture onShot={(file) => add([file])} onClose={() => setCameraOpen(false)} />}
         </div>
 
         {rejected.length > 0 && (
