@@ -98,7 +98,7 @@ export default async function MePage() {
             <PasswordForm />
           </div>
           <p className="mt-5 border-t border-line pt-4 text-xs leading-relaxed text-ink-3">
-            Removing a file only hides it from the site. The original stays safely in storage and you can restore it here at any time.
+            Deleted files disappear from the site straight away and stay at the bottom of each chapter here, so you can restore them if you deleted something by mistake.
           </p>
         </aside>
       </div>

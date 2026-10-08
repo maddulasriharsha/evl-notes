@@ -6,8 +6,8 @@ import { LogoMark } from '@/components/logo'
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-line/80 bg-bg/80 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4 sm:px-6">
-        <Link href="/" className="flex items-center gap-2.5 rounded-lg pr-2" aria-label="EVL Notes home">
+      <div className="mx-auto flex h-16 max-w-6xl items-center gap-2 px-4 sm:gap-3 sm:px-6">
+        <Link href="/" className="flex min-w-0 shrink items-center gap-2.5 rounded-lg pr-1" aria-label="EVL Notes home">
           <LogoMark />
           <span className="font-display text-[1.15rem] font-semibold tracking-tight whitespace-nowrap">EVL Notes</span>
         </Link>
@@ -15,7 +15,7 @@ export function SiteHeader() {
           <Link href="/#semesters" className="rounded-lg px-3 py-2 hover:bg-surface-2 hover:text-ink">Semesters</Link>
           <Link href="/contributors" className="rounded-lg px-3 py-2 hover:bg-surface-2 hover:text-ink">Contributors</Link>
         </nav>
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
           <form action="/search" className="relative hidden md:block">
             <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-3" />
             <input

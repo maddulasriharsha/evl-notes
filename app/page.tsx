@@ -23,10 +23,9 @@ export default async function Home() {
   const total = (code: string) => counts[code] ?? 0
 
   const stats = [
+    { label: 'Contributors', value: people.length },
     { label: 'Subjects', value: allSubjects().length },
     { label: 'Chapters', value: chapters },
-    { label: 'Files uploaded', value: communityFiles },
-    { label: 'Contributors', value: people.length },
   ]
 
   return (
@@ -51,7 +50,12 @@ export default async function Home() {
               <CloudUpload className="size-4" /> Upload today&rsquo;s notes
             </Link>
           </div>
-          <dl className="rise mt-12 grid max-w-3xl grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-4">
+          <dl className="rise mt-12 grid max-w-3xl grid-cols-3 gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-[1.4fr_1fr_1fr_1fr]">
+            <div className="col-span-3 bg-accent-soft px-5 py-4 sm:col-span-1">
+              <dt className="text-xs font-medium text-accent">Total materials</dt>
+              <dd className="mt-1 font-display text-4xl font-semibold text-ink tabular-nums">{communityFiles}</dd>
+              <dd className="text-xs text-ink-3">PDFs and photos shared so far</dd>
+            </div>
             {stats.map((s) => (
               <div key={s.label} className="bg-surface px-5 py-4">
                 <dt className="text-xs text-ink-3">{s.label}</dt>

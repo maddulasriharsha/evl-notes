@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Eye, EyeOff, FileText, Loader2, Pencil } from 'lucide-react'
+import { FileText, Loader2, Pencil, RotateCcw, Trash2 } from 'lucide-react'
 import { refreshChapter } from '@/app/upload/actions'
 import { publicFileUrl } from '@/lib/env'
 import { formatBytes, formatDate } from '@/lib/format'
@@ -40,9 +40,11 @@ export function ShelfManager({
   const [note, setNote] = useState(description ?? '')
   const [editing, setEditing] = useState<string | null>(null)
   const [draft, setDraft] = useState('')
-  const sorted = [...files].sort((a, b) => a.position - b.position || a.created_at.localeCompare(b.created_at))
+  const sorted = [...files].sort((a, b) => Number(!!a.deleted_at) - Number(!!b.deleted_at) || a.position - b.position || a.created_at.localeCompare(b.created_at))
+  const liveIds = files.filter((f) => !f.deleted_at).map((f) => f.id)
 
-  async function run(key: string, op: () => PromiseLike<{ error: { message: string } | null }>) {
+  async function run(key: string, op: () => PromiseLike<{ error: { message: string } | null }>, confirmText?: string) {
+    if (confirmText && !confirm(confirmText)) return
     setBusy(key)
     setError(null)
     const { error } = await op()
@@ -86,7 +88,7 @@ export function ShelfManager({
                   <a href={`/view/u/${f.id}`} className="block truncate text-sm font-medium hover:text-accent">{f.name}</a>
                 )}
                 <p className="text-xs text-ink-3">
-                  {removed ? 'Hidden from site' : `${formatBytes(f.size_bytes)} · ${formatDate(f.created_at)}`}
+                  {removed ? 'Deleted · not shown on the site' : `${formatBytes(f.size_bytes)} · ${formatDate(f.created_at)}`}
                 </p>
               </div>
               {busy === f.id ? (
@@ -98,16 +100,29 @@ export function ShelfManager({
                       <Pencil className="size-4" />
                     </button>
                   )}
-                  <button
-                    type="button"
-                    onClick={() =>
-                      run(f.id, () => db().from('files').update({ deleted_at: removed ? null : new Date().toISOString() }).eq('id', f.id))
-                    }
-                    className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2 text-xs font-medium text-ink-2 hover:bg-surface-2"
-                  >
-                    {removed ? <Eye className="size-3.5" /> : <EyeOff className="size-3.5" />}
-                    {removed ? 'Restore' : 'Hide'}
-                  </button>
+                  {removed ? (
+                    <button
+                      type="button"
+                      onClick={() => run(f.id, () => db().from('files').update({ deleted_at: null }).eq('id', f.id))}
+                      className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2 text-xs font-medium text-ink-2 hover:bg-surface-2"
+                    >
+                      <RotateCcw className="size-3.5" /> Restore
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        run(
+                          f.id,
+                          () => db().from('files').update({ deleted_at: new Date().toISOString() }).eq('id', f.id),
+                          `Delete “${f.name}”? It will be removed from the site. You can restore it here if you change your mind.`,
+                        )
+                      }
+                      className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2 text-xs font-medium text-danger hover:bg-danger-soft"
+                    >
+                      <Trash2 className="size-3.5" /> Delete
+                    </button>
+                  )}
                 </div>
               )}
             </li>
@@ -131,6 +146,22 @@ export function ShelfManager({
           {busy === 'note' ? <Loader2 className="size-4 animate-spin" /> : 'Save'}
         </button>
       </form>
+      {liveIds.length > 1 && (
+        <button
+          type="button"
+          disabled={busy !== null}
+          onClick={() =>
+            run(
+              'all',
+              () => db().from('files').update({ deleted_at: new Date().toISOString() }).in('id', liveIds),
+              `Delete all ${liveIds.length} files in this chapter? You can restore them here later.`,
+            )
+          }
+          className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-danger hover:underline disabled:opacity-50"
+        >
+          <Trash2 className="size-3.5" /> Delete all files in this chapter
+        </button>
+      )}
       {error && <p className="mt-2 text-sm text-danger">{error}</p>}
     </div>
   )

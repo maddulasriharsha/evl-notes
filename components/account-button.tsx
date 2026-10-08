@@ -67,9 +67,9 @@ export function AccountButton() {
     return (
       <Link
         href="/login"
-        className="inline-flex h-10 items-center gap-2 rounded-xl border border-line bg-surface px-3 text-sm font-medium whitespace-nowrap hover:border-line-strong"
+        className="inline-flex h-10 items-center gap-2 rounded-xl border border-line bg-surface px-2.5 text-sm font-medium whitespace-nowrap hover:border-line-strong sm:px-3"
       >
-        <LogIn className="size-4" />
+        <LogIn className="hidden size-4 sm:block" />
         <span>Sign in</span>
       </Link>
     )
