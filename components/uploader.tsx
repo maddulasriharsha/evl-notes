@@ -3,10 +3,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowDown, ArrowUp, Camera, Check, CloudUpload, FileText, Loader2, TriangleAlert, X } from 'lucide-react'
+import { ArrowDown, ArrowUp, Camera, Check, CloudUpload, FileStack, FileText, Loader2, TriangleAlert, X } from 'lucide-react'
 import { refreshChapter } from '@/app/upload/actions'
 import { regularSemesters, extras, sectionHref, sectionLabel, sectionsOf, sectionTitle, findSubject, type Semester } from '@/lib/curriculum'
 import { formatBytes, plural } from '@/lib/format'
+import { photosToPdf } from '@/lib/photos-to-pdf'
 import { checkFile, ensureCollection, MAX_FILES, nextPosition, uploadOne, type Stage } from '@/lib/upload'
 
 interface Item {
@@ -48,6 +49,9 @@ export function Uploader({
   )
   const [items, setItems] = useState<Item[]>([])
   const [description, setDescription] = useState('')
+  const [combine, setCombine] = useState(true)
+  const [pdfName, setPdfName] = useState('')
+  const [converting, setConverting] = useState<string | null>(null)
   const [running, setRunning] = useState(false)
   const [finished, setFinished] = useState(false)
   const [rejected, setRejected] = useState<string[]>([])
@@ -101,7 +105,11 @@ export function Uploader({
   }
 
   const pending = useMemo(() => items.filter((i) => i.stage === 'queued' || i.stage === 'error'), [items])
+  const pendingPhotos = pending.filter((i) => i.file.type.startsWith('image/'))
+  const merging = combine && pendingPhotos.length > 0
   const totalBytes = pending.reduce((n, i) => n + i.file.size, 0)
+  const today = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+  const defaultPdfName = `${chosen?.subject.short ?? 'Notes'}${unit !== undefined ? ` ${sectionLabel(unit)}` : ''} notes ${today}`
   const ready = subject !== undefined && unit !== undefined && pending.length > 0 && !running
 
   async function start() {
@@ -110,14 +118,37 @@ export function Uploader({
     try {
       const collectionId = await ensureCollection(userId, subject, unit, description)
       const base = await nextPosition(collectionId)
-      const queue = [...pending]
+      const photos = merging ? pendingPhotos : []
+      const queue = pending.filter((i) => !photos.includes(i))
+      let offset = 0
+      if (photos.length) {
+        // All selected photos become one PDF, in the order shown in the list.
+        const name = pdfName.trim() || defaultPdfName
+        for (const p of photos) patch(p.key, { stage: 'preparing', error: undefined })
+        try {
+          setConverting(`Making PDF: page 0 of ${photos.length}`)
+          const pdf = await photosToPdf(
+            photos.map((p) => p.file),
+            name,
+            (done) => setConverting(`Making PDF: page ${done} of ${photos.length}`),
+          )
+          setConverting(null)
+          if (pdf.size > 50 * 1024 * 1024) throw new Error('The PDF would be over 50 MB. Upload fewer photos at a time.')
+          await uploadOne(pdf, { userId, collectionId, position: base, name }, (stage) => photos.forEach((p) => patch(p.key, { stage })))
+        } catch (e) {
+          setConverting(null)
+          const error = e instanceof Error ? e.message : 'Could not make the PDF'
+          for (const p of photos) patch(p.key, { stage: 'error', error })
+        }
+        offset = 1
+      }
       let cursor = 0
       // Three at a time keeps phones responsive on college Wi-Fi.
       await Promise.all(
         Array.from({ length: Math.min(3, queue.length) }, async () => {
           while (cursor < queue.length) {
             const item = queue[cursor]!
-            const position = base + queue.indexOf(item)
+            const position = base + offset + queue.indexOf(item)
             cursor++
             try {
               await uploadOne(item.file, { userId, collectionId, position, name: item.name }, (stage) => patch(item.key, { stage }))
@@ -138,6 +169,7 @@ export function Uploader({
   }
 
   const doneCount = items.filter((i) => i.stage === 'done').length
+  const uploadCount = pending.length - (merging ? pendingPhotos.length - 1 : 0)
   const failed = items.filter((i) => i.stage === 'error').length
 
   return (
@@ -289,6 +321,33 @@ export function Uploader({
           </ul>
         )}
 
+        {pendingPhotos.length > 0 && (
+          <div className={`mt-4 rounded-2xl border p-4 ${combine ? 'border-accent bg-accent-soft' : 'border-line bg-bg'}`}>
+            <label className="flex cursor-pointer items-start gap-3">
+              <input type="checkbox" checked={combine} disabled={running} onChange={(e) => setCombine(e.target.checked)} className="mt-1 size-4 accent-[var(--accent)]" />
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center gap-2 text-sm font-semibold">
+                  <FileStack className="size-4" /> Combine {plural(pendingPhotos.length, 'photo')} into one PDF
+                </span>
+                <span className="mt-0.5 block text-xs text-ink-3">
+                  One page per photo, in the order above. Usually takes far less space than the original photos, and is easier to read and download.
+                  Untick to upload the original photos separately.
+                </span>
+              </span>
+            </label>
+            {combine && (
+              <input
+                value={pdfName}
+                disabled={running}
+                onChange={(e) => setPdfName(e.target.value.slice(0, 120))}
+                placeholder={defaultPdfName}
+                aria-label="PDF name"
+                className="mt-3 h-10 w-full rounded-xl border border-line bg-surface px-3 text-sm outline-none focus:border-accent"
+              />
+            )}
+          </div>
+        )}
+
         {!shelf && subject && unit !== undefined && (
           <label className="mt-5 block">
             <span className="text-sm font-medium">Note for classmates <span className="font-normal text-ink-3">(optional)</span></span>
@@ -322,9 +381,11 @@ export function Uploader({
           >
             {running ? <Loader2 className="size-4 animate-spin" /> : <CloudUpload className="size-4" />}
             {running
-              ? `Uploading ${doneCount}/${items.length}…`
+              ? (converting ?? 'Uploading…')
               : pending.length
-                ? `Upload ${plural(pending.length, 'file')} (${formatBytes(totalBytes)})`
+                ? merging
+                  ? `Upload ${plural(uploadCount, 'file')}${pendingPhotos.length ? ` (photos as 1 PDF)` : ''}`
+                  : `Upload ${plural(pending.length, 'file')} (${formatBytes(totalBytes)})`
                 : subject === undefined || unit === undefined
                   ? 'Choose a chapter first'
                   : 'Add files to upload'}
