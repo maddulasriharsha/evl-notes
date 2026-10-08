@@ -29,11 +29,17 @@ export function supabasePublic() {
   })
 }
 
-export async function currentUser() {
+/**
+ * The signed-in person, from their verified session token. getClaims() checks the token's
+ * signature locally (no round trip to Supabase), which keeps signed-in pages fast.
+ */
+export async function currentUser(): Promise<{ id: string; email?: string } | null> {
   if (!supabaseConfigured) return null
   const supabase = await supabaseServer()
-  const { data } = await supabase.auth.getUser()
-  return data.user ?? null
+  const { data } = await supabase.auth.getClaims()
+  const claims = data?.claims
+  if (!claims?.sub) return null
+  return { id: claims.sub, email: typeof claims.email === 'string' ? claims.email : undefined }
 }
 
 export interface Profile {
@@ -48,5 +54,5 @@ export async function currentProfile(): Promise<{ user: { id: string; email?: st
   if (!user) return null
   const supabase = await supabaseServer()
   const { data } = await supabase.from('profiles').select('id, display_name, role, banned_at').eq('id', user.id).maybeSingle()
-  return { user: { id: user.id, email: user.email }, profile: (data as Profile | null) ?? null }
+  return { user, profile: (data as Profile | null) ?? null }
 }

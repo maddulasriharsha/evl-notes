@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { preloadModule } from 'react-dom'
 import { Loader2, Minus, Plus } from 'lucide-react'
 import type { PDFDocumentProxy } from 'pdfjs-dist'
 import { openPdf } from '@/lib/pdf'
@@ -10,6 +11,8 @@ import { openPdf } from '@/lib/pdf'
  * usually force a download). Pages render only when scrolled near.
  */
 export function PdfViewer({ url, downloadHref }: { url: string; downloadHref: string }) {
+  // Start fetching the worker while the page hydrates instead of after pdf.js loads.
+  preloadModule('/pdf.worker.min.mjs', { as: 'worker' })
   const [doc, setDoc] = useState<PDFDocumentProxy | null>(null)
   const [error, setError] = useState(false)
   const [zoom, setZoom] = useState(1)
@@ -104,7 +107,7 @@ function PdfPage({ doc, index, width }: { doc: PDFDocumentProxy; index: number; 
       if (cancelled || !canvas.current) return
       const base = page.getViewport({ scale: 1 })
       setRatio(base.height / base.width)
-      const dpr = Math.min(window.devicePixelRatio || 1, 2.5)
+      const dpr = Math.min(window.devicePixelRatio || 1, 2)
       const viewport = page.getViewport({ scale: (width / base.width) * dpr })
       const c = canvas.current
       c.width = Math.round(viewport.width)

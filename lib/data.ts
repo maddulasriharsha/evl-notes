@@ -202,19 +202,22 @@ export interface FileWithContext extends NoteFile {
 
 export async function fileById(id: string): Promise<FileWithContext | null> {
   if (!supabaseConfigured || !/^[0-9a-f-]{36}$/i.test(id)) return null
-  const supabase = supabasePublic()
-  const { data: file } = await supabase.from('files').select(FILE_COLUMNS).eq('id', id).is('deleted_at', null).maybeSingle()
-  if (!file) return null
-  const { data: col } = await supabase
-    .from('collections')
-    .select(`subject_code, unit, profiles(display_name, role), files(${FILE_COLUMNS})`)
-    .eq('id', (file as unknown as FileRow).collection_id)
-    .is('files.deleted_at', null)
+  // One round trip: the file, its shelf, the owner and the shelf's other files.
+  const { data: file } = await supabasePublic()
+    .from('files')
+    .select(`${FILE_COLUMNS}, collections(subject_code, unit, profiles(display_name, role), files(${FILE_COLUMNS}))`)
+    .eq('id', id)
+    .is('deleted_at', null)
+    .is('collections.files.deleted_at', null)
     .maybeSingle()
+  if (!file) return null
+  const { collections: col, ...own } = file as unknown as FileRow & {
+    collections: { subject_code: string; unit: number; profiles: Owner; files: FileRow[] } | null
+  }
   if (!col) return null
-  const c = col as unknown as { subject_code: string; unit: number; profiles: Owner; files: FileRow[] }
+  const c = col
   return {
-    ...shapeFile(file as FileRow),
+    ...shapeFile(own),
     owner_name: c.profiles?.display_name ?? 'Unknown',
     owner_is_admin: c.profiles?.role === 'admin',
     subject_code: c.subject_code,

@@ -15,7 +15,19 @@ export function pdfjs() {
 
 export async function openPdf(source: string | ArrayBuffer): Promise<PDFDocumentProxy> {
   const { getDocument } = await pdfjs()
-  const task = typeof source === 'string' ? getDocument({ url: source }) : getDocument({ data: new Uint8Array(source) })
+  // Decoders and data pdf.js fetches only when a file needs them. Without wasmUrl, scanned PDFs
+  // that store pages as JPEG 2000 or JBIG2 images render as blank white pages.
+  const assets = {
+    wasmUrl: '/pdfjs/wasm/',
+    iccUrl: '/pdfjs/iccs/',
+    cMapUrl: '/pdfjs/cmaps/',
+    cMapPacked: true,
+    standardFontDataUrl: '/pdfjs/standard_fonts/',
+  }
+  const task =
+    typeof source === 'string'
+      ? getDocument({ url: source, ...assets })
+      : getDocument({ data: new Uint8Array(source), ...assets })
   return task.promise
 }
 

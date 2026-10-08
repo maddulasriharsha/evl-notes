@@ -12,7 +12,13 @@ const config: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   async headers() {
-    return [{ source: '/:path*', headers: securityHeaders }]
+    const week = { key: 'Cache-Control', value: 'public, max-age=604800, stale-while-revalidate=86400' }
+    return [
+      { source: '/:path*', headers: securityHeaders },
+      // pdf.js runtime files only change when pdfjs-dist is upgraded.
+      { source: '/pdf.worker.min.mjs', headers: [week] },
+      { source: '/pdfjs/:path*', headers: [week] },
+    ]
   },
 }
 
