@@ -147,7 +147,7 @@ export default async function Home() {
                   <div className="p-4 sm:p-5">
                     <p className="text-[10px] font-semibold tracking-widest text-ink-3 uppercase">DS · Unit II</p>
                     <p className="mt-1 font-display text-lg font-bold">Queues and Linked Lists</p>
-                    {['Sriharsha Reddy', 'Arjun', 'Meghana'].map((who, row) => (
+                    {['Sriharsha Reddy', 'Arjun', 'Ananya'].map((who, row) => (
                       <div key={who} className="mt-4 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
                         <p className="flex items-center gap-2 text-xs font-semibold">
                           <span className="grid size-6 place-items-center rounded-full bg-accent/20 text-[10px] text-accent">{who[0]}</span>
