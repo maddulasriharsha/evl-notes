@@ -4,8 +4,6 @@ import {
   BookOpen,
   Camera,
   CloudUpload,
-  FileStack,
-  FileText,
   FlaskConical,
   Library,
   MessageCircle,
@@ -29,18 +27,6 @@ const n = (x: number) => x.toLocaleString('en-IN')
 
 function Eyebrow({ children }: { children: React.ReactNode }) {
   return <p className="text-center text-[11px] font-semibold tracking-[0.25em] text-ink-3 uppercase">{children}</p>
-}
-
-function FloatingIcon({ icon: Icon, className, delay = '0s' }: { icon: typeof BookOpen; className: string; delay?: string }) {
-  return (
-    <span
-      className={`float absolute hidden size-12 place-items-center rounded-2xl border border-white/[0.08] bg-[#111116] text-ink-2 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.06)] md:grid ${className}`}
-      style={{ animationDelay: delay }}
-      aria-hidden="true"
-    >
-      <Icon className="size-5" strokeWidth={1.6} />
-    </span>
-  )
 }
 
 export default async function Home() {
@@ -113,67 +99,6 @@ export default async function Home() {
       </section>
 
       <div className="mx-auto max-w-5xl px-4 sm:px-6">
-        {/* ---------- App preview ---------- */}
-        <section className="relative mt-28">
-          <h2 className="text-center font-display text-3xl font-bold tracking-tight sm:text-5xl">
-            Open any chapter. <span className="text-white/40">It&rsquo;s all there.</span>
-          </h2>
-          <p className="mx-auto mt-4 max-w-xl text-center text-ink-2">
-            Everyone&rsquo;s notes for a chapter, side by side. PDFs open right in the page, even on your phone.
-          </p>
-          <div className="relative mt-12">
-            <FloatingIcon icon={Camera} className="top-6 -left-6" />
-            <FloatingIcon icon={FileText} className="top-1/3 -right-6" delay="1.5s" />
-            <FloatingIcon icon={MessageCircle} className="bottom-10 -left-4" delay="3s" />
-            <FloatingIcon icon={FileStack} className="-top-6 right-24" delay="2.2s" />
-            <div className="bezel shadow-[0_40px_120px_-30px_rgba(139,92,246,0.35)]">
-              <div className="overflow-hidden rounded-[22px] border border-white/[0.06] bg-[#09090c]">
-                <div className="flex items-center gap-2 border-b border-white/[0.06] px-4 py-3">
-                  <span className="size-2.5 rounded-full bg-[#ff5f57]" />
-                  <span className="size-2.5 rounded-full bg-[#febc2e]" />
-                  <span className="size-2.5 rounded-full bg-[#28c840]" />
-                  <span className="ml-3 truncate rounded-md bg-white/[0.04] px-3 py-1 text-[11px] text-ink-3">evl-notes.vercel.app/s/25es1it102/unit-2</span>
-                </div>
-                <div className="grid sm:grid-cols-[200px_1fr]">
-                  <aside className="hidden border-r border-white/[0.06] p-3 text-xs sm:block">
-                    <p className="px-2 pb-2 text-[10px] font-semibold tracking-widest text-ink-3 uppercase">DS · Chapters</p>
-                    {['Stacks & Searching', 'Queues & Linked Lists', 'Doubly Linked Lists', 'Trees & B-Trees', 'Hashing & Graphs', 'General'].map((t, i) => (
-                      <p key={t} className={`truncate rounded-md px-2 py-1.5 ${i === 1 ? 'bg-accent/15 text-ink' : 'text-ink-3'}`}>
-                        {i < 5 ? `Unit ${['I', 'II', 'III', 'IV', 'V'][i]} · ` : ''}
-                        {t}
-                      </p>
-                    ))}
-                  </aside>
-                  <div className="p-4 sm:p-5">
-                    <p className="text-[10px] font-semibold tracking-widest text-ink-3 uppercase">DS · Unit II</p>
-                    <p className="mt-1 font-display text-lg font-bold">Queues and Linked Lists</p>
-                    {['Sriharsha Reddy', 'Arjun', 'Ananya'].map((who, row) => (
-                      <div key={who} className="mt-4 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-                        <p className="flex items-center gap-2 text-xs font-semibold">
-                          <span className="grid size-6 place-items-center rounded-full bg-accent/20 text-[10px] text-accent">{who[0]}</span>
-                          {who}&rsquo;s notes
-                          {row === 0 && <span className="rounded bg-gold-soft px-1 py-0.5 text-[9px] text-gold">ADMIN</span>}
-                        </p>
-                        <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-5">
-                          {Array.from({ length: row === 0 ? 5 : 3 }, (_, i) => (
-                            <div
-                              key={i}
-                              className={`aspect-[4/3] rounded-lg border border-white/[0.05] ${i > 2 ? 'hidden sm:block' : ''}`}
-                              style={{
-                                background: `linear-gradient(${140 + i * 25}deg, rgba(167,139,250,${0.06 + ((i + row) % 3) * 0.05}), rgba(255,255,255,0.02))`,
-                              }}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* ---------- Numbers ---------- */}
         <section className="mt-28 grid grid-cols-2 gap-px overflow-hidden rounded-3xl border border-white/[0.07] bg-white/[0.07] sm:grid-cols-4">
           {[
