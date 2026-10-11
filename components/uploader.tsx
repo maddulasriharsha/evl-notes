@@ -6,11 +6,13 @@ import { useRouter } from 'next/navigation'
 import { ArrowDown, ArrowUp, Camera, Check, CloudUpload, FileStack, FileText, Link2, Loader2, TriangleAlert, X } from 'lucide-react'
 import { inspectDriveLink, refreshChapter } from '@/app/upload/actions'
 import { branches, extras, sectionHref, sectionLabel, sectionsOf, sectionTitle, findSubject, type Semester } from '@/lib/curriculum'
+import { combineHashes, fileHash } from '@/lib/hash'
+import { autoFileName, guessPlacement } from '@/lib/organise'
 import { formatBytes, plural } from '@/lib/format'
 import { CameraCapture, cameraSupported } from '@/components/camera-capture'
 import { DRIVE_KIND_LABEL, parseDriveLink, type DriveLinkKind } from '@/lib/drive-link'
 import { photosToPdf } from '@/lib/photos-to-pdf'
-import { addDriveLink, checkFile, ensureCollection, MAX_FILES, nextPosition, uploadOne, type Stage } from '@/lib/upload'
+import { addDriveLink, checkFile, ensureCollection, findDriveDuplicate, findDuplicates, MAX_FILES, nextPosition, uploadOne, type DuplicateOf, type Stage } from '@/lib/upload'
 
 interface Item {
   key: string
@@ -19,6 +21,13 @@ interface Item {
   url: string | null
   stage: Stage
   error?: string
+  /** SHA-256 of the file, used to spot duplicates. */
+  hash?: string
+  /** The person typed this name themselves, so automatic naming leaves it alone. */
+  edited?: boolean
+  /** Already on the site, or twice in this list. Skipped unless `keep` is set. */
+  dup?: DuplicateOf | 'list'
+  keep?: boolean
 }
 
 interface LinkItem {
@@ -67,6 +76,7 @@ export function Uploader({
   const [linkErrors, setLinkErrors] = useState<string[]>([])
   const [description, setDescription] = useState('')
   const [combine, setCombine] = useState(true)
+  const [autoName, setAutoName] = useState(true)
   const [pdfName, setPdfName] = useState('')
   const [converting, setConverting] = useState<string | null>(null)
   const [running, setRunning] = useState(false)
@@ -107,6 +117,35 @@ export function Uploader({
     setFinished(false)
     setRejected(bad)
     setItems((cur) => [...cur.filter((i) => i.stage !== 'done'), ...next].slice(0, MAX_FILES))
+    void checkDuplicates(next.slice(0, MAX_FILES))
+  }
+
+  /** Fingerprints new files, then flags those already on the site or repeated in this list. */
+  async function checkDuplicates(batch: Item[]) {
+    if (batch.length === 0) return
+    const hashes = new Map<string, string>()
+    await Promise.all(
+      batch.map(async (i) => {
+        try {
+          hashes.set(i.key, await fileHash(i.file))
+        } catch {
+          // Without a fingerprint the file is simply not checked.
+        }
+      }),
+    )
+    const onSite = await findDuplicates([...new Set(hashes.values())], userId)
+    setItems((cur) => {
+      const seen = new Set<string>()
+      return cur.map((it) => {
+        const fresh = hashes.has(it.key) && it.hash === undefined
+        const hash = it.hash ?? hashes.get(it.key)
+        if (!hash) return it
+        const repeat = seen.has(hash)
+        seen.add(hash)
+        if (!fresh) return it
+        return { ...it, hash, dup: onSite.get(hash) ?? (repeat ? ('list' as const) : undefined) }
+      })
+    })
   }
 
   function move(key: string, dir: -1 | 1) {
@@ -150,6 +189,11 @@ export function Uploader({
       }
       if (seen.has(res.id)) continue
       seen.add(res.id)
+      const dup = await findDriveDuplicate(res.id, userId)
+      if (dup) {
+        errors.push(`“${res.title ?? 'This link'}” is already on the site (${dup.subject} · ${sectionLabel(dup.unit)}, by ${dup.owner}). Skipped.`)
+        continue
+      }
       added.push({ key: crypto.randomUUID(), id: res.id, kind: res.kind, name: res.title ?? DRIVE_KIND_LABEL[res.kind], stage: 'queued' })
     }
     setLinks((cur) => [...cur.filter((l) => l.stage !== 'done'), ...added].slice(0, MAX_LINKS))
@@ -158,12 +202,53 @@ export function Uploader({
     setLinkBusy(false)
   }
 
-  const pending = useMemo(() => items.filter((i) => i.stage === 'queued' || i.stage === 'error'), [items])
+  const pending = useMemo(() => items.filter((i) => (i.stage === 'queued' || i.stage === 'error') && !(i.dup && !i.keep)), [items])
+  const duplicateCount = items.filter((i) => i.dup && !i.keep && i.stage !== 'done').length
   const pendingPhotos = pending.filter((i) => i.file.type.startsWith('image/'))
   const merging = combine && pendingPhotos.length > 0
   const totalBytes = pending.reduce((n, i) => n + i.file.size, 0)
   const today = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
-  const defaultPdfName = `${chosen?.subject.short ?? 'Notes'}${unit !== undefined ? ` ${sectionLabel(unit)}` : ''} notes ${today}`
+  const shelfCount = shelf?.files ?? 0
+  const defaultPdfName =
+    autoName && chosen && unit !== undefined
+      ? `${chosen.subject.short} · ${sectionLabel(unit)} · Notes ${shelfCount + 1}`
+      : `${chosen?.subject.short ?? 'Notes'}${unit !== undefined ? ` ${sectionLabel(unit)}` : ''} notes ${today}`
+  // Files that become their own note (everything except photos going into the combined PDF).
+  const separate = pending.filter((i) => !(merging && i.file.type.startsWith('image/')))
+  /** The name a file will get: what the person typed, else a chapter-based name, else its file name. */
+  function nameFor(item: Item) {
+    if (item.edited || !autoName || !chosen || unit === undefined) return item.name
+    const at = separate.indexOf(item)
+    if (at < 0) return item.name
+    return autoFileName({ short: chosen.subject.short, unit, n: shelfCount + (merging ? 1 : 0) + at + 1, original: item.file.name })
+  }
+
+  // Where does the first recognisable file name say these notes belong?
+  const preferred = useMemo(() => new Set((branch?.semesters ?? []).flatMap((s) => s.subjects.map((x) => x.code))), [branch])
+  const guess = useMemo(() => {
+    for (const i of items) {
+      const g = guessPlacement(i.file.name, preferred)
+      if (g) return { ...g, file: i.file.name }
+    }
+    return null
+  }, [items, preferred])
+
+  function moveTo(code: string, guessedUnit: number | null) {
+    const found = findSubject(code)
+    if (!found) return
+    const inBranch = (b: (typeof branches)[number]) => b.semesters.some((s) => s.subjects.some((x) => x.code === code))
+    const target = (branch && inBranch(branch) ? branch : branches.find(inBranch)) ?? branch
+    const semesterOf = [...(target?.semesters ?? []), ...(extras ? [extras] : [])].find((s) => s.subjects.some((x) => x.code === code))
+    if (target) setBranchId(target.id)
+    setSem(semesterOf?.sem ?? found.semester.sem)
+    setSubject(code)
+    setUnit(found.subject.units.length ? (guessedUnit ?? undefined) : 0)
+  }
+
+  // Nothing chosen yet: take the hint from the file name.
+  useEffect(() => {
+    if (subject === undefined && guess) moveTo(guess.code, guess.unit)
+  }, [guess]) // eslint-disable-line react-hooks/exhaustive-deps
   const pendingLinks = useMemo(() => links.filter((l) => l.stage === 'queued' || l.stage === 'error'), [links])
   const ready = subject !== undefined && unit !== undefined && pending.length + pendingLinks.length > 0 && !running
 
@@ -175,6 +260,7 @@ export function Uploader({
       const base = await nextPosition(collectionId)
       const photos = merging ? pendingPhotos : []
       const queue = pending.filter((i) => !photos.includes(i))
+      const names = new Map(queue.map((i) => [i.key, nameFor(i)]))
       let offset = 0
       if (photos.length) {
         // All selected photos become one PDF, in the order shown in the list.
@@ -189,7 +275,13 @@ export function Uploader({
           )
           setConverting(null)
           if (pdf.size > 50 * 1024 * 1024) throw new Error('The PDF would be over 50 MB. Upload fewer photos at a time.')
-          await uploadOne(pdf, { userId, collectionId, position: base, name }, (stage) => photos.forEach((p) => patch(p.key, { stage })))
+          const hashes = photos.map((p) => p.hash)
+          const contentHash = hashes.every(Boolean) ? await combineHashes(hashes as string[]) : undefined
+          const already = contentHash ? (await findDuplicates([contentHash], userId)).get(contentHash) : undefined
+          if (already) {
+            throw new Error(`These photos are already on the site as “${already.name}” (${already.subject} · ${sectionLabel(already.unit)}, by ${already.owner}).`)
+          }
+          await uploadOne(pdf, { userId, collectionId, position: base, name, contentHash }, (stage) => photos.forEach((p) => patch(p.key, { stage })))
         } catch (e) {
           setConverting(null)
           const error = e instanceof Error ? e.message : 'Could not make the PDF'
@@ -206,7 +298,7 @@ export function Uploader({
             const position = base + offset + queue.indexOf(item)
             cursor++
             try {
-              await uploadOne(item.file, { userId, collectionId, position, name: item.name }, (stage) => patch(item.key, { stage }))
+              await uploadOne(item.file, { userId, collectionId, position, name: names.get(item.key) ?? item.name, contentHash: item.hash }, (stage) => patch(item.key, { stage }))
             } catch (e) {
               patch(item.key, { stage: 'error', error: e instanceof Error ? e.message : 'Upload failed' })
             }
@@ -462,6 +554,41 @@ export function Uploader({
           </ul>
         )}
 
+        {guess && subject !== undefined && (guess.code !== subject || (guess.unit !== null && guess.unit !== unit)) && (
+          <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-accent bg-accent-soft px-4 py-3 text-sm">
+            <span className="min-w-0 flex-1">
+              “{guess.file}” looks like{' '}
+              <strong>
+                {findSubject(guess.code)?.subject.short}
+                {guess.unit !== null ? ` · ${sectionLabel(guess.unit)}` : ''}
+              </strong>
+              .
+            </span>
+            <button type="button" disabled={running} onClick={() => moveTo(guess.code, guess.unit)} className="font-semibold underline underline-offset-4">
+              Move there
+            </button>
+          </div>
+        )}
+
+        {items.length > 0 && chosen && unit !== undefined && (
+          <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-xl border border-line bg-bg px-4 py-3">
+            <input type="checkbox" checked={autoName} disabled={running} onChange={(e) => setAutoName(e.target.checked)} className="mt-0.5 size-4 accent-[var(--accent)]" />
+            <span className="text-sm">
+              <span className="font-medium">Name files by chapter</span>
+              <span className="block text-xs text-ink-3">
+                e.g. {autoFileName({ short: chosen.subject.short, unit, n: shelfCount + 1, original: 'IMG_2043.jpg' })}. You can still edit any name.
+              </span>
+            </span>
+          </label>
+        )}
+
+        {duplicateCount > 0 && (
+          <p className="mt-4 flex items-center gap-2 rounded-xl bg-gold-soft px-3 py-2 text-sm text-gold">
+            <TriangleAlert className="size-4 shrink-0" />
+            {plural(duplicateCount, 'duplicate file')} will be skipped, so nothing is stored twice.
+          </p>
+        )}
+
         {items.length > 0 && (
           <ul className="mt-4 space-y-2">
             {items.map((item, i) => (
@@ -476,15 +603,37 @@ export function Uploader({
                 </div>
                 <div className="min-w-0 flex-1">
                   <input
-                    value={item.name}
+                    value={nameFor(item)}
                     disabled={running || item.stage === 'done'}
-                    onChange={(e) => patch(item.key, { name: e.target.value })}
+                    onChange={(e) => patch(item.key, { name: e.target.value, edited: true })}
                     aria-label="File title"
                     className="w-full truncate rounded-md bg-transparent px-1 py-0.5 text-sm font-medium outline-none focus:bg-surface"
                   />
                   <p className={`px-1 text-xs ${item.stage === 'error' ? 'text-danger' : item.stage === 'done' ? 'text-ok' : 'text-ink-3'}`}>
                     {item.stage === 'error' ? item.error : stageLabel[item.stage]} · {formatBytes(item.file.size)}
                   </p>
+                  {item.dup && item.stage !== 'done' && (
+                    <p className="flex flex-wrap items-center gap-x-2 px-1 text-xs text-gold">
+                      <TriangleAlert className="size-3.5 shrink-0" />
+                      <span>
+                        {item.dup === 'list' ? (
+                          'Same file appears twice in this list.'
+                        ) : (
+                          <>
+                            {item.dup.mine ? 'You already uploaded this: ' : `Already on the site, by ${item.dup.owner}: `}
+                            <Link href={`/view/u/${item.dup.id}`} target="_blank" className="underline underline-offset-2">
+                              {item.dup.name}
+                            </Link>{' '}
+                            ({findSubject(item.dup.subject)?.subject.short ?? item.dup.subject} · {sectionLabel(item.dup.unit)})
+                          </>
+                        )}{' '}
+                        {item.keep ? 'Will upload anyway.' : 'Skipped.'}
+                      </span>
+                      <button type="button" disabled={running} onClick={() => patch(item.key, { keep: !item.keep })} className="font-semibold underline underline-offset-2">
+                        {item.keep ? 'Skip it' : 'Upload anyway'}
+                      </button>
+                    </p>
+                  )}
                 </div>
                 {item.stage === 'done' ? (
                   <Check className="size-5 shrink-0 text-ok" />

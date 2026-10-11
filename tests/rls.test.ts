@@ -392,6 +392,24 @@ describe('google drive links', () => {
   })
 })
 
+describe('duplicate fingerprints', () => {
+  const H = 'a'.repeat(64)
+  const F = 'eeeeeeee-0000-4000-8000-000000000001'
+  it('lets an uploader store a fingerprint and everyone look it up', async () => {
+    const col = (await as(A, `select id from public.collections where owner_id = $1 limit 1`, [A])).rows[0]!.id as string
+    await as(A, `insert into public.files (id, collection_id, owner_id, storage_path, name, mime, size_bytes, content_hash) values ($1, $2, $3, $4, 'Hashed', 'application/pdf', 1, $5)`,
+      [F, col, A, path(A, col, F), H])
+    expect((await as(null, `select id from public.files where content_hash = $1 and deleted_at is null`, [H])).rows).toHaveLength(1)
+  })
+  it('rejects a malformed fingerprint and does not let it be rewritten later', async () => {
+    const col = (await as(A, `select id from public.collections where owner_id = $1 limit 1`, [A])).rows[0]!.id as string
+    const G = 'eeeeeeee-0000-4000-8000-000000000002'
+    await fails(A, `insert into public.files (id, collection_id, owner_id, storage_path, name, mime, size_bytes, content_hash) values ($1, $2, $3, $4, 'Bad', 'application/pdf', 1, 'not-a-hash')`,
+      [G, col, A, path(A, col, G)])
+    await fails(A, `update public.files set content_hash = $2 where id = $1`, [F, 'b'.repeat(64)])
+  })
+})
+
 describe('moderator role', () => {
   const MOD = '44444444-4444-4444-8444-444444444444'
   const M1 = 'dddddddd-0000-4000-8000-000000000001'

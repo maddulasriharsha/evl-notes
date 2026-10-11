@@ -69,7 +69,7 @@ export type Stage = 'queued' | 'preparing' | 'uploading' | 'saving' | 'done' | '
  */
 export async function uploadOne(
   file: File,
-  opts: { userId: string; collectionId: string; position: number; name: string },
+  opts: { userId: string; collectionId: string; position: number; name: string; contentHash?: string },
   onStage: (s: Stage) => void,
 ) {
   const supabase = supabaseBrowser()
@@ -109,7 +109,7 @@ export async function uploadOne(
   const previewPath = preview && !(await put(`${dir}/preview.webp`, preview, 'image/webp')).error ? `${dir}/preview.webp` : null
 
   onStage('saving')
-  const { error } = await supabase.from('files').insert({
+  const row = {
     id,
     collection_id: opts.collectionId,
     owner_id: opts.userId,
@@ -123,7 +123,12 @@ export async function uploadOne(
     width,
     height,
     position: opts.position,
-  })
+  }
+  let { error } = await supabase.from('files').insert(opts.contentHash ? ({ ...row, content_hash: opts.contentHash } as typeof row) : row)
+  // The fingerprint column arrives with a migration; until it is applied, save without it.
+  if (error && opts.contentHash && /content_hash/.test(error.message)) {
+    error = (await supabase.from('files').insert(row)).error
+  }
   if (error) throw new Error(error.message)
   onStage('done')
   return id
@@ -150,4 +155,66 @@ export async function addDriveLink(opts: {
       position: opts.position,
     })
   if (error) throw new Error(error.message)
+}
+
+/** Where an identical file is already on the site. */
+export interface DuplicateOf {
+  id: string
+  name: string
+  owner: string
+  subject: string
+  unit: number
+  mine: boolean
+}
+
+type DupRow = {
+  id: string
+  name: string
+  content_hash: string | null
+  drive_id: string | null
+  owner_id: string
+  collections: { subject_code: string; unit: number; profiles: { display_name: string } | null } | null
+}
+
+const DUP_COLUMNS = 'id, name, owner_id, collections(subject_code, unit, profiles(display_name))'
+
+function asDuplicate(r: DupRow, userId: string): DuplicateOf {
+  return {
+    id: r.id,
+    name: r.name,
+    owner: r.collections?.profiles?.display_name ?? 'someone',
+    subject: r.collections?.subject_code ?? '',
+    unit: r.collections?.unit ?? 0,
+    mine: r.owner_id === userId,
+  }
+}
+
+/** Which of these fingerprints are already on the site (hidden notes excluded). Never throws. */
+export async function findDuplicates(hashes: string[], userId: string): Promise<Map<string, DuplicateOf>> {
+  const out = new Map<string, DuplicateOf>()
+  if (hashes.length === 0) return out
+  const { data, error } = await supabaseBrowser()
+    .from('files')
+    .select(`${DUP_COLUMNS}, content_hash`)
+    .in('content_hash', hashes)
+    .is('deleted_at', null)
+    .limit(200)
+  if (error || !data) return out
+  for (const r of data as unknown as DupRow[]) {
+    if (r.content_hash && !out.has(r.content_hash)) out.set(r.content_hash, asDuplicate(r, userId))
+  }
+  return out
+}
+
+/** Is this Google Drive item already saved as a note on the site? */
+export async function findDriveDuplicate(driveId: string, userId: string): Promise<DuplicateOf | null> {
+  const { data, error } = await supabaseBrowser()
+    .from('files')
+    .select(`${DUP_COLUMNS}, drive_id`)
+    .eq('drive_id', driveId)
+    .is('deleted_at', null)
+    .limit(1)
+    .maybeSingle()
+  if (error || !data) return null
+  return asDuplicate(data as unknown as DupRow, userId)
 }
