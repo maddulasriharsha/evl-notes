@@ -511,6 +511,31 @@ describe('requests, follows and announcements', () => {
   })
 })
 
+describe('visitor counter', () => {
+  const V1 = 'aaaaaaaa-1111-4111-8111-aaaaaaaaaaaa'
+  const V2 = 'bbbbbbbb-2222-4222-8222-bbbbbbbbbbbb'
+
+  it('lets any browser report a visit but never read the table', async () => {
+    await as(null, `select public.record_visit($1)`, [V1])
+    await as(null, `select public.record_visit($1)`, [V1])
+    await as(B, `select public.record_visit($1)`, [V2])
+    await fails(null, `select * from public.site_visits`)
+    await fails(B, `select * from public.site_visits`)
+    await fails(null, `update public.site_visits set views = 0`)
+  })
+
+  it('shows totals to the admin only', async () => {
+    await fails(B, `select public.admin_visits(7)`)
+    await fails(null, `select public.admin_visits(7)`)
+    const r = await as(ADMIN, `select public.admin_visits(7) as v`)
+    const v = r.rows[0]!.v as { today: number; all_time: number; views_all: number; daily: { visitors: number }[] }
+    expect(Number(v.today)).toBe(2)
+    expect(Number(v.all_time)).toBe(2)
+    expect(Number(v.views_all)).toBe(3)
+    expect(v.daily).toHaveLength(7)
+  })
+})
+
 describe('moderator role', () => {
   const MOD = '44444444-4444-4444-8444-444444444444'
   const M1 = 'dddddddd-0000-4000-8000-000000000001'

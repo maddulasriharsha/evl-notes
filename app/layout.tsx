@@ -4,6 +4,7 @@ import { Inter, Syne } from 'next/font/google'
 import { AnnouncementBar } from '@/components/announcement-bar'
 import { SiteFooter } from '@/components/site-footer'
 import { SiteHeader } from '@/components/site-header'
+import { VisitBeacon } from '@/components/visit-beacon'
 import { ServiceWorkerRegister } from '@/components/sw-register'
 import './globals.css'
 
@@ -36,6 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <main className="flex-1">{children}</main>
         <SiteFooter />
         <ServiceWorkerRegister />
+        <VisitBeacon />
       </body>
     </html>
   )

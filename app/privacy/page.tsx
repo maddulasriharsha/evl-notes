@@ -12,7 +12,10 @@ const sections: { title: string; body: string[] }[] = [
   },
   {
     title: 'Reading and downloading',
-    body: ['You can read and download everything without an account. We do not use ads, analytics or tracking cookies.'],
+    body: [
+      'You can read and download everything without an account. We do not use ads or tracking cookies.',
+      'To know roughly how many people use the site, your browser keeps a random number (not linked to you or to any account) and tells us it was here today. We do not store your IP address, the pages you read or anything else. If your browser sends “Do Not Track”, nothing is counted.',
+    ],
   },
   {
     title: 'What we store when you sign in',
@@ -47,7 +50,7 @@ export default function PrivacyPage() {
   return (
     <Container className="max-w-3xl py-12">
       <h1 className="font-display text-4xl font-semibold tracking-tight">Privacy policy</h1>
-      <p className="mt-2 text-sm text-ink-3">Last updated 9 October 2026</p>
+      <p className="mt-2 text-sm text-ink-3">Last updated 21 October 2026</p>
       <div className="mt-8 space-y-8">
         {sections.map((s) => (
           <section key={s.title}>

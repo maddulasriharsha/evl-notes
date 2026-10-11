@@ -49,6 +49,7 @@ function Table({ head, children }: { head: string[]; children: React.ReactNode }
 }
 
 const td = 'px-4 py-3 align-middle'
+const n = (x: number) => x.toLocaleString('en-IN')
 
 interface PersonRow {
   id: string
@@ -95,12 +96,17 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
   const { count: openReports } = await supabase.from('reports').select('id', { count: 'exact', head: true }).is('resolved_at', null)
 
   if (tab === 'overview') {
-    const [overview, daily, logins, people] = await Promise.all([
+    const [overview, daily, logins, people, visitsRes] = await Promise.all([
       supabase.rpc('admin_overview'),
       supabase.rpc('admin_daily', { p_days: 30 }),
       supabase.rpc('admin_recent_logins', { p_limit: 25 }),
       supabase.rpc('admin_people'),
+      supabase.rpc('admin_visits', { p_days: 30 }),
     ])
+    // Null until the visits SQL has been run; the dashboard works without it.
+    const visits = visitsRes.error
+      ? null
+      : (visitsRes.data as { today: number; week: number; month: number; all_time: number; views_all: number; daily: { day: string; visitors: number; views: number }[] })
     if (overview.error) {
       body = <p className="text-danger">{overview.error.message}. Has the dashboard SQL migration been run?</p>
     } else {
@@ -137,6 +143,27 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
               </div>
             ))}
           </div>
+
+          {visits && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                {[
+                  { label: 'Visitors today', value: visits.today, sub: 'unique browsers' },
+                  { label: 'Last 7 days', value: visits.week, sub: 'unique visitors' },
+                  { label: 'Last 30 days', value: visits.month, sub: 'unique visitors' },
+                  { label: 'All time', value: visits.all_time, sub: `${n(Number(visits.views_all))} visits` },
+                ].map((t) => (
+                  <div key={t.label} className="rounded-2xl border border-line bg-surface p-4 shadow-card">
+                    <p className="text-xs text-ink-3">{t.label}</p>
+                    <p className="mt-1 font-display text-3xl font-semibold tabular-nums">{n(Number(t.value))}</p>
+                    <p className="mt-1 text-xs text-ink-3">{t.sub}</p>
+                  </div>
+                ))}
+              </div>
+              <DailyChart title="Visitors per day" unit="visitors" points={visits.daily.map((d) => ({ day: d.day, value: Number(d.visitors) }))} />
+              <p className="text-xs text-ink-3">Counted once per browser session, by a random id. Visitors who block storage or send Do Not Track are not counted.</p>
+            </div>
+          )}
 
           <div className="rounded-2xl border border-line bg-surface p-4 shadow-card">
             <div className="flex flex-wrap items-baseline justify-between gap-2 text-sm">
