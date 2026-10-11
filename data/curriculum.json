@@ -1,513 +1,523 @@
-[
- {
-  "year": 1,
-  "sem": 1,
-  "subjects": [
-   {
-    "code": "25BS1MT101",
-    "name": "Matrices and Calculus",
-    "short": "MAC",
-    "credits": 4,
-    "kind": "theory",
-    "units": [
-     "Matrices",
-     "Eigenvalues and Eigenvectors",
-     "Single Variable Calculus",
-     "Partial Differentiation and Its Applications",
-     "Multiple Integrals"
-    ]
-   },
-   {
-    "code": "25BS1PH102",
-    "name": "Advanced Engineering Physics",
-    "short": "AEP",
-    "credits": 3,
-    "kind": "theory",
-    "units": [
-     "Laser and Fibre Optics",
-     "Quantum Mechanics and Band Theory of Solids",
-     "Semiconductors & Nanotechnology",
-     "Dielectric and Magnetic Materials",
-     "Quantum Computing"
-    ]
-   },
-   {
-    "code": "25ES1CS101",
-    "name": "Programming for Problem Solving",
-    "short": "PPS",
-    "credits": 3,
-    "kind": "theory",
-    "units": [
-     "Introduction to Programming",
-     "Loops, Arrays, Strings",
-     "Searching, Sorting, Functions",
-     "Structures and Pointers",
-     "Preprocessor Directives and File Handling in C"
-    ]
-   },
-   {
-    "code": "25ES1EE105",
-    "name": "Network Analysis",
-    "short": "NA",
-    "credits": 3,
-    "kind": "theory",
-    "units": [
-     "Elementary Circuit Concepts",
-     "Mesh and Nodal Analysis",
-     "Network Theorems",
-     "Single Phase AC Circuits",
-     "Two Port Networks and Filters"
-    ]
-   },
-   {
-    "code": "25HS1EN101",
-    "name": "English for Skill Enhancement",
-    "short": "ESE",
-    "credits": 3,
-    "kind": "theory",
-    "units": [
-     "The Generation Gap",
-     "Emerging Technologies",
-     "Leisure",
-     "Why a Start-Up Needs to Find its Customers First",
-     "Professional Ethics"
-    ]
-   },
-   {
-    "code": "25BS2PH102",
-    "name": "Advanced Engineering Physics Laboratory",
-    "short": "AEP Lab",
-    "credits": 1,
-    "kind": "lab",
-    "units": []
-   },
-   {
-    "code": "25HS2EN101",
-    "name": "English Language and Communication Skills Laboratory",
-    "short": "ELCS Lab",
-    "credits": 1,
-    "kind": "lab",
-    "units": [
-     "Speech Sounds & Non-Verbal Communication",
-     "Listening for Information & Situational Dialogues",
-     "Phonetics & Descriptions",
-     "Listening Techniques & Story Telling",
-     "Listening for Evaluation & Presentations"
-    ]
-   },
-   {
-    "code": "25ES2CS101",
-    "name": "Programming for Problem Solving Laboratory",
-    "short": "PPS Lab",
-    "credits": 1,
-    "kind": "lab",
-    "units": []
-   },
-   {
-    "code": "25ES2ME101",
-    "name": "Engineering Workshop",
-    "short": "EW",
-    "credits": 1,
-    "kind": "lab",
-    "units": []
-   }
-  ]
- },
- {
-  "year": 1,
-  "sem": 2,
-  "subjects": [
-   {
-    "code": "25BS1MT106",
-    "name": "Ordinary Differential Equations, Laplace Transforms and Vector Calculus",
-    "short": "ODE&VC",
-    "credits": 3,
-    "kind": "theory",
-    "units": [
-     "First Order ODE",
-     "Higher Order ODE",
-     "Laplace Transforms",
-     "Vector Differentiation",
-     "Vector Integration"
-    ]
-   },
-   {
-    "code": "25BS1CH101",
-    "name": "Chemistry for Engineers",
-    "short": "CFE",
-    "credits": 3,
-    "kind": "theory",
-    "units": [
-     "Water and its Treatment",
-     "Electrochemistry and Corrosion",
-     "Energy Sources and Battery Technology",
-     "Polymers",
-     "Spectroscopic Applications and Advanced Functional Materials"
-    ]
-   },
-   {
-    "code": "25ES1EC101",
-    "name": "Electronic Devices and Circuits",
-    "short": "EDC",
-    "credits": 3,
-    "kind": "theory",
-    "units": [
-     "Diode Characteristics",
-     "Bipolar Junction Transistor (BJT)",
-     "Transistor Amplifiers",
-     "Field Effect Transistors",
-     "Special Purpose Devices"
-    ]
-   },
-   {
-    "code": "25ES1IT102",
-    "name": "Data Structures",
-    "short": "DS",
-    "credits": 3,
-    "kind": "theory",
-    "units": [
-     "Stacks, Searching & Asymptotic Notations",
-     "Queues and Linked Lists",
-     "Doubly & Circular Linked Lists, Sorting",
-     "Trees, Priority Queues and B-Trees",
-     "Dictionaries, Hashing and Graphs"
-    ]
-   },
-   {
-    "code": "25ES1EE103",
-    "name": "Introduction to Electrical Engineering",
-    "short": "IEE",
-    "credits": 2,
-    "kind": "theory",
-    "units": [
-     "Transient Analysis",
-     "Magnetic Circuits",
-     "Transformers",
-     "DC Machines",
-     "AC Machines and Special Machines"
-    ]
-   },
-   {
-    "code": "25ES3ME101",
-    "name": "Engineering Drawing",
-    "short": "ED",
-    "credits": 3,
-    "kind": "theory",
-    "units": [
-     "Introduction to Engineering Drawing",
-     "Orthographic Projections, Projections of Points & Straight Lines",
-     "Projections of Planes",
-     "Projections of Regular Solids",
-     "Isometric Projections"
-    ]
-   },
-   {
-    "code": "25BS2CH101",
-    "name": "Engineering Chemistry Laboratory",
-    "short": "Chem Lab",
-    "credits": 1,
-    "kind": "lab",
-    "units": []
-   },
-   {
-    "code": "25ES2EC101",
-    "name": "Electronic Devices and Circuits Laboratory",
-    "short": "EDC Lab",
-    "credits": 1,
-    "kind": "lab",
-    "units": []
-   },
-   {
-    "code": "25ES2IT102",
-    "name": "Data Structures Laboratory",
-    "short": "DS Lab",
-    "credits": 1,
-    "kind": "lab",
-    "units": []
-   },
-   {
-    "code": "25MN6HS102",
-    "name": "Environmental Science",
-    "short": "ES",
-    "credits": 0,
-    "kind": "theory",
-    "units": [
-     "Introduction to Environmental Science",
-     "Synergy With Environment",
-     "Climate Change",
-     "Moving Towards Sustainability",
-     "Policies and Regulations"
-    ]
-   }
-  ]
- },
- {
-  "year": 2,
-  "sem": 3,
-  "subjects": [
-   {
-    "code": "25PC1EV201",
-    "name": "Analog Circuits",
-    "short": "AC",
-    "credits": 4,
-    "kind": "theory",
-    "units": [
-     "Multistage Amplifiers",
-     "Feedback Amplifiers",
-     "Linear Wave Shaping",
-     "OP-AMP",
-     "Data Converters"
-    ]
-   },
-   {
-    "code": "25PC1EV202",
-    "name": "Signals and Stochastic Processes",
-    "short": "SSP",
-    "credits": 3,
-    "kind": "theory",
-    "units": [
-     "Representation of Signals",
-     "Fourier Series",
-     "Signal Transmission through Linear Systems",
-     "Probability Theory",
-     "Random Processes – Temporal Characteristics"
-    ]
-   },
-   {
-    "code": "25PC1EV203",
-    "name": "RTL Modeling and Synthesis",
-    "short": "RTL",
-    "credits": 3,
-    "kind": "theory",
-    "units": [
-     "Introduction to Verilog HDL",
-     "Gate-Level Modeling",
-     "Behavioral Modelling",
-     "Switch-Level Modeling",
-     "Logic Synthesis with Verilog HDL"
-    ]
-   },
-   {
-    "code": "25PC1EC204",
-    "name": "Digital Logic Design",
-    "short": "DLD",
-    "credits": 3,
-    "kind": "theory",
-    "units": [
-     "Number Systems",
-     "Simplification of Boolean Functions",
-     "Sequential Circuits Fundamentals",
-     "Registers and Counters",
-     "Sequential Machines"
-    ]
-   },
-   {
-    "code": "25HS1MG201",
-    "name": "Innovation and Entrepreneurship",
-    "short": "I&E",
-    "credits": 2,
-    "kind": "theory",
-    "units": [
-     "Fundamentals of Innovation and Entrepreneurship",
-     "Problem and Customer Identification",
-     "Opportunity Assessment and Prototype Development",
-     "Business & Financial Models",
-     "Startups and IPR"
-    ]
-   },
-   {
-    "code": "25PC2EV201",
-    "name": "Analog Circuits Laboratory",
-    "short": "AC Lab",
-    "credits": 1,
-    "kind": "lab",
-    "units": []
-   },
-   {
-    "code": "25PC2EC201",
-    "name": "Modeling and Simulation Laboratory",
-    "short": "M&S Lab",
-    "credits": 1,
-    "kind": "lab",
-    "units": []
-   },
-   {
-    "code": "25PC2EC202",
-    "name": "Applied Python Programming Laboratory",
-    "short": "Python Lab",
-    "credits": 1,
-    "kind": "lab",
-    "units": []
-   },
-   {
-    "code": "25PC2EC204",
-    "name": "Digital Logic Design Laboratory",
-    "short": "DLD Lab",
-    "credits": 1,
-    "kind": "lab",
-    "units": []
-   },
-   {
-    "code": "25SD5EC201",
-    "name": "Linux and Shell Scripting",
-    "short": "Linux",
-    "credits": 1,
-    "kind": "lab",
-    "units": []
-   },
-   {
-    "code": "25MN6HS103",
-    "name": "Happiness and Wellbeing",
-    "short": "H&W",
-    "credits": 0,
-    "kind": "theory",
-    "units": [
-     "Introduction to Happiness",
-     "Power of Emotions & Relationships",
-     "Health and Wellbeing",
-     "Re-Wirement for Wellbeing",
-     "Nurturing Happiness Development Index"
-    ]
-   }
-  ]
- },
- {
-  "year": 2,
-  "sem": 4,
-  "subjects": [
-   {
-    "code": "25BS1MT202",
-    "name": "Numerical Methods and Complex Variables",
-    "short": "NMCV",
-    "credits": 3,
-    "kind": "theory",
-    "units": [
-     "Numerical Methods – I",
-     "Numerical Methods – II",
-     "Curve Fitting and Regression Models",
-     "Complex Differentiation",
-     "Complex Integration"
-    ]
-   },
-   {
-    "code": "25PC1EV204",
-    "name": "CMOS Digital IC Design",
-    "short": "CMOS",
-    "credits": 3,
-    "kind": "theory",
-    "units": [
-     "CMOS Inverter",
-     "Combinational MOS Logic Circuits",
-     "Dynamic Logic Circuits",
-     "Sequential MOS Logic Circuits",
-     "Semiconductor Memories"
-    ]
-   },
-   {
-    "code": "25PC1EV205",
-    "name": "Design Verification using System Verilog",
-    "short": "DV",
-    "credits": 2,
-    "kind": "theory",
-    "units": [
-     "Verification Guidelines",
-     "Procedural Statements and Routines",
-     "Basic OOP",
-     "Randomization",
-     "Functional Coverage"
-    ]
-   },
-   {
-    "code": "25PC1EC206",
-    "name": "Analog and Digital Communications",
-    "short": "ADC",
-    "credits": 3,
-    "kind": "theory",
-    "units": [
-     "Amplitude Modulation",
-     "Transmitters & Receivers",
-     "Pulse Digital Modulation",
-     "Digital Modulation Techniques",
-     "Information Theory"
-    ]
-   },
-   {
-    "code": "25PC1EV206",
-    "name": "Computer Architectures",
-    "short": "CA",
-    "credits": 3,
-    "kind": "theory",
-    "units": [
-     "Overview of Organization and Architecture",
-     "Computer Arithmetic",
-     "Organization of a Processor",
-     "Memory Subsystem",
-     "I/O Subsystem and System Interconnection"
-    ]
-   },
-   {
-    "code": "25PC2EV202",
-    "name": "CMOS Digital IC Design Laboratory",
-    "short": "CMOS Lab",
-    "credits": 1,
-    "kind": "lab",
-    "units": []
-   },
-   {
-    "code": "25PC2EV203",
-    "name": "Design Verification using System Verilog Laboratory",
-    "short": "DV Lab",
-    "credits": 1,
-    "kind": "lab",
-    "units": []
-   },
-   {
-    "code": "25BS2MT211",
-    "name": "Computational Mathematics Laboratory",
-    "short": "CM Lab",
-    "credits": 1,
-    "kind": "lab",
-    "units": []
-   },
-   {
-    "code": "25PW4EV201",
-    "name": "Design Thinking",
-    "short": "DT",
-    "credits": 2,
-    "kind": "theory",
-    "units": [
-     "Design Overview",
-     "User Empathy",
-     "Ideation Process",
-     "Building Prototypes & Design for Sustainability",
-     "Capstone Project (Interdisciplinary)"
-    ]
-   },
-   {
-    "code": "25SD5EV201",
-    "name": "Scripting Languages for VLSI",
-    "short": "Scripting",
-    "credits": 1,
-    "kind": "lab",
-    "units": []
-   },
-   {
-    "code": "25VA7EN201",
-    "name": "Gender Sensitization",
-    "short": "GS",
-    "credits": 1,
-    "kind": "theory",
-    "units": [
-     "Understanding Gender – Concepts and Myths",
-     "Gender and Family Division of Labour",
-     "Gender-Based Violence",
-     "Gender Laws in India",
-     "Women in Politics and Leadership"
-    ]
-   }
-  ]
- },
- {
+{
+ "branches": [
+  {
+   "id": "evl",
+   "short": "EVL",
+   "name": "Electronics Engineering (VLSI Design and Technology)",
+   "regulation": "R25",
+   "semesters": [
+    {
+     "year": 1,
+     "sem": 1,
+     "subjects": [
+      {
+       "code": "25BS1MT101",
+       "name": "Matrices and Calculus",
+       "short": "MAC",
+       "credits": 4,
+       "kind": "theory",
+       "units": [
+        "Matrices",
+        "Eigenvalues and Eigenvectors",
+        "Single Variable Calculus",
+        "Partial Differentiation and Its Applications",
+        "Multiple Integrals"
+       ]
+      },
+      {
+       "code": "25BS1PH102",
+       "name": "Advanced Engineering Physics",
+       "short": "AEP",
+       "credits": 3,
+       "kind": "theory",
+       "units": [
+        "Laser and Fibre Optics",
+        "Quantum Mechanics and Band Theory of Solids",
+        "Semiconductors & Nanotechnology",
+        "Dielectric and Magnetic Materials",
+        "Quantum Computing"
+       ]
+      },
+      {
+       "code": "25ES1CS101",
+       "name": "Programming for Problem Solving",
+       "short": "PPS",
+       "credits": 3,
+       "kind": "theory",
+       "units": [
+        "Introduction to Programming",
+        "Loops, Arrays, Strings",
+        "Searching, Sorting, Functions",
+        "Structures and Pointers",
+        "Preprocessor Directives and File Handling in C"
+       ]
+      },
+      {
+       "code": "25ES1EE105",
+       "name": "Network Analysis",
+       "short": "NA",
+       "credits": 3,
+       "kind": "theory",
+       "units": [
+        "Elementary Circuit Concepts",
+        "Mesh and Nodal Analysis",
+        "Network Theorems",
+        "Single Phase AC Circuits",
+        "Two Port Networks and Filters"
+       ]
+      },
+      {
+       "code": "25HS1EN101",
+       "name": "English for Skill Enhancement",
+       "short": "ESE",
+       "credits": 3,
+       "kind": "theory",
+       "units": [
+        "The Generation Gap",
+        "Emerging Technologies",
+        "Leisure",
+        "Why a Start-Up Needs to Find its Customers First",
+        "Professional Ethics"
+       ]
+      },
+      {
+       "code": "25BS2PH102",
+       "name": "Advanced Engineering Physics Laboratory",
+       "short": "AEP Lab",
+       "credits": 1,
+       "kind": "lab",
+       "units": []
+      },
+      {
+       "code": "25HS2EN101",
+       "name": "English Language and Communication Skills Laboratory",
+       "short": "ELCS Lab",
+       "credits": 1,
+       "kind": "lab",
+       "units": [
+        "Speech Sounds & Non-Verbal Communication",
+        "Listening for Information & Situational Dialogues",
+        "Phonetics & Descriptions",
+        "Listening Techniques & Story Telling",
+        "Listening for Evaluation & Presentations"
+       ]
+      },
+      {
+       "code": "25ES2CS101",
+       "name": "Programming for Problem Solving Laboratory",
+       "short": "PPS Lab",
+       "credits": 1,
+       "kind": "lab",
+       "units": []
+      },
+      {
+       "code": "25ES2ME101",
+       "name": "Engineering Workshop",
+       "short": "EW",
+       "credits": 1,
+       "kind": "lab",
+       "units": []
+      }
+     ]
+    },
+    {
+     "year": 1,
+     "sem": 2,
+     "subjects": [
+      {
+       "code": "25BS1MT106",
+       "name": "Ordinary Differential Equations, Laplace Transforms and Vector Calculus",
+       "short": "ODE&VC",
+       "credits": 3,
+       "kind": "theory",
+       "units": [
+        "First Order ODE",
+        "Higher Order ODE",
+        "Laplace Transforms",
+        "Vector Differentiation",
+        "Vector Integration"
+       ]
+      },
+      {
+       "code": "25BS1CH101",
+       "name": "Chemistry for Engineers",
+       "short": "CFE",
+       "credits": 3,
+       "kind": "theory",
+       "units": [
+        "Water and its Treatment",
+        "Electrochemistry and Corrosion",
+        "Energy Sources and Battery Technology",
+        "Polymers",
+        "Spectroscopic Applications and Advanced Functional Materials"
+       ]
+      },
+      {
+       "code": "25ES1EC101",
+       "name": "Electronic Devices and Circuits",
+       "short": "EDC",
+       "credits": 3,
+       "kind": "theory",
+       "units": [
+        "Diode Characteristics",
+        "Bipolar Junction Transistor (BJT)",
+        "Transistor Amplifiers",
+        "Field Effect Transistors",
+        "Special Purpose Devices"
+       ]
+      },
+      {
+       "code": "25ES1IT102",
+       "name": "Data Structures",
+       "short": "DS",
+       "credits": 3,
+       "kind": "theory",
+       "units": [
+        "Stacks, Searching & Asymptotic Notations",
+        "Queues and Linked Lists",
+        "Doubly & Circular Linked Lists, Sorting",
+        "Trees, Priority Queues and B-Trees",
+        "Dictionaries, Hashing and Graphs"
+       ]
+      },
+      {
+       "code": "25ES1EE103",
+       "name": "Introduction to Electrical Engineering",
+       "short": "IEE",
+       "credits": 2,
+       "kind": "theory",
+       "units": [
+        "Transient Analysis",
+        "Magnetic Circuits",
+        "Transformers",
+        "DC Machines",
+        "AC Machines and Special Machines"
+       ]
+      },
+      {
+       "code": "25ES3ME101",
+       "name": "Engineering Drawing",
+       "short": "ED",
+       "credits": 3,
+       "kind": "theory",
+       "units": [
+        "Introduction to Engineering Drawing",
+        "Orthographic Projections, Projections of Points & Straight Lines",
+        "Projections of Planes",
+        "Projections of Regular Solids",
+        "Isometric Projections"
+       ]
+      },
+      {
+       "code": "25BS2CH101",
+       "name": "Engineering Chemistry Laboratory",
+       "short": "Chem Lab",
+       "credits": 1,
+       "kind": "lab",
+       "units": []
+      },
+      {
+       "code": "25ES2EC101",
+       "name": "Electronic Devices and Circuits Laboratory",
+       "short": "EDC Lab",
+       "credits": 1,
+       "kind": "lab",
+       "units": []
+      },
+      {
+       "code": "25ES2IT102",
+       "name": "Data Structures Laboratory",
+       "short": "DS Lab",
+       "credits": 1,
+       "kind": "lab",
+       "units": []
+      },
+      {
+       "code": "25MN6HS102",
+       "name": "Environmental Science",
+       "short": "ES",
+       "credits": 0,
+       "kind": "theory",
+       "units": [
+        "Introduction to Environmental Science",
+        "Synergy With Environment",
+        "Climate Change",
+        "Moving Towards Sustainability",
+        "Policies and Regulations"
+       ]
+      }
+     ]
+    },
+    {
+     "year": 2,
+     "sem": 3,
+     "subjects": [
+      {
+       "code": "25PC1EV201",
+       "name": "Analog Circuits",
+       "short": "AC",
+       "credits": 4,
+       "kind": "theory",
+       "units": [
+        "Multistage Amplifiers",
+        "Feedback Amplifiers",
+        "Linear Wave Shaping",
+        "OP-AMP",
+        "Data Converters"
+       ]
+      },
+      {
+       "code": "25PC1EV202",
+       "name": "Signals and Stochastic Processes",
+       "short": "SSP",
+       "credits": 3,
+       "kind": "theory",
+       "units": [
+        "Representation of Signals",
+        "Fourier Series",
+        "Signal Transmission through Linear Systems",
+        "Probability Theory",
+        "Random Processes – Temporal Characteristics"
+       ]
+      },
+      {
+       "code": "25PC1EV203",
+       "name": "RTL Modeling and Synthesis",
+       "short": "RTL",
+       "credits": 3,
+       "kind": "theory",
+       "units": [
+        "Introduction to Verilog HDL",
+        "Gate-Level Modeling",
+        "Behavioral Modelling",
+        "Switch-Level Modeling",
+        "Logic Synthesis with Verilog HDL"
+       ]
+      },
+      {
+       "code": "25PC1EC204",
+       "name": "Digital Logic Design",
+       "short": "DLD",
+       "credits": 3,
+       "kind": "theory",
+       "units": [
+        "Number Systems",
+        "Simplification of Boolean Functions",
+        "Sequential Circuits Fundamentals",
+        "Registers and Counters",
+        "Sequential Machines"
+       ]
+      },
+      {
+       "code": "25HS1MG201",
+       "name": "Innovation and Entrepreneurship",
+       "short": "I&E",
+       "credits": 2,
+       "kind": "theory",
+       "units": [
+        "Fundamentals of Innovation and Entrepreneurship",
+        "Problem and Customer Identification",
+        "Opportunity Assessment and Prototype Development",
+        "Business & Financial Models",
+        "Startups and IPR"
+       ]
+      },
+      {
+       "code": "25PC2EV201",
+       "name": "Analog Circuits Laboratory",
+       "short": "AC Lab",
+       "credits": 1,
+       "kind": "lab",
+       "units": []
+      },
+      {
+       "code": "25PC2EC201",
+       "name": "Modeling and Simulation Laboratory",
+       "short": "M&S Lab",
+       "credits": 1,
+       "kind": "lab",
+       "units": []
+      },
+      {
+       "code": "25PC2EC202",
+       "name": "Applied Python Programming Laboratory",
+       "short": "Python Lab",
+       "credits": 1,
+       "kind": "lab",
+       "units": []
+      },
+      {
+       "code": "25PC2EC204",
+       "name": "Digital Logic Design Laboratory",
+       "short": "DLD Lab",
+       "credits": 1,
+       "kind": "lab",
+       "units": []
+      },
+      {
+       "code": "25SD5EC201",
+       "name": "Linux and Shell Scripting",
+       "short": "Linux",
+       "credits": 1,
+       "kind": "lab",
+       "units": []
+      },
+      {
+       "code": "25MN6HS103",
+       "name": "Happiness and Wellbeing",
+       "short": "H&W",
+       "credits": 0,
+       "kind": "theory",
+       "units": [
+        "Introduction to Happiness",
+        "Power of Emotions & Relationships",
+        "Health and Wellbeing",
+        "Re-Wirement for Wellbeing",
+        "Nurturing Happiness Development Index"
+       ]
+      }
+     ]
+    },
+    {
+     "year": 2,
+     "sem": 4,
+     "subjects": [
+      {
+       "code": "25BS1MT202",
+       "name": "Numerical Methods and Complex Variables",
+       "short": "NMCV",
+       "credits": 3,
+       "kind": "theory",
+       "units": [
+        "Numerical Methods – I",
+        "Numerical Methods – II",
+        "Curve Fitting and Regression Models",
+        "Complex Differentiation",
+        "Complex Integration"
+       ]
+      },
+      {
+       "code": "25PC1EV204",
+       "name": "CMOS Digital IC Design",
+       "short": "CMOS",
+       "credits": 3,
+       "kind": "theory",
+       "units": [
+        "CMOS Inverter",
+        "Combinational MOS Logic Circuits",
+        "Dynamic Logic Circuits",
+        "Sequential MOS Logic Circuits",
+        "Semiconductor Memories"
+       ]
+      },
+      {
+       "code": "25PC1EV205",
+       "name": "Design Verification using System Verilog",
+       "short": "DV",
+       "credits": 2,
+       "kind": "theory",
+       "units": [
+        "Verification Guidelines",
+        "Procedural Statements and Routines",
+        "Basic OOP",
+        "Randomization",
+        "Functional Coverage"
+       ]
+      },
+      {
+       "code": "25PC1EC206",
+       "name": "Analog and Digital Communications",
+       "short": "ADC",
+       "credits": 3,
+       "kind": "theory",
+       "units": [
+        "Amplitude Modulation",
+        "Transmitters & Receivers",
+        "Pulse Digital Modulation",
+        "Digital Modulation Techniques",
+        "Information Theory"
+       ]
+      },
+      {
+       "code": "25PC1EV206",
+       "name": "Computer Architectures",
+       "short": "CA",
+       "credits": 3,
+       "kind": "theory",
+       "units": [
+        "Overview of Organization and Architecture",
+        "Computer Arithmetic",
+        "Organization of a Processor",
+        "Memory Subsystem",
+        "I/O Subsystem and System Interconnection"
+       ]
+      },
+      {
+       "code": "25PC2EV202",
+       "name": "CMOS Digital IC Design Laboratory",
+       "short": "CMOS Lab",
+       "credits": 1,
+       "kind": "lab",
+       "units": []
+      },
+      {
+       "code": "25PC2EV203",
+       "name": "Design Verification using System Verilog Laboratory",
+       "short": "DV Lab",
+       "credits": 1,
+       "kind": "lab",
+       "units": []
+      },
+      {
+       "code": "25BS2MT211",
+       "name": "Computational Mathematics Laboratory",
+       "short": "CM Lab",
+       "credits": 1,
+       "kind": "lab",
+       "units": []
+      },
+      {
+       "code": "25PW4EV201",
+       "name": "Design Thinking",
+       "short": "DT",
+       "credits": 2,
+       "kind": "theory",
+       "units": [
+        "Design Overview",
+        "User Empathy",
+        "Ideation Process",
+        "Building Prototypes & Design for Sustainability",
+        "Capstone Project (Interdisciplinary)"
+       ]
+      },
+      {
+       "code": "25SD5EV201",
+       "name": "Scripting Languages for VLSI",
+       "short": "Scripting",
+       "credits": 1,
+       "kind": "lab",
+       "units": []
+      },
+      {
+       "code": "25VA7EN201",
+       "name": "Gender Sensitization",
+       "short": "GS",
+       "credits": 1,
+       "kind": "theory",
+       "units": [
+        "Understanding Gender – Concepts and Myths",
+        "Gender and Family Division of Labour",
+        "Gender-Based Violence",
+        "Gender Laws in India",
+        "Women in Politics and Leadership"
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "extras": {
   "year": 1,
   "sem": 0,
   "label": "Extras",
@@ -528,4 +538,4 @@
    }
   ]
  }
-]
+}

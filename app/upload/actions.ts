@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { findSubject, sectionHref, sectionsOf, subjectHref } from '@/lib/curriculum'
+import { findSubject, sectionHref, sectionsOf, semesterHref, subjectHref } from '@/lib/curriculum'
 import { parseDriveLink, type DriveLinkKind } from '@/lib/drive-link'
 import { currentUser } from '@/lib/supabase/server'
 
@@ -12,7 +12,9 @@ export async function refreshChapter(subjectCode: string, unit: number) {
   if (!found || !sectionsOf(found.subject).includes(unit)) return
   revalidatePath(sectionHref(found.subject.code, unit))
   revalidatePath(subjectHref(found.subject.code))
-  if (found.semester.sem) revalidatePath(`/sem/${found.semester.sem}`)
+  for (const use of found.usedIn) {
+    if (use.branch) revalidatePath(semesterHref(use.branch.id, use.semester.sem))
+  }
   revalidatePath('/')
   revalidatePath('/contributors')
 }

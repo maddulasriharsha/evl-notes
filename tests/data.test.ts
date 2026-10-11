@@ -1,10 +1,41 @@
 import { describe, expect, it } from 'vitest'
-import { allSubjects, regularSemesters, parseSectionSlug, sectionSlug } from '@/lib/curriculum'
+import { allSubjects, branches, findBranch, findSubject, parseSectionSlug, sectionSlug } from '@/lib/curriculum'
 import { safeNext } from '@/lib/safe-next'
 
 describe('curriculum', () => {
-  it('has the four R25 semesters', () => {
-    expect(regularSemesters.map((s) => [s.year, s.sem])).toEqual([[1, 1], [1, 2], [2, 3], [2, 4]])
+  it('has EVL with the four R25 semesters', () => {
+    const evl = findBranch('evl')
+    expect(evl).toBeDefined()
+    expect(evl!.semesters.map((s) => [s.year, s.sem])).toEqual([[1, 1], [1, 2], [2, 3], [2, 4]])
+  })
+
+  it('has unique branch ids and semesters in ascending order', () => {
+    expect(new Set(branches.map((b) => b.id)).size).toBe(branches.length)
+    for (const b of branches) {
+      expect(b.id).toMatch(/^[a-z0-9-]+$/)
+      const sems = b.semesters.map((s) => s.sem)
+      expect(sems, b.id).toEqual([...sems].sort((a, c) => a - c))
+    }
+  })
+
+  it('names a shared course the same way in every branch that teaches it', () => {
+    const names = new Map<string, string>()
+    for (const b of branches) {
+      for (const sem of b.semesters) {
+        for (const sub of sem.subjects) {
+          const seen = names.get(sub.code)
+          if (seen !== undefined) expect(sub.name, `${b.id} ${sub.code}`).toBe(seen)
+          names.set(sub.code, sub.name)
+        }
+      }
+    }
+  })
+
+  it('finds a subject and lists every branch that teaches it', () => {
+    const found = findSubject('25ES1EC101')
+    expect(found?.subject.short).toBe('EDC')
+    expect(found?.usedIn.length).toBeGreaterThanOrEqual(1)
+    expect(found?.usedIn[0]?.branch?.id).toBe('evl')
   })
 
   it('has unique, well-formed subject codes', () => {

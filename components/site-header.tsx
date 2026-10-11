@@ -13,10 +13,10 @@ export function SiteHeader() {
           <span className="font-display text-[1.05rem] font-bold tracking-tight whitespace-nowrap">EVL Notes</span>
         </Link>
         <span className="hidden items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-[11px] font-medium text-ink-2 lg:inline-flex">
-          <span className="size-1.5 rounded-full bg-accent shadow-[0_0_8px_var(--accent)]" /> R25 · VNR VJIET
+          <span className="size-1.5 rounded-full bg-accent shadow-[0_0_8px_var(--accent)]" /> VNR VJIET
         </span>
         <nav className="ml-2 hidden items-center gap-0.5 text-sm text-ink-2 md:flex">
-          <Link href="/#semesters" className="rounded-lg px-3 py-1.5 hover:bg-white/[0.06] hover:text-ink">Semesters</Link>
+          <Link href="/#branches" className="rounded-lg px-3 py-1.5 hover:bg-white/[0.06] hover:text-ink">Branches</Link>
           <Link href="/contributors" className="rounded-lg px-3 py-1.5 hover:bg-white/[0.06] hover:text-ink">Contributors</Link>
           <Link href="/search" className="rounded-lg px-3 py-1.5 hover:bg-white/[0.06] hover:text-ink">Search</Link>
         </nav>

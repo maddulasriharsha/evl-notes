@@ -76,9 +76,9 @@ export default async function SearchPage({ searchParams }: PageProps<'/search'>)
         <section className="mt-10">
           <SectionHeading title="Subjects" />
           <div className="grid gap-2 sm:grid-cols-2">
-            {subjects.map(({ subject, semester }) => (
+            {subjects.map(({ subject, semester, branch }) => (
               <Link key={subject.code} href={subjectHref(subject.code)} className="rounded-xl border border-line bg-surface px-4 py-3 hover:border-line-strong">
-                <span className="block text-xs text-ink-3">{semesterLabel(semester)} · {subject.code}</span>
+                <span className="block text-xs text-ink-3">{branch ? `${branch.short} · ` : ''}{semesterLabel(semester)} · {subject.code}</span>
                 <span className="block font-medium">{subject.name}</span>
               </Link>
             ))}

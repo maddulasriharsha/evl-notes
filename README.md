@@ -103,6 +103,17 @@ An **Admin** button then appears on *My notes*. The admin area has:
 - **People**: emails, contribution, last sign-in; block someone from uploading and commenting; add co-admins.
 - **Shelves**: hide or show a person's whole shelf for a chapter.
 
+## Adding a branch
+
+The site is organised as **branch → semester → subject → chapter**. Branches live in `data/curriculum.json` under
+`branches`; each has an `id` (the URL, for example `cse` → `/b/cse`), a `short` name, a full `name`, and its `semesters`
+with subjects and chapter titles (copied from that branch's syllabus book, titles only). To add one, send the syllabus
+PDF; nothing else changes.
+
+A **subject code identifies the course**. When two branches teach the same code (for example the common first-year
+courses), they share one set of notes, and the subject page lists every branch that teaches it. Use the exact same
+name for the same code (a test checks this).
+
 ## Changing the site later
 
 - **Code or design**: edit, commit, push. Data is not touched.

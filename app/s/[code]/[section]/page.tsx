@@ -11,7 +11,7 @@ import {
   sectionLabel,
   sectionsOf,
   sectionTitle,
-  semesterLabel,
+  subjectCrumbs,
   subjectHref,
   allSubjects,
   sectionSlug,
@@ -68,8 +68,7 @@ export default async function SectionPage({ params }: PageProps<'/s/[code]/[sect
         <Container className="pt-10 pb-10">
           <Crumbs
             items={[
-              { href: '/', label: 'Home' },
-              semester.sem ? { href: `/sem/${semester.sem}`, label: `Sem ${semester.sem}` } : { label: semesterLabel(semester) },
+              ...subjectCrumbs(r),
               { href: subjectHref(subject.code), label: subject.short },
               { label: sectionLabel(unit) },
             ]}

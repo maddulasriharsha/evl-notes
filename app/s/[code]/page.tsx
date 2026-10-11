@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowRight, CloudUpload } from 'lucide-react'
 import { ButtonLink, Container, Crumbs, SectionHeading } from '@/components/ui'
-import { allSubjects, sectionHref, sectionLabel, sectionsOf, sectionTitle, semesterLabel, findSubject } from '@/lib/curriculum'
+import { allSubjects, findSubject, sectionHref, sectionLabel, sectionsOf, sectionTitle, semesterHref, subjectCrumbs } from '@/lib/curriculum'
 import { countsForSubject } from '@/lib/data'
 import { driveCount } from '@/lib/library'
 import { plural } from '@/lib/format'
@@ -31,11 +31,7 @@ export default async function SubjectPage({ params }: PageProps<'/s/[code]'>) {
       <section className="grain border-b border-line">
         <Container className="pt-10 pb-10">
           <Crumbs
-            items={[
-              { href: '/', label: 'Home' },
-              semester.sem ? { href: `/sem/${semester.sem}`, label: semesterLabel(semester) } : { label: semesterLabel(semester) },
-              { label: subject.short },
-            ]}
+            items={[...subjectCrumbs(found), { label: subject.short }]}
           />
           <div className="mt-6 flex flex-wrap items-end justify-between gap-6">
             <div className="max-w-3xl">
@@ -49,6 +45,23 @@ export default async function SubjectPage({ params }: PageProps<'/s/[code]'>) {
               <CloudUpload className="size-4" /> Upload notes
             </ButtonLink>
           </div>
+          {found.usedIn.length > 1 && (
+            <p className="mt-5 flex flex-wrap items-center gap-2 text-sm text-ink-3">
+              Taught in:
+              {found.usedIn.map((u) =>
+                u.branch ? (
+                  <Link
+                    key={`${u.branch.id}-${u.semester.sem}`}
+                    href={semesterHref(u.branch.id, u.semester.sem)}
+                    className="rounded-lg border border-white/[0.08] bg-white/[0.03] px-2 py-1 text-xs font-medium text-ink-2 hover:text-ink"
+                  >
+                    {u.branch.short} · Sem {u.semester.sem}
+                  </Link>
+                ) : null,
+              )}
+              <span className="text-xs">Notes are shared by all of them.</span>
+            </p>
+          )}
         </Container>
       </section>
 

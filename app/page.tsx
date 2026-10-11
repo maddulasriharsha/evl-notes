@@ -14,7 +14,7 @@ import {
 } from 'lucide-react'
 import { Thumb } from '@/components/thumb'
 import { OwnerName } from '@/components/ui'
-import { allSubjects, extras, findSubject, regularSemesters, sectionHref, sectionLabel, semesterLabel, subjectHref } from '@/lib/curriculum'
+import { allSubjects, branches, branchHref, branchSubjects, extras, findSubject, sectionHref, sectionLabel, subjectHref } from '@/lib/curriculum'
 import { contributors, countsBySubject, recentlyUpdated, uploadTotals } from '@/lib/data'
 import { DRIVE_LIBRARY } from '@/lib/drive-stats'
 import { thumbFor } from '@/lib/file-thumb'
@@ -45,7 +45,7 @@ export default async function Home() {
         <div className="horizon-haze" aria-hidden="true" />
         <div className="relative mx-auto flex min-h-[660px] max-w-5xl flex-col items-center px-4 pt-16 text-center sm:min-h-[700px] sm:pt-24">
           <Link
-            href="/#semesters"
+            href="/#branches"
             className="rise inline-flex items-center gap-2 rounded-full border border-white/[0.1] bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-ink-2 backdrop-blur hover:text-ink"
           >
             <Star className="size-3.5 fill-gold text-gold" />
@@ -56,11 +56,11 @@ export default async function Home() {
             <span className="block text-white/40 sm:inline">For everyone.</span>
           </h1>
           <p className="rise rise-2 mx-auto mt-6 max-w-xl text-base leading-relaxed text-ink-2 sm:text-lg">
-            Every lecture of B.Tech EVL, written down once and shared with the whole class. Organised by semester,
+            Every lecture, written down once and shared with the whole class. Pick your branch, then your semester,
             subject and chapter. Free to read, no sign-in needed.
           </p>
           <div className="rise rise-3 mt-9 flex flex-wrap items-center justify-center gap-3">
-            <Link href="#semesters" className="btn-primary inline-flex h-12 items-center gap-2 rounded-xl px-5 text-sm font-semibold">
+            <Link href="#branches" className="btn-primary inline-flex h-12 items-center gap-2 rounded-xl px-5 text-sm font-semibold">
               <BookOpen className="size-4" /> Browse notes
             </Link>
             <Link href="/upload" className="btn-ghost inline-flex h-12 items-center gap-2 rounded-xl px-5 text-sm font-semibold">
@@ -72,10 +72,10 @@ export default async function Home() {
 
       {/* ---------- Subject marquee ---------- */}
       <section className="relative mt-4 sm:-mt-8">
-        <Eyebrow>Every subject · every chapter · Sem 1 to 4</Eyebrow>
+        <Eyebrow>Every subject · every chapter</Eyebrow>
         <div className="marquee-wrap marquee-mask mt-6 overflow-hidden">
           <div className="marquee gap-3 pr-3">
-            {[...strip, ...strip].map(({ subject, semester }, i) => (
+            {[...strip, ...strip].map(({ subject, semester, branch }, i) => (
               <Link
                 key={`${subject.code}-${i}`}
                 href={subjectHref(subject.code)}
@@ -87,7 +87,9 @@ export default async function Home() {
                   <span className="grid size-8 place-items-center rounded-lg bg-white/[0.05] text-ink-2">
                     {subject.kind === 'lab' ? <FlaskConical className="size-4" /> : <BookOpen className="size-4" />}
                   </span>
-                  <span className="text-[11px] text-ink-3">Sem {semester.sem}</span>
+                  <span className="text-[11px] text-ink-3">
+                    {branch ? `${branch.short} · ` : ''}Sem {semester.sem}
+                  </span>
                 </div>
                 <p className="mt-3 text-xs font-semibold tracking-widest text-accent uppercase">{subject.short}</p>
                 <p className="mt-1 line-clamp-2 text-sm leading-snug text-ink">{subject.name}</p>
@@ -115,40 +117,50 @@ export default async function Home() {
           ))}
         </section>
 
-        {/* ---------- Semesters ---------- */}
-        <section id="semesters" className="mt-28 scroll-mt-28">
+        {/* ---------- Branches ---------- */}
+        <section id="branches" className="mt-28 scroll-mt-28">
           <Eyebrow>Browse</Eyebrow>
           <h2 className="mt-3 text-center font-display text-3xl font-bold tracking-tight sm:text-5xl">
-            Pick your semester. <span className="text-white/40">Start reading.</span>
+            Pick your branch. <span className="text-white/40">Start reading.</span>
           </h2>
           <div className="mt-12 grid gap-4 sm:grid-cols-2">
-            {regularSemesters.map((s) => {
-              const files = s.subjects.reduce((sum, sub) => sum + total(sub.code), 0)
+            {branches.map((b) => {
+              const subjects = branchSubjects(b)
+              const files = subjects.reduce((sum, { subject }) => sum + total(subject.code), 0)
               return (
                 <Link
-                  key={s.sem}
-                  href={`/sem/${s.sem}`}
+                  key={b.id}
+                  href={branchHref(b.id)}
                   className="group relative overflow-hidden rounded-3xl border border-white/[0.07] bg-[#0b0b0f] p-6 transition duration-300 hover:-translate-y-1 hover:border-accent/40 hover:shadow-[0_30px_80px_-30px_rgba(139,92,246,0.45)]"
                 >
                   <div className="pointer-events-none absolute -top-24 -right-24 size-56 rounded-full bg-accent/10 blur-3xl transition group-hover:bg-accent/25" />
                   <div className="relative flex items-baseline justify-between">
-                    <p className="text-[11px] font-semibold tracking-[0.2em] text-ink-3 uppercase">Semester {s.sem}</p>
+                    <p className="text-[11px] font-semibold tracking-[0.2em] text-ink-3 uppercase">
+                      B.Tech{b.regulation ? ` · ${b.regulation}` : ''}
+                    </p>
                     <p className="text-xs text-ink-3">{plural(files, 'file')}</p>
                   </div>
-                  <h3 className="relative mt-3 font-display text-3xl font-bold tracking-tight">{semesterLabel(s)}</h3>
+                  <h3 className="relative mt-3 font-display text-4xl font-bold tracking-tight">{b.short}</h3>
+                  <p className="relative mt-1 text-sm text-ink-2">{b.name}</p>
                   <div className="relative mt-5 flex flex-wrap gap-1.5">
-                    {s.subjects.map((sub) => (
-                      <span key={sub.code} className="rounded-lg border border-white/[0.06] bg-white/[0.03] px-2 py-1 text-xs font-medium text-ink-2">
-                        {sub.short}
+                    {b.semesters.map((sem) => (
+                      <span key={sem.sem} className="rounded-lg border border-white/[0.06] bg-white/[0.03] px-2 py-1 text-xs font-medium text-ink-2">
+                        Sem {sem.sem}
                       </span>
                     ))}
                   </div>
                   <p className="relative mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-accent">
-                    Open {plural(s.subjects.length, 'subject')} <ArrowRight className="size-4 transition group-hover:translate-x-1" />
+                    Open {b.short} · {plural(subjects.length, 'subject')}{' '}
+                    <ArrowRight className="size-4 transition group-hover:translate-x-1" />
                   </p>
                 </Link>
               )
             })}
+            <div className="flex flex-col justify-center rounded-3xl border border-dashed border-white/[0.12] p-6 text-center">
+              <Sparkles className="mx-auto size-6 text-ink-3" strokeWidth={1.5} />
+              <p className="mt-3 font-display text-lg font-bold">More branches are being added</p>
+              <p className="mt-1 text-sm text-ink-3">Don&rsquo;t see yours yet? It&rsquo;s coming. Subjects shared by several branches already share their notes.</p>
+            </div>
           </div>
           {extras && (
             <p className="mt-5 text-center text-sm text-ink-3">

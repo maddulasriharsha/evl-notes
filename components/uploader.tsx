@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ArrowDown, ArrowUp, Camera, Check, CloudUpload, FileStack, FileText, Link2, Loader2, TriangleAlert, X } from 'lucide-react'
 import { inspectDriveLink, refreshChapter } from '@/app/upload/actions'
-import { regularSemesters, extras, sectionHref, sectionLabel, sectionsOf, sectionTitle, findSubject, type Semester } from '@/lib/curriculum'
+import { branches, extras, sectionHref, sectionLabel, sectionsOf, sectionTitle, findSubject, type Semester } from '@/lib/curriculum'
 import { formatBytes, plural } from '@/lib/format'
 import { CameraCapture, cameraSupported } from '@/components/camera-capture'
 import { DRIVE_KIND_LABEL, parseDriveLink, type DriveLinkKind } from '@/lib/drive-link'
@@ -32,8 +32,6 @@ interface LinkItem {
 
 const MAX_LINKS = 30
 
-const allSemesters: Semester[] = extras ? [...regularSemesters, extras] : regularSemesters
-
 const stageLabel: Record<Stage, string> = {
   queued: 'Ready',
   preparing: 'Preparing preview…',
@@ -55,7 +53,8 @@ export function Uploader({
   existing: { id: string; subject: string; unit: number; files: number }[]
 }) {
   const initial = initialSubject ? findSubject(initialSubject) : undefined
-  const [sem, setSem] = useState<number>(initial?.semester.sem ?? 1)
+  const [branchId, setBranchId] = useState<string>(initial?.branch?.id ?? branches[0]?.id ?? '')
+  const [sem, setSem] = useState<number>(initial?.semester.sem ?? branches[0]?.semesters[0]?.sem ?? 1)
   const [subject, setSubject] = useState<string | undefined>(initial?.subject.code)
   const [unit, setUnit] = useState<number | undefined>(
     initial && initialUnit !== undefined && sectionsOf(initial.subject).includes(initialUnit) ? initialUnit : undefined,
@@ -79,6 +78,8 @@ export function Uploader({
   const camera = useRef<HTMLInputElement>(null)
   const [cameraOpen, setCameraOpen] = useState(false)
 
+  const branch = branches.find((b) => b.id === branchId) ?? branches[0]
+  const allSemesters: Semester[] = [...(branch?.semesters ?? []), ...(extras ? [extras] : [])]
   const semester = allSemesters.find((s) => s.sem === sem) ?? allSemesters[0]!
   const chosen = subject ? findSubject(subject) : undefined
   const shelf = existing.find((c) => c.subject === subject && c.unit === unit)
@@ -247,6 +248,29 @@ export function Uploader({
       {/* Where */}
       <section className="rounded-3xl border border-line bg-surface p-5 shadow-card sm:p-6">
         <Step n={1} title="Where do these notes go?" />
+        {branches.length > 1 && (
+          <div className="mt-4">
+            <p className="mb-2 text-sm font-medium">Branch</p>
+            <div className="flex flex-wrap gap-1.5">
+              {branches.map((b) => (
+                <button
+                  key={b.id}
+                  type="button"
+                  disabled={running}
+                  onClick={() => {
+                    setBranchId(b.id)
+                    setSem(b.semesters[0]?.sem ?? 1)
+                    setSubject(undefined)
+                    setUnit(undefined)
+                  }}
+                  className={`rounded-lg px-3 py-1.5 text-sm font-medium ${b.id === branch?.id ? 'bg-accent text-accent-ink' : 'bg-surface-2 text-ink-2 hover:text-ink'}`}
+                >
+                  {b.short}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         <div className="mt-4 flex flex-wrap gap-1.5">
           {allSemesters.map((s) => (
             <button
