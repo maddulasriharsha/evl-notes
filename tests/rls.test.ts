@@ -472,6 +472,45 @@ describe('community features', () => {
   })
 })
 
+describe('requests, follows and announcements', () => {
+  it('lets members ask for a chapter, publicly, once, and close their own request', async () => {
+    await as(B, `insert into public.note_requests (requester_id, subject_code, unit, message) values ($1, '25ES1CS101', 3, 'exam soon')`, [B])
+    await fails(B, `insert into public.note_requests (requester_id, subject_code, unit) values ($1, '25ES1CS101', 3)`, [B])
+    await fails(B, `insert into public.note_requests (requester_id, subject_code, unit) values ($1, '25ES1CS101', 3)`, [A])
+    await fails(B, `insert into public.note_requests (requester_id, subject_code, unit) values ($1, '25ES1CS101', 9)`, [B])
+    expect((await as(null, `select id from public.note_requests where closed_at is null`)).rows).toHaveLength(1)
+    // someone else cannot close it, the requester can
+    const nope = await as(A, `update public.note_requests set closed_at = now() where requester_id = $1 returning id`, [B])
+    expect(nope.rows).toHaveLength(0)
+    const ok = await as(B, `update public.note_requests set closed_at = now() where requester_id = $1 returning id`, [B])
+    expect(ok.rows).toHaveLength(1)
+    // once closed they can ask again
+    await as(B, `insert into public.note_requests (requester_id, subject_code, unit) values ($1, '25ES1CS101', 3)`, [B])
+  })
+
+  it('keeps followed subjects private', async () => {
+    await as(B, `insert into public.follows (user_id, subject_code) values ($1, '25ES1CS101')`, [B])
+    expect((await as(B, `select subject_code from public.follows`)).rows).toHaveLength(1)
+    expect((await as(A, `select subject_code from public.follows`)).rows).toHaveLength(0)
+    await fails(A, `insert into public.follows (user_id, subject_code) values ($1, '25ES1CS101')`, [B])
+    await as(B, `delete from public.follows where user_id = $1`, [B])
+    expect((await as(B, `select subject_code from public.follows`)).rows).toHaveLength(0)
+  })
+
+  it('lets only staff post announcements; everyone reads the active ones', async () => {
+    await fails(B, `insert into public.announcements (message, created_by) values ('hi', $1)`, [B])
+    await as(ADMIN, `insert into public.announcements (message, link, created_by) values ('Mid-2 papers are up', '/requests', $1)`, [ADMIN])
+    // unsafe links are refused
+    await fails(ADMIN, `insert into public.announcements (message, link, created_by) values ('x', '//evil.example', $1)`, [ADMIN])
+    await fails(ADMIN, `insert into public.announcements (message, link, created_by) values ('x', 'javascript:alert(1)', $1)`, [ADMIN])
+    expect((await as(null, `select message from public.announcements where active`)).rows).toHaveLength(1)
+    const off = await as(B, `update public.announcements set active = false returning id`)
+    expect(off.rows).toHaveLength(0)
+    await as(ADMIN, `update public.announcements set active = false`)
+    expect((await as(null, `select message from public.announcements where active`)).rows).toHaveLength(0)
+  })
+})
+
 describe('moderator role', () => {
   const MOD = '44444444-4444-4444-8444-444444444444'
   const M1 = 'dddddddd-0000-4000-8000-000000000001'

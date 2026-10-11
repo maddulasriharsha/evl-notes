@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { InstallButton } from '@/components/install-button'
 import { LogoMark } from '@/components/logo'
+import { ThemeToggle } from '@/components/theme-toggle'
 
 export function SiteFooter() {
   return (
@@ -15,7 +16,10 @@ export function SiteFooter() {
           <Link href="/contributors" className="hover:text-ink">Contributors</Link>
           <Link href="/search" className="hover:text-ink">Search</Link>
           <Link href="/upload" className="hover:text-ink">Upload</Link>
+          <Link href="/requests" className="hover:text-ink">Requests</Link>
+          <Link href="/share" className="hover:text-ink">Share</Link>
           <Link href="/privacy" className="hover:text-ink">Privacy</Link>
+          <ThemeToggle withLabel className="inline-flex items-center gap-1.5 hover:text-ink" />
           <InstallButton className="inline-flex items-center gap-1.5 font-medium text-ink-2 hover:text-ink" />
         </div>
       </div>

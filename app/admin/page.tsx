@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { CommentModButtons, FileModButtons, ReportActions, UserModButtons } from '@/components/admin-actions'
 import { AdminHideToggle } from '@/components/admin-hide-toggle'
+import { AnnouncementManager, type AnnouncementRow } from '@/components/announcement-manager'
 import { DailyChart } from '@/components/daily-chart'
 import { Container, OwnerName } from '@/components/ui'
 import { findSubject, sectionHref, sectionLabel } from '@/lib/curriculum'
@@ -19,6 +20,7 @@ const allTabs = [
   { id: 'comments', label: 'Comments', adminOnly: false },
   { id: 'people', label: 'People', adminOnly: false },
   { id: 'shelves', label: 'Shelves', adminOnly: false },
+  { id: 'announcements', label: 'Announcements', adminOnly: false },
 ] as const
 type Tab = (typeof allTabs)[number]['id']
 
@@ -427,6 +429,19 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
           </tr>
         ))}
       </Table>
+    )
+  }
+
+  if (tab === 'announcements') {
+    const { data, error } = await supabase
+      .from('announcements')
+      .select('id, message, link, active, created_at')
+      .order('created_at', { ascending: false })
+      .limit(30)
+    body = error ? (
+      <p className="text-danger">{error.message}. Has the requests / announcements SQL been run?</p>
+    ) : (
+      <AnnouncementManager userId={me.user.id} items={(data ?? []) as AnnouncementRow[]} />
     )
   }
 

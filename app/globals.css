@@ -25,6 +25,31 @@
   color-scheme: dark;
 }
 
+/* Light theme: same tokens, switched by data-theme="light" (set before paint by the layout script). */
+:root[data-theme='light'] {
+  --bg: #fafafb;
+  --surface: #ffffff;
+  --surface-2: #f1f1f5;
+  --ink: #0b0b10;
+  --ink-2: #4a4a57;
+  --ink-3: #777786;
+  --line: #e3e3ea;
+  --line-strong: #cdcdd8;
+  --accent: #6240e0;
+  --accent-ink: #ffffff;
+  --accent-soft: #ede8fe;
+  --chart: #7c5cf0;
+  --gold: #9a6200;
+  --gold-soft: #fdf2d9;
+  --ok: #0f7a56;
+  --ok-soft: #e0f5ec;
+  --danger: #cc3027;
+  --danger-soft: #fdeae8;
+  --shadow: 0 1px 2px rgb(20 20 40 / 0.06), 0 10px 28px -16px rgb(20 20 40 / 0.22);
+  --shadow-lg: 0 1px 2px rgb(20 20 40 / 0.08), 0 24px 48px -20px rgb(20 20 40 / 0.3), 0 0 0 1px rgb(98 64 224 / 0.08);
+  color-scheme: light;
+}
+
 @theme inline {
   --color-bg: var(--bg);
   --color-surface: var(--surface);
@@ -234,5 +259,67 @@ body {
   .float,
   .marquee {
     animation: none;
+  }
+}
+
+/* ---------- Light theme adjustments for the cinematic bits ---------- */
+:root[data-theme='light'] ::selection {
+  background: rgb(98 64 224 / 0.25);
+  color: inherit;
+}
+:root[data-theme='light'] .horizon {
+  background: radial-gradient(closest-side, #fafafb 96%, #f1edff 99%);
+  box-shadow:
+    0 2px 0 0 rgb(98 64 224 / 0.55),
+    0 6px 24px 2px rgb(167 139 250 / 0.5),
+    0 18px 80px 12px rgb(139 92 246 / 0.28),
+    0 40px 220px 60px rgb(167 139 250 / 0.2);
+}
+:root[data-theme='light'] .horizon-haze {
+  background:
+    radial-gradient(60% 50% at 50% 0%, rgb(139 92 246 / 0.1), transparent 70%),
+    linear-gradient(to bottom, transparent 70%, var(--bg));
+}
+:root[data-theme='light'] .btn-primary {
+  background: linear-gradient(to bottom, #1c1c24, #0b0b10);
+  color: #ffffff;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.12),
+    0 1px 2px rgb(0 0 0 / 0.25),
+    0 8px 24px -10px rgb(98 64 224 / 0.5);
+}
+:root[data-theme='light'] .btn-primary:hover {
+  background: linear-gradient(to bottom, #2a2a34, #14141a);
+}
+:root[data-theme='light'] .btn-ghost {
+  background: rgb(0 0 0 / 0.035);
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.1);
+}
+:root[data-theme='light'] .btn-ghost:hover {
+  background: rgb(0 0 0 / 0.07);
+}
+:root[data-theme='light'] .bezel {
+  background: linear-gradient(to bottom, rgb(0 0 0 / 0.07), rgb(0 0 0 / 0.02));
+}
+:root[data-theme='light'] [class*='border-white/'] {
+  border-color: var(--line);
+}
+:root[data-theme='light'] [class*='bg-white/'] {
+  background-color: rgb(0 0 0 / 0.035);
+}
+:root[data-theme='light'] .text-glow {
+  text-shadow: none;
+}
+
+/* ---------- Print: just the page content (used by the share poster) ---------- */
+@media print {
+  header,
+  footer,
+  [role='status'] {
+    display: none !important;
+  }
+  html,
+  body {
+    background: #fff !important;
   }
 }

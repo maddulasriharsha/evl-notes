@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowLeft, ArrowRight, CloudUpload, ThumbsUp } from 'lucide-react'
+import { RequestNotesButton } from '@/components/community-buttons'
+import { DownloadShelfButton } from '@/components/download-shelf'
 import { DriveFileCard, UploadFileCard } from '@/components/file-card'
 import { ButtonLink, Container, Crumbs, Empty, OwnerName } from '@/components/ui'
 import {
@@ -16,7 +18,9 @@ import {
   allSubjects,
   sectionSlug,
 } from '@/lib/curriculum'
+import { openRequestCount } from '@/lib/community'
 import { collectionsFor, type NoteCollection } from '@/lib/data'
+import { publicFileUrl } from '@/lib/env'
 import { driveFilesFor, LIBRARY_OWNER, type DriveFile } from '@/lib/library'
 import { formatDate, plural, timeAgo } from '@/lib/format'
 
@@ -46,7 +50,7 @@ export default async function SectionPage({ params }: PageProps<'/s/[code]/[sect
   const r = await resolve(params)
   if (!r) notFound()
   const { subject, semester, unit } = r
-  const collections = await collectionsFor(subject.code, unit)
+  const [collections, waiting] = await Promise.all([collectionsFor(subject.code, unit), openRequestCount(subject.code, unit)])
   const order = sectionsOf(subject)
   const idx = order.indexOf(unit)
   const prev = idx > 0 ? order[idx - 1] : undefined
@@ -59,6 +63,12 @@ export default async function SectionPage({ params }: PageProps<'/s/[code]/[sect
     ...(ownerShelf || drive.length ? [{ key: ownerShelf?.id ?? 'owner', collection: ownerShelf, drive }] : []),
     ...collections.filter((c) => c !== ownerShelf).map((c) => ({ key: c.id, collection: c, drive: [] as DriveFile[] })),
   ]
+  // PDFs and photos that can be joined into one downloadable PDF (Drive links cannot).
+  const sourcesOf = (c: NoteCollection) =>
+    c.files
+      .filter((f) => f.storage_path && (f.mime === 'application/pdf' || f.mime.startsWith('image/')))
+      .map((f) => ({ name: f.name, mime: f.mime, url: publicFileUrl(f.storage_path!) }))
+  const allSources = collections.flatMap(sourcesOf)
   const topHelpful = collections.reduce((m, c) => Math.max(m, c.helpful), 0)
   const totalFiles = collections.reduce((n, c) => n + c.files.length, 0) + drive.length
   const uploadHref = `/upload?subject=${subject.code}&unit=${unit}`
@@ -90,6 +100,21 @@ export default async function SectionPage({ params }: PageProps<'/s/[code]/[sect
               <CloudUpload className="size-4" /> Add your notes here
             </ButtonLink>
           </div>
+          <div className="mt-6 flex flex-wrap items-start gap-3">
+            <RequestNotesButton subject={subject.code} unit={unit} />
+            {allSources.length > 1 && (
+              <DownloadShelfButton
+                sources={allSources}
+                title={`${subject.short} ${sectionLabel(unit)} notes`}
+                label={`Download all ${allSources.length} as one PDF`}
+              />
+            )}
+          </div>
+          {waiting > 0 && (
+            <p className="mt-3 text-sm text-ink-3">
+              {plural(waiting, 'classmate')} asked for notes in this chapter. <Link href="/requests" className="font-medium text-accent">See all requests</Link>
+            </p>
+          )}
         </Container>
       </section>
 
@@ -133,6 +158,9 @@ export default async function SectionPage({ params }: PageProps<'/s/[code]/[sect
                           {c && ` · started ${formatDate(c.created_at)} · updated ${timeAgo(c.updated_at)}`}
                         </p>
                       </div>
+                      {c && sourcesOf(c).length > 1 && (
+                        <DownloadShelfButton sources={sourcesOf(c)} title={`${name} - ${subject.short} ${sectionLabel(unit)}`} label="Download as one PDF" />
+                      )}
                     </header>
                     {c?.description && <p className="mb-4 text-sm whitespace-pre-line text-ink-2">{c.description}</p>}
                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">

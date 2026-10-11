@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowRight, CloudUpload } from 'lucide-react'
+import { FollowButton } from '@/components/community-buttons'
 import { ButtonLink, Container, Crumbs, SectionHeading } from '@/components/ui'
 import { allSubjects, findSubject, sectionHref, sectionLabel, sectionMark, sectionsOf, sectionTitle, semesterHref, subjectCrumbs } from '@/lib/curriculum'
 import { countsForSubject } from '@/lib/data'
@@ -41,9 +42,12 @@ export default async function SubjectPage({ params }: PageProps<'/s/[code]'>) {
               </p>
               <h1 className="mt-2 font-display text-3xl leading-tight font-semibold tracking-tight text-balance sm:text-5xl">{subject.name}</h1>
             </div>
-            <ButtonLink href={`/upload?subject=${subject.code}`}>
-              <CloudUpload className="size-4" /> Upload notes
-            </ButtonLink>
+            <div className="flex flex-wrap items-center gap-2">
+              <FollowButton subject={subject.code} />
+              <ButtonLink href={`/upload?subject=${subject.code}`}>
+                <CloudUpload className="size-4" /> Upload notes
+              </ButtonLink>
+            </div>
           </div>
           {found.usedIn.length > 1 && (
             <p className="mt-5 flex flex-wrap items-center gap-2 text-sm text-ink-3">

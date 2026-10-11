@@ -41,7 +41,7 @@ export default async function BranchPage({ params }: PageProps<'/b/[branch]'>) {
             <Link
               key={s.sem}
               href={semesterHref(branch.id, s.sem)}
-              className="group relative overflow-hidden rounded-3xl border border-white/[0.07] bg-[#0b0b0f] p-6 transition duration-300 hover:-translate-y-1 hover:border-accent/40 hover:shadow-[0_30px_80px_-30px_rgba(139,92,246,0.45)]"
+              className="group relative overflow-hidden rounded-3xl border border-line bg-surface p-6 transition duration-300 hover:-translate-y-1 hover:border-accent/40 hover:shadow-[0_30px_80px_-30px_rgba(139,92,246,0.45)]"
             >
               <div className="pointer-events-none absolute -top-24 -right-24 size-56 rounded-full bg-accent/10 blur-3xl transition group-hover:bg-accent/25" />
               <div className="relative flex items-baseline justify-between">
@@ -51,7 +51,7 @@ export default async function BranchPage({ params }: PageProps<'/b/[branch]'>) {
               <h2 className="relative mt-3 font-display text-3xl font-bold tracking-tight">{semesterLabel(s)}</h2>
               <div className="relative mt-5 flex flex-wrap gap-1.5">
                 {s.subjects.map((sub) => (
-                  <span key={sub.code} className="rounded-lg border border-white/[0.06] bg-white/[0.03] px-2 py-1 text-xs font-medium text-ink-2">
+                  <span key={sub.code} className="rounded-lg border border-line bg-white/[0.03] px-2 py-1 text-xs font-medium text-ink-2">
                     {sub.short}
                   </span>
                 ))}

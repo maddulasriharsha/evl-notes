@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from 'next'
+import Script from 'next/script'
 import { Inter, Syne } from 'next/font/google'
+import { AnnouncementBar } from '@/components/announcement-bar'
 import { SiteFooter } from '@/components/site-footer'
 import { SiteHeader } from '@/components/site-header'
 import { ServiceWorkerRegister } from '@/components/sw-register'
@@ -24,8 +26,12 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${syne.variable}`}>
+    <html lang="en" className={`${inter.variable} ${syne.variable}`} suppressHydrationWarning>
       <body className="flex min-h-dvh flex-col font-sans antialiased">
+        <Script id="vj-theme" strategy="beforeInteractive">
+          {`try{var t=localStorage.getItem('vj-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}`}
+        </Script>
+        <AnnouncementBar />
         <SiteHeader />
         <main className="flex-1">{children}</main>
         <SiteFooter />

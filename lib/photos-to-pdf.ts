@@ -8,7 +8,7 @@ const JPEG_QUALITY = 0.82
 /** A4 width in PDF points; each page keeps its photo's own shape. */
 const PAGE_WIDTH = 595
 
-async function toJpeg(file: File) {
+export async function toJpeg(file: Blob) {
   const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' })
   try {
     const scale = Math.min(1, MAX_SIDE / Math.max(bitmap.width, bitmap.height))
