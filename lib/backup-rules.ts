@@ -1,5 +1,5 @@
 /** Days a verified Drive copy must exist before the Storage original may be removed. */
-export const KEEP_ORIGINAL_DAYS = 7
+export const KEEP_ORIGINAL_DAYS = 3
 
 const DAY = 24 * 60 * 60 * 1000
 

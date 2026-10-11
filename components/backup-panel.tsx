@@ -94,7 +94,7 @@ export function BackupPanel({ service, drive, cron, columns, status }: BackupPan
       <section className="rounded-2xl border border-line bg-surface p-5 shadow-card">
         <h2 className="font-semibold">How it works</h2>
         <p className="mt-1 text-sm text-ink-2">
-          New uploads are copied to the &ldquo;VJNOTES backup&rdquo; folder in the backup Drive and checked. Seven days later, if the copy is
+          New uploads are copied to the &ldquo;VJNOTES backup&rdquo; folder in the backup Drive and checked. Three days later, if the copy is
           still there, still shared and the same size, the original is removed from Supabase to save space and the note is shown from Drive.
           Thumbnails stay in Supabase. Runs by itself once a day.
         </p>

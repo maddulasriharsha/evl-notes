@@ -36,7 +36,7 @@ export default async function UploadViewer({ params }: PageProps<'/view/u/[id]'>
   const prev = file.siblings[i - 1]
   const next = file.siblings[i + 1]
   // A note is either an uploaded file in our storage or a link to Google Drive.
-  // After a week the Storage original is replaced by its Drive backup, which is then shown the same way.
+  // After 3 days the Storage original is replaced by its Drive backup, which is then shown the same way.
   const backedUp = !!file.original_removed_at && !!file.backup_drive_id
   const link = file.drive_id && isDriveMime(file.mime)
     ? { id: file.drive_id, kind: driveKindFromMime(file.mime) }

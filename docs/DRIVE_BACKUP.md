@@ -1,6 +1,6 @@
 # Drive backup
 
-Every uploaded file is copied to a Google Drive folder. Seven days later, if the copy is still intact,
+Every uploaded file is copied to a Google Drive folder. Three days later, if the copy is still intact,
 the original is removed from Supabase Storage and the note is served from the Drive copy. Thumbnails
 and previews stay in Storage.
 
@@ -9,8 +9,8 @@ and previews stay in Storage.
 1. **Copy.** A daily job (and the **Run backup now** button on Admin → Backup) downloads each new
    upload, uploads it to the folder **VJNOTES backup**, makes it readable by "anyone with the link",
    and checks the size and MD5 checksum against the original. Only then is it recorded.
-2. **Wait.** The original stays in Storage for 7 days.
-3. **Remove.** After 7 days the job looks at the Drive copy again. The original is removed only if
+2. **Wait.** The original stays in Storage for 3 days.
+3. **Remove.** After 3 days the job looks at the Drive copy again. The original is removed only if
    the copy still exists, is not in the bin, is still shared, and has the same size. Otherwise the
    original is kept and the problem is shown on the Backup tab.
 4. **Serve.** A note whose original was removed opens in Drive's preview, and Download uses Drive.

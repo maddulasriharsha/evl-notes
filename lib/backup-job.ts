@@ -25,7 +25,7 @@ export function backupReady() {
 
 /**
  * One pass of the job:
- *   1. Originals whose Drive copy is a week old and still intact are removed from Storage.
+ *   1. Originals whose Drive copy is 3 days old and still intact are removed from Storage.
  *   2. New uploads are copied to Drive, checked (size and checksum) and recorded.
  * It stops when the time budget is used up; the next run picks up where this one left off.
  * An original is only ever removed after the Drive copy has been looked at again just beforehand.
