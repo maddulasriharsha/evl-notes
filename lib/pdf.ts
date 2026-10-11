@@ -48,3 +48,37 @@ export async function pdfThumbnail(file: File, width = 480): Promise<{ blob: Blo
     void doc.loadingTask.destroy()
   }
 }
+
+/** The text of the first pages of a PDF (empty for scans that are only pictures). */
+export async function pdfText(file: File, maxPages = 3): Promise<string> {
+  const doc = await openPdf(await file.arrayBuffer())
+  try {
+    let out = ''
+    for (let i = 1; i <= Math.min(doc.numPages, maxPages); i++) {
+      const page = await doc.getPage(i)
+      const content = await page.getTextContent()
+      out += ' ' + content.items.map((it) => ('str' in it ? it.str : '')).join(' ')
+      if (out.length > 6000) break
+    }
+    return out
+  } finally {
+    void doc.loadingTask.destroy()
+  }
+}
+
+/** One page of a PDF as a WebP picture, for reading scanned notes. */
+export async function pdfPageImage(file: File, pageNumber = 1, width = 1100): Promise<Blob | null> {
+  const doc = await openPdf(await file.arrayBuffer())
+  try {
+    const page = await doc.getPage(Math.min(pageNumber, doc.numPages))
+    const base = page.getViewport({ scale: 1 })
+    const viewport = page.getViewport({ scale: width / base.width })
+    const canvas = document.createElement('canvas')
+    canvas.width = Math.round(viewport.width)
+    canvas.height = Math.round(viewport.height)
+    await page.render({ canvas, viewport }).promise
+    return await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/webp', 0.7))
+  } finally {
+    void doc.loadingTask.destroy()
+  }
+}
