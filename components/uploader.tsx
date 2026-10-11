@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ArrowDown, ArrowUp, Camera, Check, CloudUpload, FileStack, FileText, Link2, Loader2, TriangleAlert, X } from 'lucide-react'
 import { inspectDriveLink, refreshChapter } from '@/app/upload/actions'
-import { branches, extras, sectionHref, sectionLabel, sectionsOf, sectionTitle, findSubject, type Semester } from '@/lib/curriculum'
+import { branches, extras, PAPERS_UNIT, sectionHref, sectionLabel, sectionsOf, sectionTitle, findSubject, type Semester } from '@/lib/curriculum'
 import { combineHashes, fileHash } from '@/lib/hash'
 import { autoFileName, guessPlacement } from '@/lib/organise'
 import { formatBytes, plural } from '@/lib/format'
@@ -242,7 +242,7 @@ export function Uploader({
     if (target) setBranchId(target.id)
     setSem(semesterOf?.sem ?? found.semester.sem)
     setSubject(code)
-    setUnit(found.subject.units.length ? (guessedUnit ?? undefined) : 0)
+    setUnit(guessedUnit === PAPERS_UNIT ? PAPERS_UNIT : found.subject.units.length ? (guessedUnit ?? undefined) : 0)
   }
 
   // Nothing chosen yet: take the hint from the file name.

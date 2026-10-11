@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Search } from 'lucide-react'
 import { Container, Empty, OwnerName, SectionHeading } from '@/components/ui'
-import { allSubjects, findSubject, sectionHref, sectionLabel, sectionsOf, sectionTitle, semesterLabel, subjectHref } from '@/lib/curriculum'
+import { allSubjects, findSubject, PAPERS_UNIT, sectionHref, sectionLabel, sectionsOf, sectionTitle, semesterLabel, subjectHref } from '@/lib/curriculum'
 import { searchFiles } from '@/lib/data'
 import { driveFiles, LIBRARY_OWNER } from '@/lib/library'
 import { plural } from '@/lib/format'
@@ -29,7 +29,7 @@ export default async function SearchPage({ searchParams }: PageProps<'/search'>)
   const chapters = terms.length
     ? allSubjects().flatMap(({ subject }) =>
         sectionsOf(subject)
-          .filter((u) => u !== 0 && matches(`${sectionTitle(subject, u)} ${subject.short}`, terms))
+          .filter((u) => u !== 0 && u !== PAPERS_UNIT && matches(`${sectionTitle(subject, u)} ${subject.short}`, terms))
           .map((u) => ({ subject, unit: u })),
       )
     : []

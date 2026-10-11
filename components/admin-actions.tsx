@@ -184,6 +184,53 @@ export function UserModButtons({
   )
 }
 
+/**
+ * One open report: hide the reported note (or comment) and close its reports, or just dismiss them.
+ * Nothing is deleted; hidden items can be restored from the Files / Comments tabs.
+ */
+export function ReportActions({
+  fileId,
+  commentId,
+  subject,
+  unit,
+}: {
+  fileId?: string
+  commentId?: string
+  subject?: string
+  unit?: number
+}) {
+  const { busy, run } = useAction()
+  const db = () => supabaseBrowser()
+  const resolve = () => db().rpc('resolve_reports', { p_file: fileId ?? null, p_comment: commentId ?? null })
+  return (
+    <div className="flex justify-end gap-1.5">
+      <Btn busy={busy === 'dismiss'} onClick={() => run('dismiss', resolve)}>
+        Dismiss
+      </Btn>
+      <Btn
+        danger
+        busy={busy === 'hide'}
+        onClick={() =>
+          run(
+            'hide',
+            async () => {
+              const hidden = fileId
+                ? await db().from('files').update({ deleted_at: new Date().toISOString() }).eq('id', fileId)
+                : await db().from('comments').update({ deleted_at: new Date().toISOString() }).eq('id', commentId!)
+              if (hidden.error) return hidden
+              return resolve()
+            },
+            subject && unit !== undefined ? () => refreshChapter(subject, unit) : undefined,
+            fileId ? 'Hide this note from the site?' : 'Delete this comment?',
+          )
+        }
+      >
+        {fileId ? 'Hide note' : 'Delete comment'}
+      </Btn>
+    </div>
+  )
+}
+
 /** Shown on a file's page to admins and moderators only: hide it from the site right away. */
 export function AdminFileQuickHide({ id, subject, unit }: { id: string; subject: string; unit: number }) {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null)

@@ -70,7 +70,8 @@ describe('curriculum', () => {
   })
 
   it('round-trips section slugs', () => {
-    for (const u of [0, 1, 2, 3, 4, 5]) expect(parseSectionSlug(sectionSlug(u))).toBe(u)
+    for (const u of [0, 1, 2, 3, 4, 5, 6]) expect(parseSectionSlug(sectionSlug(u))).toBe(u)
+    expect(sectionSlug(6)).toBe('question-papers')
     expect(parseSectionSlug('unit-6')).toBeNull()
     expect(parseSectionSlug('../x')).toBeNull()
   })

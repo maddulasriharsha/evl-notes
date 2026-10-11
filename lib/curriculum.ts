@@ -118,29 +118,45 @@ export function subjectCrumbs(entry: SubjectEntry): { href?: string; label: stri
   return [home]
 }
 
-/** URL slug for a section of a subject: 1–5 are chapters, 0 is "general". */
+/** Section number of the "Previous question papers" shelf every subject has. */
+export const PAPERS_UNIT = 6
+
+/** URL slug for a section of a subject: 1-5 are chapters, 0 is "general", 6 is question papers. */
 export function sectionSlug(unit: number) {
-  return unit === 0 ? 'general' : `unit-${unit}`
+  if (unit === 0) return 'general'
+  if (unit === PAPERS_UNIT) return 'question-papers'
+  return `unit-${unit}`
 }
 
 export function parseSectionSlug(slug: string): number | null {
   if (slug === 'general') return 0
+  if (slug === 'question-papers') return PAPERS_UNIT
   const m = /^unit-([1-5])$/.exec(slug)
   return m ? Number(m[1]) : null
 }
 
 export function sectionTitle(subject: Subject, unit: number) {
   if (unit === 0) return subject.kind === 'lab' ? 'Lab work & records' : 'Complete notes & general'
+  if (unit === PAPERS_UNIT) return 'Previous question papers'
   return subject.units[unit - 1] ?? `Unit ${unit}`
 }
 
 export function sectionLabel(unit: number) {
-  return unit === 0 ? 'General' : `Unit ${['I', 'II', 'III', 'IV', 'V'][unit - 1]}`
+  if (unit === 0) return 'General'
+  if (unit === PAPERS_UNIT) return 'Papers'
+  return `Unit ${['I', 'II', 'III', 'IV', 'V'][unit - 1]}`
 }
 
-/** Sections a subject offers, in display order: its chapters, then General. */
+/** The mark shown in a section's tile: roman numeral, star for General, P for papers. */
+export function sectionMark(unit: number) {
+  if (unit === 0) return '∗'
+  if (unit === PAPERS_UNIT) return 'P'
+  return ['I', 'II', 'III', 'IV', 'V'][unit - 1] ?? String(unit)
+}
+
+/** Sections a subject offers, in display order: its chapters, General, then question papers. */
 export function sectionsOf(subject: Subject) {
-  return [...subject.units.map((_, i) => i + 1), 0]
+  return [...subject.units.map((_, i) => i + 1), 0, PAPERS_UNIT]
 }
 
 export function subjectHref(code: string) {

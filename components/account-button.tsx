@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
-import { ChevronDown, CloudUpload, LayoutDashboard, LogIn, LogOut, NotebookText, UserRound } from 'lucide-react'
+import { Bookmark, ChevronDown, CloudUpload, LayoutDashboard, LogIn, LogOut, NotebookText, UserRound } from 'lucide-react'
 import { supabaseConfigured } from '@/lib/env'
 import { supabaseBrowser } from '@/lib/supabase/browser'
 
@@ -111,6 +111,9 @@ export function AccountButton() {
           </Link>
           <Link role="menuitem" href="/me" onClick={() => setOpen(false)} className={item}>
             <NotebookText className="size-4 text-ink-3" /> My notes
+          </Link>
+          <Link role="menuitem" href="/saved" onClick={() => setOpen(false)} className={item}>
+            <Bookmark className="size-4 text-ink-3" /> Saved notes
           </Link>
           <Link role="menuitem" href="/upload" onClick={() => setOpen(false)} className={item}>
             <CloudUpload className="size-4 text-ink-3" /> Upload notes

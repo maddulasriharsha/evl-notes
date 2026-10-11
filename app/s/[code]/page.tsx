@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowRight, CloudUpload } from 'lucide-react'
 import { ButtonLink, Container, Crumbs, SectionHeading } from '@/components/ui'
-import { allSubjects, findSubject, sectionHref, sectionLabel, sectionsOf, sectionTitle, semesterHref, subjectCrumbs } from '@/lib/curriculum'
+import { allSubjects, findSubject, sectionHref, sectionLabel, sectionMark, sectionsOf, sectionTitle, semesterHref, subjectCrumbs } from '@/lib/curriculum'
 import { countsForSubject } from '@/lib/data'
 import { driveCount } from '@/lib/library'
 import { plural } from '@/lib/format'
@@ -74,7 +74,7 @@ export default async function SubjectPage({ params }: PageProps<'/s/[code]'>) {
               <li key={unit} className="border-b border-line last:border-0">
                 <Link href={sectionHref(subject.code, unit)} className="group flex items-center gap-4 px-5 py-4 transition hover:bg-surface-2/60">
                   <span className="grid size-11 shrink-0 place-items-center rounded-xl border border-line bg-bg font-display text-lg font-semibold text-ink-2">
-                    {unit === 0 ? '∗' : ['I', 'II', 'III', 'IV', 'V'][unit - 1]}
+                    {sectionMark(unit)}
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block text-xs font-semibold tracking-widest text-ink-3 uppercase">{sectionLabel(unit)}</span>

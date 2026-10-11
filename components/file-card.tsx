@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { MessageCircle } from 'lucide-react'
+import { MessageCircle, ThumbsUp } from 'lucide-react'
 import { FileTools } from '@/components/file-tools'
 import { Thumb, type ThumbIcon } from '@/components/thumb'
 import { Badge } from '@/components/ui'
@@ -33,9 +33,18 @@ export function UploadFileCard({ file, subject, unit }: { file: NoteFile; subjec
             {file.page_count ? ` · ${plural(file.page_count, 'page')}` : ''}
             {file.size_bytes != null ? ` · ${formatBytes(file.size_bytes)}` : ''}
           </span>
-          {file.comment_count > 0 && (
-            <span className="ml-auto inline-flex shrink-0 items-center gap-0.5 font-medium text-ink-2">
-              <MessageCircle className="size-3.5" /> {file.comment_count}
+          {(file.helpful_count > 0 || file.comment_count > 0) && (
+            <span className="ml-auto inline-flex shrink-0 items-center gap-2 font-medium text-ink-2">
+              {file.helpful_count > 0 && (
+                <span className="inline-flex items-center gap-0.5">
+                  <ThumbsUp className="size-3.5" /> {file.helpful_count}
+                </span>
+              )}
+              {file.comment_count > 0 && (
+                <span className="inline-flex items-center gap-0.5">
+                  <MessageCircle className="size-3.5" /> {file.comment_count}
+                </span>
+              )}
             </span>
           )}
         </p>

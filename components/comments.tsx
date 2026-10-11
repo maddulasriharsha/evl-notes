@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Loader2, MessageCircle, Send, Trash2, X } from 'lucide-react'
+import { ReportButton } from '@/components/file-actions'
 import { OwnerName } from '@/components/ui'
 import { supabaseConfigured } from '@/lib/env'
 import { timeAgo } from '@/lib/format'
@@ -101,11 +102,14 @@ function CommentsPanel({ fileId, ownerId, onCount }: { fileId: string; ownerId: 
                     <OwnerName name={name} admin={c.profiles?.role === 'admin'} moderator={c.profiles?.role === 'moderator'} className="font-semibold text-ink" />
                     {c.author_id === ownerId && <span className="shrink-0 rounded-md bg-surface-2 px-1.5 py-0.5 text-[10px] font-semibold text-ink-2 uppercase">Uploader</span>}
                     <span className="shrink-0 text-ink-3">{timeAgo(c.created_at)}</span>
-                    {canDelete && (
-                      <button type="button" onClick={() => remove(c.id)} aria-label="Delete comment" className="ml-auto text-ink-3 opacity-60 hover:text-danger hover:opacity-100">
-                        <Trash2 className="size-3.5" />
-                      </button>
-                    )}
+                    <span className="ml-auto flex items-center gap-3">
+                      {me && me.id !== c.author_id && <ReportButton commentId={c.id} fileFor={fileId} compact />}
+                      {canDelete && (
+                        <button type="button" onClick={() => remove(c.id)} aria-label="Delete comment" className="text-ink-3 opacity-60 hover:text-danger hover:opacity-100">
+                          <Trash2 className="size-3.5" />
+                        </button>
+                      )}
+                    </span>
                   </div>
                   <p className="mt-1 text-sm leading-relaxed break-words whitespace-pre-line text-ink-2">{c.body}</p>
                 </div>

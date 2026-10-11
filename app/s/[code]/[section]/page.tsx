@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowLeft, ArrowRight, CloudUpload } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CloudUpload, ThumbsUp } from 'lucide-react'
 import { DriveFileCard, UploadFileCard } from '@/components/file-card'
 import { ButtonLink, Container, Crumbs, Empty, OwnerName } from '@/components/ui'
 import {
@@ -59,6 +59,7 @@ export default async function SectionPage({ params }: PageProps<'/s/[code]/[sect
     ...(ownerShelf || drive.length ? [{ key: ownerShelf?.id ?? 'owner', collection: ownerShelf, drive }] : []),
     ...collections.filter((c) => c !== ownerShelf).map((c) => ({ key: c.id, collection: c, drive: [] as DriveFile[] })),
   ]
+  const topHelpful = collections.reduce((m, c) => Math.max(m, c.helpful), 0)
   const totalFiles = collections.reduce((n, c) => n + c.files.length, 0) + drive.length
   const uploadHref = `/upload?subject=${subject.code}&unit=${unit}`
 
@@ -120,9 +121,15 @@ export default async function SectionPage({ params }: PageProps<'/s/[code]/[sect
                       <div className="min-w-0 flex-1">
                         <p className="flex items-center font-semibold">
                           <OwnerName name={`${name}’s notes`} admin={admin} moderator={mod} />
+                          {c && topHelpful > 0 && c.helpful === topHelpful && (
+                            <span className="ml-2 inline-flex items-center gap-1 rounded-md bg-ok-soft px-1.5 py-0.5 text-[10px] font-semibold tracking-wider text-ok uppercase">
+                              <ThumbsUp className="size-3" /> Most helpful
+                            </span>
+                          )}
                         </p>
                         <p className="text-xs text-ink-3">
                           {plural(count, 'file')}
+                          {c && c.helpful > 0 && ` · ${plural(c.helpful, 'helpful vote')}`}
                           {c && ` · started ${formatDate(c.created_at)} · updated ${timeAgo(c.updated_at)}`}
                         </p>
                       </div>

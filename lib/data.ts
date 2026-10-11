@@ -22,6 +22,8 @@ export interface NoteFile {
   position: number
   created_at: string
   comment_count: number
+  /** How many people marked this note helpful. */
+  helpful_count: number
 }
 
 export interface NoteCollection {
@@ -35,53 +37,75 @@ export interface NoteCollection {
   description: string | null
   created_at: string
   updated_at: string
+  /** Helpful votes across the shelf's notes. */
+  helpful: number
   files: NoteFile[]
 }
 
-const FILE_COLUMNS =
+const BASE_COLUMNS =
   'id, collection_id, owner_id, storage_path, drive_id, thumb_path, preview_path, name, mime, size_bytes, page_count, width, height, position, created_at, comments(count)'
 
-type Owner = { display_name: string; role: string } | null
-type FileRow = Omit<NoteFile, 'comment_count'> & { comments?: { count: number }[] }
+// Helpful votes live in a table added by a later migration. Until it exists, read without it so
+// the site keeps working; the first failed read flips this off for the rest of the process.
+let votesReady = true
+const fileColumns = () => (votesReady ? `${BASE_COLUMNS}, file_votes(count)` : BASE_COLUMNS)
 
-function shapeFile({ comments, ...f }: FileRow): NoteFile {
-  return { ...f, comment_count: comments?.[0]?.count ?? 0 }
+/** Runs a read that selects file columns, retrying once without votes if that table is missing. */
+async function readWithVotes<T extends { error: { message: string } | null }>(run: (columns: string) => PromiseLike<T>): Promise<T> {
+  const first = await run(fileColumns())
+  if (first.error && votesReady && /file_votes/.test(first.error.message)) {
+    votesReady = false
+    return run(fileColumns())
+  }
+  return first
 }
 
-type CollectionRow = Omit<NoteCollection, 'owner_name' | 'owner_is_admin' | 'owner_is_mod' | 'files'> & {
+type Owner = { display_name: string; role: string } | null
+type FileRow = Omit<NoteFile, 'comment_count' | 'helpful_count'> & { comments?: { count: number }[]; file_votes?: { count: number }[] }
+
+function shapeFile({ comments, file_votes, ...f }: FileRow): NoteFile {
+  return { ...f, comment_count: comments?.[0]?.count ?? 0, helpful_count: file_votes?.[0]?.count ?? 0 }
+}
+
+type CollectionRow = Omit<NoteCollection, 'owner_name' | 'owner_is_admin' | 'owner_is_mod' | 'helpful' | 'files'> & {
   profiles: Owner
   files: FileRow[]
 }
 
 function shape(rows: CollectionRow[]): NoteCollection[] {
   return rows
-    .map(({ profiles, files, ...c }) => ({
-      ...c,
-      owner_name: profiles?.display_name ?? 'Unknown',
-      owner_is_admin: profiles?.role === 'admin',
-      owner_is_mod: profiles?.role === 'moderator',
-      files: files.map(shapeFile).sort(
-        (a, b) => a.position - b.position || a.created_at.localeCompare(b.created_at),
-      ),
-    }))
+    .map(({ profiles, files, ...c }) => {
+      const shaped = files.map(shapeFile).sort((a, b) => a.position - b.position || a.created_at.localeCompare(b.created_at))
+      return {
+        ...c,
+        owner_name: profiles?.display_name ?? 'Unknown',
+        owner_is_admin: profiles?.role === 'admin',
+        owner_is_mod: profiles?.role === 'moderator',
+        helpful: shaped.reduce((n, f) => n + f.helpful_count, 0),
+        files: shaped,
+      }
+    })
     .filter((c) => c.files.length > 0)
 }
 
 /** Community collections (non-hidden, with at least one live file) for one chapter. */
 export async function collectionsFor(subject: string, unit: number): Promise<NoteCollection[]> {
   if (!supabaseConfigured) return []
-  const { data, error } = await supabasePublic()
-    .from('collections')
-    .select(`id, owner_id, subject_code, unit, description, created_at, updated_at, profiles(display_name, role), files(${FILE_COLUMNS})`)
-    .eq('subject_code', subject)
-    .eq('unit', unit)
-    .is('files.deleted_at', null)
-    .order('updated_at', { ascending: false })
+  const { data, error } = await readWithVotes((cols) =>
+    supabasePublic()
+      .from('collections')
+      .select(`id, owner_id, subject_code, unit, description, created_at, updated_at, profiles(display_name, role), files(${cols})`)
+      .eq('subject_code', subject)
+      .eq('unit', unit)
+      .is('files.deleted_at', null)
+      .order('updated_at', { ascending: false }),
+  )
   if (error) {
     console.error('collectionsFor', error.message)
     return []
   }
-  return shape((data ?? []) as unknown as CollectionRow[])
+  // Most helpful shelf first; Array.sort is stable, so ties keep "recently updated" order.
+  return shape((data ?? []) as unknown as CollectionRow[]).sort((a, b) => b.helpful - a.helpful)
 }
 
 /** Live file counts per unit for a subject: { [unit]: count }. */
@@ -152,12 +176,14 @@ export interface RecentCollection {
 
 export async function recentlyUpdated(limit = 8): Promise<RecentCollection[]> {
   if (!supabaseConfigured) return []
-  const { data, error } = await supabasePublic()
-    .from('collections')
-    .select(`id, owner_id, subject_code, unit, description, created_at, updated_at, profiles(display_name, role), files(${FILE_COLUMNS})`)
-    .is('files.deleted_at', null)
-    .order('updated_at', { ascending: false })
-    .limit(limit * 2)
+  const { data, error } = await readWithVotes((cols) =>
+    supabasePublic()
+      .from('collections')
+      .select(`id, owner_id, subject_code, unit, description, created_at, updated_at, profiles(display_name, role), files(${cols})`)
+      .is('files.deleted_at', null)
+      .order('updated_at', { ascending: false })
+      .limit(limit * 2),
+  )
   if (error) return []
   return shape((data ?? []) as unknown as CollectionRow[])
     .slice(0, limit)
@@ -236,13 +262,15 @@ export interface FileWithContext extends NoteFile {
 export async function fileById(id: string): Promise<FileWithContext | null> {
   if (!supabaseConfigured || !/^[0-9a-f-]{36}$/i.test(id)) return null
   // One round trip: the file, its shelf, the owner and the shelf's other files.
-  const { data: file } = await supabasePublic()
-    .from('files')
-    .select(`${FILE_COLUMNS}, collections(subject_code, unit, profiles(display_name, role), files(${FILE_COLUMNS}))`)
-    .eq('id', id)
-    .is('deleted_at', null)
-    .is('collections.files.deleted_at', null)
-    .maybeSingle()
+  const { data: file } = await readWithVotes((cols) =>
+    supabasePublic()
+      .from('files')
+      .select(`${cols}, collections(subject_code, unit, profiles(display_name, role), files(${cols}))`)
+      .eq('id', id)
+      .is('deleted_at', null)
+      .is('collections.files.deleted_at', null)
+      .maybeSingle(),
+  )
   if (!file) return null
   const { collections: col, ...own } = file as unknown as FileRow & {
     collections: { subject_code: string; unit: number; profiles: Owner; files: FileRow[] } | null
@@ -272,14 +300,15 @@ export interface FileHit {
 }
 
 export async function searchFiles(q: string): Promise<FileHit[]> {
-  if (!supabaseConfigured || q.length < 2) return []
-  const pattern = `%${q.replace(/[%_\\]/g, (m) => `\\${m}`)}%`
-  const { data, error } = await supabasePublic()
+  const terms = q.split(/\s+/).filter((t) => t.length > 0).slice(0, 5)
+  if (!supabaseConfigured || q.length < 2 || terms.length === 0) return []
+  let query = supabasePublic()
     .from('files')
     .select('id, name, mime, collections!inner(subject_code, unit, hidden, profiles(display_name, role))')
     .is('deleted_at', null)
-    .ilike('name', pattern)
-    .limit(30)
+  // Every word must appear in the file name, in any order: "laplace unit 2" finds "Unit 2 Laplace".
+  for (const t of terms) query = query.ilike('name', `%${t.replace(/[%_\\]/g, (m) => `\\${m}`)}%`)
+  const { data, error } = await query.limit(40)
   if (error) return []
   return ((data ?? []) as unknown as {
     id: string

@@ -410,6 +410,68 @@ describe('duplicate fingerprints', () => {
   })
 })
 
+describe('community features', () => {
+  const FV = 'ffffffff-0000-4000-8000-000000000001'
+  let shelfA = ''
+  let commentOnFv = ''
+
+  it('allows the question-papers shelf (unit 6) and nothing beyond', async () => {
+    const ok = await as(A, `insert into public.collections (owner_id, subject_code, unit) values ($1, '25ES1CS101', 6) returning id`, [A])
+    expect(ok.rows).toHaveLength(1)
+    await fails(A, `insert into public.collections (owner_id, subject_code, unit) values ($1, '25ES1CS101', 7)`, [A])
+  })
+
+  it('lets members mark a note helpful, once, and never their own', async () => {
+    const col = (await as(A, `select id from public.collections where owner_id = $1 and unit = 6`, [A])).rows[0]!.id as string
+    shelfA = col
+    await as(A, `insert into public.files (id, collection_id, owner_id, storage_path, name, mime, size_bytes) values ($1, $2, $3, $4, 'Paper', 'application/pdf', 1000)`,
+      [FV, col, A, path(A, col, FV)])
+    await as(B, `insert into public.file_votes (file_id, user_id) values ($1, $2)`, [FV, B])
+    await fails(B, `insert into public.file_votes (file_id, user_id) values ($1, $2)`, [FV, B])
+    await fails(A, `insert into public.file_votes (file_id, user_id) values ($1, $2)`, [FV, A])
+    await fails(B, `insert into public.file_votes (file_id, user_id) values ($1, $2)`, [FV, A])
+    // anyone can see the count
+    expect((await as(null, `select count(*)::int as n from public.file_votes where file_id = $1`, [FV])).rows[0]).toEqual({ n: 1 })
+    // only you can take your own vote back
+    const nope = await as(A, `delete from public.file_votes where file_id = $1 returning user_id`, [FV])
+    expect(nope.rows).toHaveLength(0)
+    await as(B, `delete from public.file_votes where file_id = $1 and user_id = $2`, [FV, B])
+    expect((await as(null, `select count(*)::int as n from public.file_votes where file_id = $1`, [FV])).rows[0]).toEqual({ n: 0 })
+  })
+
+  it('keeps saved notes private', async () => {
+    await as(B, `insert into public.bookmarks (user_id, file_id) values ($1, $2)`, [B, FV])
+    expect((await as(B, `select file_id from public.bookmarks`)).rows).toHaveLength(1)
+    expect((await as(A, `select file_id from public.bookmarks`)).rows).toHaveLength(0)
+    expect((await as(null, `select file_id from public.bookmarks`).catch(() => ({ rows: [] }))).rows).toHaveLength(0)
+    await fails(A, `insert into public.bookmarks (user_id, file_id) values ($1, $2)`, [B, FV])
+  })
+
+  it('takes reports from signed-in members and shows them only to the reporter and staff', async () => {
+    const c = await as(A, `insert into public.comments (file_id, author_id, body) values ($1, $2, 'rude') returning id`, [FV, A])
+    commentOnFv = c.rows[0]!.id as string
+    await as(B, `insert into public.reports (reporter_id, file_id, reason) values ($1, $2, 'low_quality')`, [B, FV])
+    await as(B, `insert into public.reports (reporter_id, comment_id, reason, details) values ($1, $2, 'spam', 'link farm')`, [B, commentOnFv])
+    // one open report per person per note
+    await fails(B, `insert into public.reports (reporter_id, file_id, reason) values ($1, $2, 'duplicate')`, [B, FV])
+    // exactly one target, honest reporter, known reason
+    await fails(B, `insert into public.reports (reporter_id, reason) values ($1, 'spam')`, [B])
+    await fails(B, `insert into public.reports (reporter_id, file_id, comment_id, reason) values ($1, $2, $3, 'spam')`, [B, FV, commentOnFv])
+    await fails(B, `insert into public.reports (reporter_id, file_id, reason) values ($1, $2, 'low_quality')`, [A, FV])
+    await fails(B, `insert into public.reports (reporter_id, file_id, reason) values ($1, $2, 'because')`, [B, FV])
+    // privacy: the uploader cannot see who reported them
+    expect((await as(A, `select id from public.reports`)).rows).toHaveLength(0)
+    expect((await as(B, `select id from public.reports`)).rows).toHaveLength(2)
+    expect((await as(ADMIN, `select id from public.reports`)).rows).toHaveLength(2)
+    await fails(B, `select public.resolve_reports($1)`, [FV])
+    await as(ADMIN, `select public.resolve_reports($1, null)`, [FV])
+    expect((await as(ADMIN, `select id from public.reports where resolved_at is null`)).rows).toHaveLength(1)
+    // once resolved, the same person may report it again
+    await as(B, `insert into public.reports (reporter_id, file_id, reason) values ($1, $2, 'duplicate')`, [B, FV])
+    void shelfA
+  })
+})
+
 describe('moderator role', () => {
   const MOD = '44444444-4444-4444-8444-444444444444'
   const M1 = 'dddddddd-0000-4000-8000-000000000001'

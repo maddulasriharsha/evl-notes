@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { Download, ExternalLink } from 'lucide-react'
+import { HelpfulButton, RecordView, ReportButton, SaveButton } from '@/components/file-actions'
 import { FileTools } from '@/components/file-tools'
 import { ViewerWithComments } from '@/components/comments'
 import { ImageViewer } from '@/components/image-viewer'
@@ -65,6 +66,10 @@ export default async function UploadViewer({ params }: PageProps<'/view/u/[id]'>
         position: `${i + 1}/${file.siblings.length}`,
         actions: (
           <>
+            <RecordView id={file.id} name={file.name} subject={file.subject_code} unit={file.unit} />
+            <HelpfulButton fileId={file.id} ownerId={file.owner_id} subject={file.subject_code} unit={file.unit} initialCount={file.helpful_count} />
+            <SaveButton fileId={file.id} />
+            <ReportButton fileId={file.id} />
             <FileTools
               id={file.id}
               ownerId={file.owner_id}

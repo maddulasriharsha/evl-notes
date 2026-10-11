@@ -25,7 +25,7 @@ function loadViewer(): Promise<Viewer> {
   return viewerPromise
 }
 
-function useViewer() {
+export function useViewer() {
   const [viewer, setViewer] = useState<Viewer>(null)
   useEffect(() => {
     let live = true

@@ -40,7 +40,13 @@ function sortFiles(a: DriveFile, b: DriveFile) {
 
 export function driveFilesFor(subject: string, unit?: number) {
   const list = bySubject.get(subject) ?? []
-  const filtered = unit === undefined ? list : list.filter((f) => (f.unit ?? 0) === unit)
+  // Section 6 is "Previous question papers": the owner's question-bank files are listed there too.
+  const filtered =
+    unit === undefined
+      ? list
+      : unit === 6
+        ? list.filter((f) => f.kind === 'questions')
+        : list.filter((f) => (f.unit ?? 0) === unit)
   return [...filtered].sort(sortFiles)
 }
 

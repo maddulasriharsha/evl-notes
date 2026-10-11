@@ -23,6 +23,12 @@ describe('guessPlacement', () => {
     expect(guessPlacement(`${theory.code} unit 9.pdf`)?.unit).toBeNull()
   })
 
+  it('recognises question papers', () => {
+    expect(guessPlacement(`${theory.code} previous question papers.pdf`)?.unit).toBe(6)
+    expect(guessPlacement(`${theory.code} mid 1 paper.pdf`)?.unit).toBe(6)
+    expect(guessPlacement(`${theory.code} PYQ 2024.pdf`)?.unit).toBe(6)
+  })
+
   it('knows nothing from a phone-camera name', () => {
     expect(guessPlacement('IMG_20260912_104455.jpg')).toBeNull()
     expect(guessPlacement('WhatsApp Image 2026-09-12 at 10.44.55 AM.jpeg')).toBeNull()

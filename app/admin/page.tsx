@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
-import { CommentModButtons, FileModButtons, UserModButtons } from '@/components/admin-actions'
+import { CommentModButtons, FileModButtons, ReportActions, UserModButtons } from '@/components/admin-actions'
 import { AdminHideToggle } from '@/components/admin-hide-toggle'
 import { DailyChart } from '@/components/daily-chart'
 import { Container, OwnerName } from '@/components/ui'
@@ -14,6 +14,7 @@ export const dynamic = 'force-dynamic'
 
 const allTabs = [
   { id: 'overview', label: 'Dashboard', adminOnly: true },
+  { id: 'reports', label: 'Reports', adminOnly: false },
   { id: 'files', label: 'Files', adminOnly: false },
   { id: 'comments', label: 'Comments', adminOnly: false },
   { id: 'people', label: 'People', adminOnly: false },
@@ -75,6 +76,16 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
   const supabase = await supabaseServer()
 
   let body: React.ReactNode = null
+  const REASON_LABEL: Record<string, string> = {
+    wrong_place: 'Wrong subject or chapter',
+    low_quality: 'Unreadable or low quality',
+    duplicate: 'Duplicate',
+    inappropriate: 'Inappropriate',
+    copyright: 'Copyrighted material',
+    spam: 'Spam',
+    other: 'Other',
+  }
+  const { count: openReports } = await supabase.from('reports').select('id', { count: 'exact', head: true }).is('resolved_at', null)
 
   if (tab === 'overview') {
     const [overview, daily, logins, people] = await Promise.all([
@@ -187,6 +198,89 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
         </div>
       )
     }
+  }
+
+  if (tab === 'reports') {
+    const { data, error } = await supabase
+      .from('reports')
+      .select(
+        'id, reason, details, created_at, file_id, comment_id, reporter:profiles!reports_reporter_id_fkey(display_name), files(name, deleted_at, collections(subject_code, unit)), comments(body, deleted_at, file_id)',
+      )
+      .is('resolved_at', null)
+      .order('created_at', { ascending: false })
+      .limit(300)
+    type R = {
+      id: string
+      reason: string
+      details: string | null
+      created_at: string
+      file_id: string | null
+      comment_id: string | null
+      reporter: { display_name: string } | null
+      files: { name: string; deleted_at: string | null; collections: { subject_code: string; unit: number } | null } | null
+      comments: { body: string; deleted_at: string | null; file_id: string } | null
+    }
+    // One row per reported note or comment, with every reason given for it.
+    const groups = new Map<string, { target: R; items: R[] }>()
+    for (const r of (data ?? []) as unknown as R[]) {
+      const key = r.file_id ?? r.comment_id ?? r.id
+      const g = groups.get(key) ?? { target: r, items: [] }
+      g.items.push(r)
+      groups.set(key, g)
+    }
+    body = error ? (
+      <p className="text-danger">{error.message}. Has the community-features SQL been run?</p>
+    ) : groups.size === 0 ? (
+      <p className="text-ink-3">No open reports. Nice and quiet.</p>
+    ) : (
+      <Table head={['Reported', 'Why', 'By', 'When', '']}>
+        {[...groups.values()].map(({ target: t, items }) => {
+          const col = t.files?.collections
+          return (
+            <tr key={t.id} className={rowCls(false)}>
+              <td className={`${td} max-w-xs`}>
+                {t.file_id ? (
+                  <>
+                    <Link href={`/view/u/${t.file_id}`} className="font-medium hover:text-accent">{t.files?.name ?? 'Note'}</Link>
+                    <p className="text-xs text-ink-3">
+                      {col ? where(col.subject_code, col.unit) : ''}
+                      {t.files?.deleted_at && ' · already hidden'}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="line-clamp-2 break-words whitespace-pre-line">{t.comments?.body ?? 'Comment'}</p>
+                    {t.comments && (
+                      <Link href={`/view/u/${t.comments.file_id}`} className="text-xs text-ink-3 hover:text-accent">Open the note</Link>
+                    )}
+                  </>
+                )}
+              </td>
+              <td className={td}>
+                <ul className="space-y-1 text-xs">
+                  {items.map((i) => (
+                    <li key={i.id}>
+                      <span className="font-medium">{REASON_LABEL[i.reason] ?? i.reason}</span>
+                      {i.details && <span className="text-ink-3"> — {i.details}</span>}
+                    </li>
+                  ))}
+                </ul>
+              </td>
+              <td className={`${td} text-xs text-ink-3`}>{[...new Set(items.map((i) => i.reporter?.display_name ?? 'Someone'))].join(', ')}</td>
+              <td className={`${td} whitespace-nowrap text-ink-3`}>{timeAgo(items[0]!.created_at)}</td>
+              <td className={td}>
+                <ReportActions
+                  fileId={t.file_id ?? undefined}
+                  commentId={t.comment_id ?? undefined}
+                  subject={col?.subject_code}
+                  unit={col?.unit}
+                />
+              </td>
+            </tr>
+          )
+        })}
+      </Table>
+    )
   }
 
   if (tab === 'files') {
@@ -399,6 +493,9 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
             className={`rounded-lg px-4 py-1.5 font-medium ${tab === t.id ? 'bg-ink text-bg' : 'text-ink-2 hover:bg-surface-2'}`}
           >
             {t.label}
+            {t.id === 'reports' && !!openReports && (
+              <span className={`ml-1.5 rounded-full px-1.5 text-xs font-semibold ${tab === t.id ? 'bg-bg text-ink' : 'bg-danger text-white'}`}>{openReports}</span>
+            )}
           </Link>
         ))}
       </nav>
