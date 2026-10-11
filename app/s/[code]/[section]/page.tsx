@@ -66,7 +66,7 @@ export default async function SectionPage({ params }: PageProps<'/s/[code]/[sect
   // PDFs and photos that can be joined into one downloadable PDF (Drive links cannot).
   const sourcesOf = (c: NoteCollection) =>
     c.files
-      .filter((f) => f.storage_path && (f.mime === 'application/pdf' || f.mime.startsWith('image/')))
+      .filter((f) => f.storage_path && !f.original_removed_at && (f.mime === 'application/pdf' || f.mime.startsWith('image/')))
       .map((f) => ({ name: f.name, mime: f.mime, url: publicFileUrl(f.storage_path!) }))
   const allSources = collections.flatMap(sourcesOf)
   const topHelpful = collections.reduce((m, c) => Math.max(m, c.helpful), 0)

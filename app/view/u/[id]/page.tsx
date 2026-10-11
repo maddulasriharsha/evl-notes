@@ -36,11 +36,21 @@ export default async function UploadViewer({ params }: PageProps<'/view/u/[id]'>
   const prev = file.siblings[i - 1]
   const next = file.siblings[i + 1]
   // A note is either an uploaded file in our storage or a link to Google Drive.
-  const link = file.drive_id && isDriveMime(file.mime) ? { id: file.drive_id, kind: driveKindFromMime(file.mime) } : null
-  const original = file.storage_path ? publicFileUrl(file.storage_path) : ''
-  const download = file.storage_path ? publicFileUrl(file.storage_path, file.name) : ''
+  // After a week the Storage original is replaced by its Drive backup, which is then shown the same way.
+  const backedUp = !!file.original_removed_at && !!file.backup_drive_id
+  const link = file.drive_id && isDriveMime(file.mime)
+    ? { id: file.drive_id, kind: driveKindFromMime(file.mime) }
+    : backedUp
+      ? { id: file.backup_drive_id!, kind: 'file' as const }
+      : null
+  const original = file.storage_path && !backedUp ? publicFileUrl(file.storage_path) : ''
+  const download = file.storage_path && !backedUp ? publicFileUrl(file.storage_path, file.name) : ''
   const isPdf = file.mime === 'application/pdf'
-  const detail = link
+  const detail = backedUp
+    ? file.size_bytes != null
+      ? `${formatBytes(file.size_bytes)} · stored in Drive`
+      : 'Stored in Drive'
+    : link
     ? DRIVE_KIND_LABEL[link.kind]
     : file.size_bytes != null
       ? formatBytes(file.size_bytes)

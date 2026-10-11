@@ -24,6 +24,10 @@ export interface NoteFile {
   comment_count: number
   /** How many people marked this note helpful. */
   helpful_count: number
+  /** Google Drive copy kept as a backup of the upload. */
+  backup_drive_id: string | null
+  /** Set once the Storage original was removed; the note is then served from the Drive copy. */
+  original_removed_at: string | null
 }
 
 export interface NoteCollection {
@@ -45,26 +49,42 @@ export interface NoteCollection {
 const BASE_COLUMNS =
   'id, collection_id, owner_id, storage_path, drive_id, thumb_path, preview_path, name, mime, size_bytes, page_count, width, height, position, created_at, comments(count)'
 
-// Helpful votes live in a table added by a later migration. Until it exists, read without it so
-// the site keeps working; the first failed read flips this off for the rest of the process.
-let votesReady = true
-const fileColumns = () => (votesReady ? `${BASE_COLUMNS}, file_votes(count)` : BASE_COLUMNS)
+// Helpful votes and the Drive-backup columns arrive with later migrations. Until they exist, read
+// without them so the site keeps working; a failed read switches the missing part off for the rest
+// of the process.
+const optional = { votes: true, backup: true }
+const fileColumns = () =>
+  [BASE_COLUMNS, optional.backup && 'backup_drive_id, original_removed_at', optional.votes && 'file_votes(count)'].filter(Boolean).join(', ')
 
-/** Runs a read that selects file columns, retrying once without votes if that table is missing. */
+/** Runs a read that selects file columns, retrying without any optional part that is missing. */
 async function readWithVotes<T extends { error: { message: string } | null }>(run: (columns: string) => PromiseLike<T>): Promise<T> {
-  const first = await run(fileColumns())
-  if (first.error && votesReady && /file_votes/.test(first.error.message)) {
-    votesReady = false
-    return run(fileColumns())
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const res = await run(fileColumns())
+    const message = res.error?.message ?? ''
+    if (!res.error) return res
+    if (optional.votes && /file_votes/.test(message)) optional.votes = false
+    else if (optional.backup && /backup_drive_id|original_removed_at/.test(message)) optional.backup = false
+    else return res
   }
-  return first
+  return run(fileColumns())
 }
 
 type Owner = { display_name: string; role: string } | null
-type FileRow = Omit<NoteFile, 'comment_count' | 'helpful_count'> & { comments?: { count: number }[]; file_votes?: { count: number }[] }
+type FileRow = Omit<NoteFile, 'comment_count' | 'helpful_count' | 'backup_drive_id' | 'original_removed_at'> & {
+  comments?: { count: number }[]
+  file_votes?: { count: number }[]
+  backup_drive_id?: string | null
+  original_removed_at?: string | null
+}
 
-function shapeFile({ comments, file_votes, ...f }: FileRow): NoteFile {
-  return { ...f, comment_count: comments?.[0]?.count ?? 0, helpful_count: file_votes?.[0]?.count ?? 0 }
+function shapeFile({ comments, file_votes, backup_drive_id, original_removed_at, ...f }: FileRow): NoteFile {
+  return {
+    ...f,
+    comment_count: comments?.[0]?.count ?? 0,
+    helpful_count: file_votes?.[0]?.count ?? 0,
+    backup_drive_id: backup_drive_id ?? null,
+    original_removed_at: original_removed_at ?? null,
+  }
 }
 
 type CollectionRow = Omit<NoteCollection, 'owner_name' | 'owner_is_admin' | 'owner_is_mod' | 'helpful' | 'files'> & {

@@ -24,5 +24,5 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   // Only routes that need a session; public browsing pages stay cacheable.
-  matcher: ['/upload/:path*', '/me/:path*', '/saved/:path*', '/admin/:path*', '/login', '/auth/:path*'],
+  matcher: ['/upload/:path*', '/me/:path*', '/saved/:path*', '/api/admin/:path*', '/admin/:path*', '/login', '/auth/:path*'],
 }

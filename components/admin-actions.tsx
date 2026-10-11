@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
+import { removeBackupCopy } from '@/app/admin/backup-actions'
 import { refreshChapter } from '@/app/upload/actions'
 import { STORAGE_BUCKET } from '@/lib/env'
 import { supabaseBrowser } from '@/lib/supabase/browser'
@@ -81,8 +82,12 @@ export function FileModButtons({
             run(
               'purge',
               async () => {
+                // Read the Drive copy's id first: once the row is gone it cannot be looked up.
+                const backup = await db().from('files').select('backup_drive_id').eq('id', id).maybeSingle()
+                const driveCopy = (backup.data as { backup_drive_id: string | null } | null)?.backup_drive_id ?? null
                 const { data, error } = await db().rpc('admin_purge_file', { p_file: id })
                 if (error) return { error }
+                if (driveCopy) await removeBackupCopy(driveCopy).catch(() => undefined)
                 const paths = (data as string[] | null) ?? []
                 const removed = paths.length ? await db().storage.from(STORAGE_BUCKET).remove(paths) : { error: null }
                 return { error: removed.error ? { message: `Removed from the site, but storage cleanup failed: ${removed.error.message}` } : null }

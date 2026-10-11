@@ -4,10 +4,14 @@ import { notFound, redirect } from 'next/navigation'
 import { CommentModButtons, FileModButtons, ReportActions, UserModButtons } from '@/components/admin-actions'
 import { AdminHideToggle } from '@/components/admin-hide-toggle'
 import { AnnouncementManager, type AnnouncementRow } from '@/components/announcement-manager'
+import { BackupPanel } from '@/components/backup-panel'
 import { DailyChart } from '@/components/daily-chart'
 import { Container, OwnerName } from '@/components/ui'
 import { findSubject, sectionHref, sectionLabel } from '@/lib/curriculum'
 import { formatBytes, formatDate, plural, timeAgo } from '@/lib/format'
+import { backupStatus } from '@/lib/backup-job'
+import { driveBackupConfigured } from '@/lib/drive-backup'
+import { adminConfigured } from '@/lib/supabase/admin'
 import { currentProfile, supabaseServer } from '@/lib/supabase/server'
 
 export const metadata: Metadata = { title: 'Admin' }
@@ -21,6 +25,7 @@ const allTabs = [
   { id: 'people', label: 'People', adminOnly: false },
   { id: 'shelves', label: 'Shelves', adminOnly: false },
   { id: 'announcements', label: 'Announcements', adminOnly: false },
+  { id: 'backup', label: 'Backup', adminOnly: true },
 ] as const
 type Tab = (typeof allTabs)[number]['id']
 
@@ -429,6 +434,20 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
           </tr>
         ))}
       </Table>
+    )
+  }
+
+  if (tab === 'backup' && isAdmin) {
+    // Do the new columns exist yet? Selecting one is the cheapest way to find out.
+    const probe = await supabase.from('files').select('backup_drive_id').limit(1)
+    body = (
+      <BackupPanel
+        service={adminConfigured()}
+        drive={driveBackupConfigured()}
+        cron={!!process.env.CRON_SECRET}
+        columns={!probe.error}
+        status={await backupStatus()}
+      />
     )
   }
 
