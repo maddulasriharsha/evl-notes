@@ -36,7 +36,7 @@ async function toJpeg(file: File) {
 export async function photosToPdf(photos: File[], title: string, onProgress?: (done: number) => void) {
   const pdf = await PDFDocument.create()
   pdf.setTitle(title)
-  pdf.setProducer('EVL Notes')
+  pdf.setProducer('VJNOTES')
   for (const [i, photo] of photos.entries()) {
     const { bytes, width, height } = await toJpeg(photo)
     const image = await pdf.embedJpg(bytes)

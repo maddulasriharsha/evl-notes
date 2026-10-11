@@ -1,4 +1,4 @@
-# EVL Notes
+# VJNOTES
 
 Class notes for **B.Tech EVL (R25), VNR VJIET**: Year I and II, Semesters 1–4. Anyone can read, preview and
 download. Students sign in (Google or any email) to upload photos or PDFs to a chapter.
@@ -55,7 +55,7 @@ can never overwrite another.
    message body with
 
    ```html
-   <h2>Sign in to EVL Notes</h2>
+   <h2>Sign in to VJNOTES</h2>
    <p><a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next=/upload">Sign in</a></p>
    <p>Or type this code on the sign-in page: <strong>{{ .Token }}</strong></p>
    ```

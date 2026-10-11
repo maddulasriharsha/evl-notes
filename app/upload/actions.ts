@@ -67,7 +67,7 @@ export async function inspectDriveLink(input: string): Promise<DriveCheck> {
       redirect: 'manual',
       cache: 'no-store',
       signal: AbortSignal.timeout(8000),
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; EVLNotes/1.0)', 'Accept-Language': 'en' },
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; VJNOTES/1.0)', 'Accept-Language': 'en' },
     })
     if (res.status >= 300 && res.status < 400) {
       const to = res.headers.get('location') ?? ''

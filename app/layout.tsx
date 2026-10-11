@@ -8,10 +8,10 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'sw
 const syne = Syne({ subsets: ['latin'], variable: '--font-syne', display: 'swap', weight: ['500', '600', '700', '800'] })
 
 export const metadata: Metadata = {
-  title: { default: 'EVL Notes · VNR VJIET', template: '%s · EVL Notes' },
+  title: { default: 'VJNOTES · VNR VJIET class notes', template: '%s · VJNOTES' },
   description:
-    'Class notes for B.Tech EVL (R25), VNR VJIET, organised by semester, subject and chapter. Free to read and download, no sign-in needed.',
-  applicationName: 'EVL Notes',
+    'Class notes for every B.Tech branch (R25) at VNR VJIET, organised by branch, semester, subject and chapter. Free to read and download, no sign-in needed.',
+  applicationName: 'VJNOTES',
 }
 
 export const viewport: Viewport = {

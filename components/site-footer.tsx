@@ -7,7 +7,7 @@ export function SiteFooter() {
       <div className="mx-auto flex max-w-5xl flex-col gap-4 border-t border-white/[0.06] px-4 py-8 text-sm text-ink-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <div className="flex items-center gap-2.5">
           <LogoMark className="size-5" />
-          <span>EVL Notes · VNR VJIET class notes</span>
+          <span>VJNOTES · VNR VJIET class notes</span>
         </div>
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
           <Link href="/#branches" className="hover:text-ink">Branches</Link>

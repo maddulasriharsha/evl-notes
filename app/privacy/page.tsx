@@ -7,7 +7,7 @@ const sections: { title: string; body: string[] }[] = [
   {
     title: 'What this site is',
     body: [
-      'EVL Notes is a free, non-commercial site where B.Tech EVL (R25) students at VNR VJIET share class notes. It is run by a student, Sriharsha Reddy (EVL), not by the college.',
+      'VJNOTES is a free, non-commercial site where B.Tech (R25) students at VNR VJIET share class notes. It is run by a student, Sriharsha Reddy (EVL), not by the college.',
     ],
   },
   {
