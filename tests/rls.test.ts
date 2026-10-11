@@ -424,6 +424,15 @@ describe('moderator role', () => {
     expect(nope.rows).toHaveLength(0)
   })
 
+  it('can rename anyone’s file; members can rename only their own', async () => {
+    await as(MOD, `update public.files set name = 'Renamed by mod' where id = $1`, [M1])
+    expect((await as(null, `select name from public.files where id = $1`, [M1])).rows[0]).toEqual({ name: 'Renamed by mod' })
+    await as(A, `update public.files set name = 'Mine again' where id = $1`, [M1])
+    const nope = await as(B, `update public.files set name = 'Hijacked' where id = $1 returning id`, [M1])
+    expect(nope.rows).toHaveLength(0)
+    expect((await as(null, `select name from public.files where id = $1`, [M1])).rows[0]).toEqual({ name: 'Mine again' })
+  })
+
   it('can hide a shelf and remove any comment', async () => {
     await as(MOD, `select public.set_collection_hidden($1, true)`, [shelf])
     expect((await as(null, `select id from public.collections where id = $1`, [shelf])).rows).toHaveLength(0)

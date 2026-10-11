@@ -35,12 +35,14 @@ function Btn({ onClick, busy, danger, dark, children }: { onClick: () => void; b
 
 export function FileModButtons({
   id,
+  name,
   hidden,
   subject,
   unit,
   canPurge = true,
 }: {
   id: string
+  name?: string
   hidden: boolean
   subject: string
   unit: number
@@ -52,6 +54,18 @@ export function FileModButtons({
   const refresh = () => refreshChapter(subject, unit)
   return (
     <div className="flex justify-end gap-1.5">
+      {name !== undefined && !hidden && (
+        <Btn
+          busy={busy === 'rename'}
+          onClick={() => {
+            const next = prompt('Rename this file', name)?.trim().replace(/\s+/g, ' ').slice(0, 200)
+            if (!next || next === name) return
+            void run('rename', () => db().from('files').update({ name: next }).eq('id', id), refresh)
+          }}
+        >
+          Rename
+        </Btn>
+      )}
       <Btn
         busy={busy === 'hide'}
         dark={hidden}

@@ -224,7 +224,7 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
             <td className={`${td} whitespace-nowrap text-ink-3`}>{timeAgo(f.created_at)}</td>
             <td className={td}>
               {f.collections && (
-                <FileModButtons id={f.id} hidden={!!f.deleted_at} subject={f.collections.subject_code} unit={f.collections.unit} canPurge={isAdmin} />
+                <FileModButtons id={f.id} name={f.name} hidden={!!f.deleted_at} subject={f.collections.subject_code} unit={f.collections.unit} canPurge={isAdmin} />
               )}
             </td>
           </tr>

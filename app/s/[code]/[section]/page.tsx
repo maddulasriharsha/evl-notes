@@ -129,7 +129,7 @@ export default async function SectionPage({ params }: PageProps<'/s/[code]/[sect
                     </header>
                     {c?.description && <p className="mb-4 text-sm whitespace-pre-line text-ink-2">{c.description}</p>}
                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-                      {c?.files.map((f) => <UploadFileCard key={f.id} file={f} />)}
+                      {c?.files.map((f) => <UploadFileCard key={f.id} file={f} subject={subject.code} unit={unit} />)}
                       {driveList.map((f) => (
                         <DriveFileCard key={f.id} file={f} />
                       ))}

@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { MessageCircle } from 'lucide-react'
+import { FileTools } from '@/components/file-tools'
 import { Thumb, type ThumbIcon } from '@/components/thumb'
 import { Badge } from '@/components/ui'
 import type { NoteFile } from '@/lib/data'
@@ -8,14 +9,16 @@ import { thumbFor } from '@/lib/file-thumb'
 import { formatBytes, plural } from '@/lib/format'
 import { driveThumbUrl, isImage, kindLabel, type DriveFile } from '@/lib/library'
 
-export function UploadFileCard({ file }: { file: NoteFile }) {
+export function UploadFileCard({ file, subject, unit }: { file: NoteFile; subject: string; unit: number }) {
   const isLink = isDriveMime(file.mime)
   const isPdf = file.mime === 'application/pdf'
   const thumb = thumbFor(file)
   return (
+    <div className="group relative flex">
+    <FileTools id={file.id} ownerId={file.owner_id} name={file.name} subject={subject} unit={unit} variant="card" />
     <Link
       href={`/view/u/${file.id}`}
-      className="group flex flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-card transition hover:-translate-y-0.5 hover:border-line-strong hover:shadow-pop"
+      className="flex w-full flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-card transition hover:-translate-y-0.5 hover:border-line-strong hover:shadow-pop"
     >
       <Thumb
         src={thumb}
@@ -38,6 +41,7 @@ export function UploadFileCard({ file }: { file: NoteFile }) {
         </p>
       </div>
     </Link>
+    </div>
   )
 }
 

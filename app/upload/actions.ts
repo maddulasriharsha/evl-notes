@@ -19,6 +19,13 @@ export async function refreshChapter(subjectCode: string, unit: number) {
   revalidatePath('/contributors')
 }
 
+/** Same as refreshChapter, plus the note's own page (after a rename or delete). */
+export async function refreshFile(fileId: string, subjectCode: string, unit: number) {
+  if (!(await currentUser())) return
+  if (/^[0-9a-f-]{36}$/i.test(fileId)) revalidatePath(`/view/u/${fileId}`)
+  await refreshChapter(subjectCode, unit)
+}
+
 export type DriveCheck =
   | { ok: true; id: string; kind: DriveLinkKind; title: string | null }
   | { ok: false; message: string }

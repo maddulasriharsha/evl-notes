@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { Download, ExternalLink } from 'lucide-react'
-import { AdminFileQuickHide } from '@/components/admin-actions'
+import { FileTools } from '@/components/file-tools'
 import { ViewerWithComments } from '@/components/comments'
 import { ImageViewer } from '@/components/image-viewer'
 import { PdfViewer } from '@/components/pdf-viewer'
@@ -65,7 +65,15 @@ export default async function UploadViewer({ params }: PageProps<'/view/u/[id]'>
         position: `${i + 1}/${file.siblings.length}`,
         actions: (
           <>
-            <AdminFileQuickHide id={file.id} subject={file.subject_code} unit={file.unit} />
+            <FileTools
+              id={file.id}
+              ownerId={file.owner_id}
+              name={file.name}
+              subject={file.subject_code}
+              unit={file.unit}
+              variant="bar"
+              after={sectionHref(file.subject_code, file.unit)}
+            />
             <ActionLink href={openHref} newTab>
               <ExternalLink className="size-4" />
               <span className="hidden md:inline">{link ? 'Open in Drive' : 'Open original'}</span>
