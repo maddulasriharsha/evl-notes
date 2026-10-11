@@ -1,40 +1,44 @@
 /**
- * VJNOTES mark: a folded-paper "V" (two ribbons meeting at a crease) on a dark glass tile with a
- * neon rim and a spark. Kept in sync with app/icon.svg.
+ * VJNOTES mark: a layered "VJ" monogram on a transparent background (no tile), with a magenta V
+ * and a violet J that each throw a darker offset shadow. Kept in sync with app/icon.svg.
  */
 export function LogoMark({ className = 'size-7' }: { className?: string }) {
+  const j = 'M48 14V37a9.500 9.500 0 0 1-9.500 9.500'
   return (
     <svg viewBox="0 0 64 64" className={className} aria-hidden="true">
       <defs>
-        <linearGradient id="vj-rim" x1="4" y1="4" x2="60" y2="60" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#c4b5fd" />
-          <stop offset="0.5" stopColor="#8b5cf6" />
-          <stop offset="1" stopColor="#22d3ee" />
+        <linearGradient id="vj-vl" x1="3" y1="12" x2="19" y2="52" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#9d3d73" />
+          <stop offset="1" stopColor="#5e1b46" />
         </linearGradient>
-        <linearGradient id="vj-l" x1="12" y1="14" x2="32" y2="50" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#f0abfc" />
-          <stop offset="0.5" stopColor="#a78bfa" />
-          <stop offset="1" stopColor="#6d28d9" />
+        <linearGradient id="vj-vr" x1="35" y1="12" x2="19" y2="52" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#e07bb0" />
+          <stop offset="1" stopColor="#a8447c" />
         </linearGradient>
-        <linearGradient id="vj-r" x1="52" y1="14" x2="32" y2="50" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#67e8f9" />
-          <stop offset="0.55" stopColor="#38bdf8" />
-          <stop offset="1" stopColor="#4f46e5" />
+        <linearGradient id="vj-j" x1="40" y1="10" x2="52" y2="48" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#a78bfa" />
+          <stop offset="1" stopColor="#6d4fc4" />
         </linearGradient>
-        <radialGradient id="vj-bg" cx="0.5" cy="0.15" r="0.9">
-          <stop offset="0" stopColor="#2a1b57" />
-          <stop offset="1" stopColor="#09090f" />
-        </radialGradient>
       </defs>
-      <rect x="1.5" y="1.5" width="61" height="61" rx="18" fill="url(#vj-bg)" stroke="url(#vj-rim)" strokeWidth="2.5" />
-      {/* two folded ribbons forming the V */}
-      <path d="M12 14h12l8 24v12z" fill="url(#vj-l)" />
-      <path d="M52 14H40l-8 24v12z" fill="url(#vj-r)" />
-      {/* crease + highlight */}
-      <path d="M32 38v12" stroke="#fff" strokeOpacity="0.35" strokeWidth="1" />
-      <path d="M14.5 16.5h7l7.2 21.5" fill="none" stroke="#fff" strokeOpacity="0.55" strokeWidth="1.2" strokeLinecap="round" />
-      {/* spark */}
-      <path d="M50 5.5c.5 3.6 1.6 4.7 5.2 5.2-3.6.5-4.7 1.6-5.2 5.2-.5-3.6-1.6-4.7-5.2-5.2 3.600-.5 4.700-1.600 5.200-5.200z" fill="#fff" />
+      {/* offset shadows */}
+      <g transform="translate(-1.500 2.500)" fill="#3a1030" opacity="0.9">
+        <path d="M3 12h12l4 26v14z" />
+        <path d="M35 12H23l-4 26v14z" />
+      </g>
+      <g transform="translate(2.500 2.500)" fill="none" stroke="#33236b" strokeWidth="8.500">
+        <path d={j} />
+        <path d="M41 14h17" strokeWidth="6" />
+      </g>
+      {/* V */}
+      <path d="M3 12h12l4 26v14z" fill="url(#vj-vl)" />
+      <path d="M35 12H23l-4 26v14z" fill="url(#vj-vr)" />
+      <path d="M19 38v14" stroke="#fff" strokeOpacity="0.3" />
+      <path d="M5.500 14.500h7" stroke="#fff" strokeOpacity="0.5" strokeWidth="1.200" strokeLinecap="round" />
+      {/* J: cream rim, then violet body */}
+      <path d={j} fill="none" stroke="#efe6d0" strokeWidth="10" />
+      <path d="M40 14h20" stroke="#efe6d0" strokeWidth="8" />
+      <path d={j} fill="none" stroke="url(#vj-j)" strokeWidth="7.500" />
+      <path d="M41.500 14h17" stroke="url(#vj-j)" strokeWidth="5.500" />
     </svg>
   )
 }
