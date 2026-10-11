@@ -1,4 +1,4 @@
-import { allSubjects, PAPERS_UNIT, sectionLabel, type Subject } from '@/lib/curriculum'
+import { allSubjects, PAPERS_UNIT, QUESTION_BANK_UNIT, sectionLabel, type Subject } from '@/lib/curriculum'
 
 const ROMAN: Record<string, number> = { i: 1, ii: 2, iii: 3, iv: 4, v: 5 }
 
@@ -16,7 +16,10 @@ const UNIT = /\b(?:unit|module|chapter|chap|ch|u)\s*[-:]?\s*(iii|ii|iv|i|v|[1-5]
 
 const PAPERS = /\b(?:question\s*papers?|qp|previous\s*(?:year|years)?(?:\s*question)?\s*papers?|pyqs?|model\s*papers?|mid\s*(?:term|exam|\d)|end\s*sem|semester\s*(?:exam|paper)s?|sem\s*exam|exam\s*papers?|supply|supplementary)\b/
 
+const QBANK = /\b(?:question\s*bank|qbank|q\s*bank|qb|imp(?:ortant)?\s*(?:questions?|qs?)|laq|saq|assignments?(?:\s*questions?)?)\b/
+
 function unitFrom(text: string, max: number): number | null {
+  if (QBANK.test(text)) return QUESTION_BANK_UNIT
   if (PAPERS.test(text)) return PAPERS_UNIT
   const m = UNIT.exec(text)
   if (!m) return null

@@ -415,10 +415,12 @@ describe('community features', () => {
   let shelfA = ''
   let commentOnFv = ''
 
-  it('allows the question-papers shelf (unit 6) and nothing beyond', async () => {
+  it('allows the question-papers (6) and question-bank (7) shelves and nothing beyond', async () => {
     const ok = await as(A, `insert into public.collections (owner_id, subject_code, unit) values ($1, '25ES1CS101', 6) returning id`, [A])
     expect(ok.rows).toHaveLength(1)
-    await fails(A, `insert into public.collections (owner_id, subject_code, unit) values ($1, '25ES1CS101', 7)`, [A])
+    const bank = await as(A, `insert into public.collections (owner_id, subject_code, unit) values ($1, '25ES1CS101', 7) returning id`, [A])
+    expect(bank.rows).toHaveLength(1)
+    await fails(A, `insert into public.collections (owner_id, subject_code, unit) values ($1, '25ES1CS101', 8)`, [A])
   })
 
   it('lets members mark a note helpful, once, and never their own', async () => {
@@ -533,6 +535,31 @@ describe('visitor counter', () => {
     expect(Number(v.all_time)).toBe(2)
     expect(Number(v.views_all)).toBe(3)
     expect(v.daily).toHaveLength(7)
+  })
+})
+
+describe('suggestion box', () => {
+  it('lets members suggest, keeps them private, and lets staff read and mark them', async () => {
+    await as(B, `insert into public.suggestions (author_id, category, body) values ($1, 'feature', 'Please add a dark mode toggle')`, [B])
+    await fails(B, `insert into public.suggestions (author_id, category, body) values ($1, 'feature', 'sent as someone else')`, [A])
+    await fails(B, `insert into public.suggestions (author_id, category, body) values ($1, 'rant', 'unknown category here')`, [B])
+    await fails(B, `insert into public.suggestions (author_id, category, body) values ($1, 'bug', 'abc')`, [B])
+    await fails(null, `select * from public.suggestions`)
+    expect((await as(A, `select id from public.suggestions`)).rows).toHaveLength(0)
+    expect((await as(B, `select id from public.suggestions`)).rows).toHaveLength(1)
+    expect((await as(ADMIN, `select id from public.suggestions`)).rows).toHaveLength(1)
+    // the author cannot mark their own as done; staff can
+    const own = await as(B, `update public.suggestions set status = 'done' where author_id = $1 returning id`, [B])
+    expect(own.rows).toHaveLength(0)
+    const staff = await as(ADMIN, `update public.suggestions set status = 'seen' returning id`)
+    expect(staff.rows).toHaveLength(1)
+  })
+
+  it('stops a flood: ten a day', async () => {
+    for (let i = 0; i < 9; i++) {
+      await as(B, `insert into public.suggestions (author_id, category, body) values ($1, 'other', 'suggestion number ${i}')`, [B])
+    }
+    await fails(B, `insert into public.suggestions (author_id, category, body) values ($1, 'other', 'one too many today')`, [B])
   })
 })
 

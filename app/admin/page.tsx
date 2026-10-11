@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
-import { CommentModButtons, FileModButtons, ReportActions, UserModButtons } from '@/components/admin-actions'
+import { CommentModButtons, FileModButtons, ReportActions, SuggestionStatusButtons, UserModButtons } from '@/components/admin-actions'
 import { AdminHideToggle } from '@/components/admin-hide-toggle'
 import { AnnouncementManager, type AnnouncementRow } from '@/components/announcement-manager'
 import { BackupPanel } from '@/components/backup-panel'
@@ -20,6 +20,7 @@ export const dynamic = 'force-dynamic'
 const allTabs = [
   { id: 'overview', label: 'Dashboard', adminOnly: true },
   { id: 'reports', label: 'Reports', adminOnly: false },
+  { id: 'suggestions', label: 'Suggestions', adminOnly: false },
   { id: 'files', label: 'Files', adminOnly: false },
   { id: 'comments', label: 'Comments', adminOnly: false },
   { id: 'people', label: 'People', adminOnly: false },
@@ -94,6 +95,7 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
     other: 'Other',
   }
   const { count: openReports } = await supabase.from('reports').select('id', { count: 'exact', head: true }).is('resolved_at', null)
+  const { count: newSuggestions } = await supabase.from('suggestions').select('id', { count: 'exact', head: true }).eq('status', 'new')
 
   if (tab === 'overview') {
     const [overview, daily, logins, people, visitsRes] = await Promise.all([
@@ -313,6 +315,47 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
             </tr>
           )
         })}
+      </Table>
+    )
+  }
+
+  if (tab === 'suggestions') {
+    const { data, error } = await supabase
+      .from('suggestions')
+      .select('id, category, body, status, created_at, author:profiles!suggestions_author_id_fkey(display_name, role)')
+      .order('created_at', { ascending: false })
+      .limit(200)
+    const rows = (data ?? []) as unknown as {
+      id: string
+      category: string
+      body: string
+      status: string
+      created_at: string
+      author: { display_name: string; role: string } | null
+    }[]
+    const label: Record<string, string> = { feature: 'Feature', bug: 'Broken', content: 'Missing notes', other: 'Other' }
+    body = error ? (
+      <p className="text-danger">{error.message}. Has the question-bank / suggestions SQL been run?</p>
+    ) : rows.length === 0 ? (
+      <p className="text-ink-3">No suggestions yet. The link is in the site footer.</p>
+    ) : (
+      <Table head={['Suggestion', 'Type', 'From', 'When', 'Status', '']}>
+        {rows.map((r) => (
+          <tr key={r.id} className={rowCls(false)}>
+            <td className={`${td} max-w-lg`}>
+              <p className="break-words whitespace-pre-line">{r.body}</p>
+            </td>
+            <td className={`${td} whitespace-nowrap text-ink-2`}>{label[r.category] ?? r.category}</td>
+            <td className={td}>
+              <OwnerName name={r.author?.display_name ?? 'Unknown'} admin={r.author?.role === 'admin'} moderator={r.author?.role === 'moderator'} />
+            </td>
+            <td className={`${td} whitespace-nowrap text-ink-3`}>{timeAgo(r.created_at)}</td>
+            <td className={`${td} capitalize ${r.status === 'new' ? 'font-semibold text-accent' : 'text-ink-3'}`}>{r.status}</td>
+            <td className={td}>
+              <SuggestionStatusButtons id={r.id} status={r.status} />
+            </td>
+          </tr>
+        ))}
       </Table>
     )
   }
@@ -554,6 +597,9 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
             className={`rounded-lg px-4 py-1.5 font-medium ${tab === t.id ? 'bg-ink text-bg' : 'text-ink-2 hover:bg-surface-2'}`}
           >
             {t.label}
+            {t.id === 'suggestions' && !!newSuggestions && (
+              <span className={`ml-1.5 rounded-full px-1.5 text-xs font-semibold ${tab === t.id ? 'bg-bg text-ink' : 'bg-accent text-accent-ink'}`}>{newSuggestions}</span>
+            )}
             {t.id === 'reports' && !!openReports && (
               <span className={`ml-1.5 rounded-full px-1.5 text-xs font-semibold ${tab === t.id ? 'bg-bg text-ink' : 'bg-danger text-white'}`}>{openReports}</span>
             )}

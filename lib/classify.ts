@@ -1,4 +1,4 @@
-import { allSubjects, PAPERS_UNIT, type Subject } from '@/lib/curriculum'
+import { allSubjects, PAPERS_UNIT, QUESTION_BANK_UNIT, type Subject } from '@/lib/curriculum'
 
 /**
  * Works out which subject and chapter some text belongs to, by comparing it with the course names
@@ -58,6 +58,7 @@ export interface Classification {
   confidence: number
 }
 
+const BANK_WORDS = /\b(question\s*bank|important\s*questions|imp\s*questions|short\s*answer\s*questions|long\s*answer\s*questions)\b/i
 const PAPER_WORDS = /\b(question\s*paper|previous\s*year|mid[\s-]*(term|exam|\d)|end\s*sem|semester\s*exam|model\s*paper|time\s*:\s*\d|max(imum)?\s*marks)\b/i
 
 /**
@@ -103,6 +104,7 @@ export function classifyText(text: string, prefer?: ReadonlySet<string>): Classi
   if (second && top.score - second.score < 12) return null
 
   let unit: number | null = top.unit
-  if (PAPER_WORDS.test(clean) && top.unitOv < 0.9) unit = PAPERS_UNIT
+  if (BANK_WORDS.test(clean) && top.unitOv < 0.9) unit = QUESTION_BANK_UNIT
+  else if (PAPER_WORDS.test(clean) && top.unitOv < 0.9) unit = PAPERS_UNIT
   return { code: top.e.subject.code, unit, confidence: Math.min(1, top.score / 110) }
 }

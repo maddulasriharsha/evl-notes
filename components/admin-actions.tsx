@@ -236,6 +236,30 @@ export function ReportActions({
   )
 }
 
+/** Mark a suggestion as seen or done (staff only; the database enforces it). */
+export function SuggestionStatusButtons({ id, status }: { id: string; status: string }) {
+  const { busy, run } = useAction()
+  const set = (next: string) => run(next, () => supabaseBrowser().from('suggestions').update({ status: next }).eq('id', id))
+  return (
+    <div className="flex justify-end gap-1.5">
+      {status !== 'seen' && status !== 'done' && (
+        <Btn busy={busy === 'seen'} onClick={() => set('seen')}>
+          Mark seen
+        </Btn>
+      )}
+      {status !== 'done' ? (
+        <Btn dark busy={busy === 'done'} onClick={() => set('done')}>
+          Done
+        </Btn>
+      ) : (
+        <Btn busy={busy === 'new'} onClick={() => set('new')}>
+          Reopen
+        </Btn>
+      )}
+    </div>
+  )
+}
+
 /** Shown on a file's page to admins and moderators only: hide it from the site right away. */
 export function AdminFileQuickHide({ id, subject, unit }: { id: string; subject: string; unit: number }) {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null)

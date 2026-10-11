@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
-import { Bell, Bookmark, ChevronDown, CloudUpload, LayoutDashboard, LogIn, LogOut, NotebookText, UserRound } from 'lucide-react'
+import { Bell, Bookmark, ChevronDown, Lightbulb, CloudUpload, LayoutDashboard, LogIn, LogOut, NotebookText, UserRound } from 'lucide-react'
 import { InstallButton } from '@/components/install-button'
 import { supabaseConfigured } from '@/lib/env'
 import { supabaseBrowser } from '@/lib/supabase/browser'
@@ -115,6 +115,9 @@ export function AccountButton() {
           </Link>
           <Link role="menuitem" href="/following" onClick={() => setOpen(false)} className={item}>
             <Bell className="size-4 text-ink-3" /> Following
+          </Link>
+          <Link role="menuitem" href="/suggest" onClick={() => setOpen(false)} className={item}>
+            <Lightbulb className="size-4 text-ink-3" /> Suggestion box
           </Link>
           <Link role="menuitem" href="/saved" onClick={() => setOpen(false)} className={item}>
             <Bookmark className="size-4 text-ink-3" /> Saved notes

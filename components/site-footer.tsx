@@ -17,6 +17,7 @@ export function SiteFooter() {
           <Link href="/search" className="hover:text-ink">Search</Link>
           <Link href="/upload" className="hover:text-ink">Upload</Link>
           <Link href="/requests" className="hover:text-ink">Requests</Link>
+          <Link href="/suggest" className="hover:text-ink">Suggest</Link>
           <Link href="/share" className="hover:text-ink">Share</Link>
           <Link href="/privacy" className="hover:text-ink">Privacy</Link>
           <ThemeToggle withLabel className="inline-flex items-center gap-1.5 hover:text-ink" />

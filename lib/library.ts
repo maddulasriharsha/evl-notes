@@ -32,6 +32,8 @@ for (const f of driveFiles) {
   byId.set(f.id, f)
 }
 
+const PAPER_TITLE = /\b(mid|pyq|paper|sem\s*end|end\s*sem|exam|previous)/i
+
 const kindOrder: Record<DriveKind, number> = { notes: 0, slides: 1, lab: 2, questions: 3 }
 
 function sortFiles(a: DriveFile, b: DriveFile) {
@@ -40,13 +42,16 @@ function sortFiles(a: DriveFile, b: DriveFile) {
 
 export function driveFilesFor(subject: string, unit?: number) {
   const list = bySubject.get(subject) ?? []
-  // Section 6 is "Previous question papers": the owner's question-bank files are listed there too.
+  // Section 6 is "Previous question papers" (exams: mid, pyq, sem end); section 7 is the "Question
+  // bank" (important questions, assignments, question sets). Both draw on the owner's question files.
   const filtered =
     unit === undefined
       ? list
       : unit === 6
-        ? list.filter((f) => f.kind === 'questions')
-        : list.filter((f) => (f.unit ?? 0) === unit)
+        ? list.filter((f) => f.kind === 'questions' && PAPER_TITLE.test(f.title))
+        : unit === 7
+          ? list.filter((f) => f.kind === 'questions' && !PAPER_TITLE.test(f.title))
+          : list.filter((f) => (f.unit ?? 0) === unit)
   return [...filtered].sort(sortFiles)
 }
 

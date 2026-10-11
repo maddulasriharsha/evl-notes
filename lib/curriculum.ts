@@ -121,16 +121,21 @@ export function subjectCrumbs(entry: SubjectEntry): { href?: string; label: stri
 /** Section number of the "Previous question papers" shelf every subject has. */
 export const PAPERS_UNIT = 6
 
+/** Section number of the "Question bank" shelf (important questions, assignments, question sets). */
+export const QUESTION_BANK_UNIT = 7
+
 /** URL slug for a section of a subject: 1-5 are chapters, 0 is "general", 6 is question papers. */
 export function sectionSlug(unit: number) {
   if (unit === 0) return 'general'
   if (unit === PAPERS_UNIT) return 'question-papers'
+  if (unit === QUESTION_BANK_UNIT) return 'question-bank'
   return `unit-${unit}`
 }
 
 export function parseSectionSlug(slug: string): number | null {
   if (slug === 'general') return 0
   if (slug === 'question-papers') return PAPERS_UNIT
+  if (slug === 'question-bank') return QUESTION_BANK_UNIT
   const m = /^unit-([1-5])$/.exec(slug)
   return m ? Number(m[1]) : null
 }
@@ -138,12 +143,14 @@ export function parseSectionSlug(slug: string): number | null {
 export function sectionTitle(subject: Subject, unit: number) {
   if (unit === 0) return subject.kind === 'lab' ? 'Lab work & records' : 'Complete notes & general'
   if (unit === PAPERS_UNIT) return 'Previous question papers'
+  if (unit === QUESTION_BANK_UNIT) return 'Question bank'
   return subject.units[unit - 1] ?? `Unit ${unit}`
 }
 
 export function sectionLabel(unit: number) {
   if (unit === 0) return 'General'
   if (unit === PAPERS_UNIT) return 'Papers'
+  if (unit === QUESTION_BANK_UNIT) return 'Q-Bank'
   return `Unit ${['I', 'II', 'III', 'IV', 'V'][unit - 1]}`
 }
 
@@ -151,12 +158,13 @@ export function sectionLabel(unit: number) {
 export function sectionMark(unit: number) {
   if (unit === 0) return '∗'
   if (unit === PAPERS_UNIT) return 'P'
+  if (unit === QUESTION_BANK_UNIT) return 'Q'
   return ['I', 'II', 'III', 'IV', 'V'][unit - 1] ?? String(unit)
 }
 
 /** Sections a subject offers, in display order: its chapters, General, then question papers. */
 export function sectionsOf(subject: Subject) {
-  return [...subject.units.map((_, i) => i + 1), 0, PAPERS_UNIT]
+  return [...subject.units.map((_, i) => i + 1), 0, PAPERS_UNIT, QUESTION_BANK_UNIT]
 }
 
 export function subjectHref(code: string) {
