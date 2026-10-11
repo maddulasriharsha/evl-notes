@@ -21,7 +21,7 @@ export default async function MePage() {
   const supabase = await supabaseServer()
   const { data } = await supabase
     .from('collections')
-    .select('id, subject_code, unit, description, hidden, updated_at, files(id, name, mime, size_bytes, thumb_path, storage_path, position, created_at, deleted_at)')
+    .select('id, subject_code, unit, description, hidden, updated_at, files(id, name, mime, size_bytes, thumb_path, storage_path, drive_id, position, created_at, deleted_at)')
     .eq('owner_id', me.user.id)
     .order('updated_at', { ascending: false })
   const shelves = (data ?? []) as {

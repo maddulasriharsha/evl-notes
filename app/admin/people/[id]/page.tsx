@@ -71,7 +71,7 @@ export default async function PersonPage({ params }: PageProps<'/admin/people/[i
     id: string
     name: string
     mime: string
-    size_bytes: number
+    size_bytes: number | null
     page_count: number | null
     created_at: string
     deleted_at: string | null
@@ -143,7 +143,7 @@ export default async function PersonPage({ params }: PageProps<'/admin/people/[i
                       <p className="text-xs text-ink-3">
                         {f.collections ? where(f.collections.subject_code, f.collections.unit) : '—'} ·{' '}
                         {f.page_count ? `${f.page_count} pages · ` : ''}
-                        {formatBytes(f.size_bytes)} · {timeAgo(f.created_at)}
+                        {f.size_bytes != null ? `${formatBytes(f.size_bytes)} · ` : 'Drive link · '}{timeAgo(f.created_at)}
                         {f.deleted_at && ' · hidden'}
                       </p>
                     </div>

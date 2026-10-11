@@ -340,3 +340,54 @@ describe('admin dashboard', () => {
     expect((await as(ADMIN, `select * from public.admin_user_logins($1)`, [A])).rows).toHaveLength(1)
   })
 })
+
+describe('google drive links', () => {
+  const L1 = 'cccccccc-0000-4000-8000-000000000001'
+  const L2 = 'cccccccc-0000-4000-8000-000000000002'
+  const DRIVE = '1kZqdo_2yHP24dDkfNLxCk-CqCj2yAYMy'
+  const insert = `insert into public.files (id, collection_id, owner_id, drive_id, name, mime) values ($1, $2, $3, $4, 'ODE notes', $5)`
+
+  it('lets someone add a Drive link to their own shelf without using storage', async () => {
+    await as(A, insert, [L1, colA, A, DRIVE, 'application/vnd.google-apps.file'])
+    const r = await db.query(`select storage_path, size_bytes, drive_id from public.files where id = '${L1}'`)
+    expect(r.rows[0]).toEqual({ storage_path: null, size_bytes: null, drive_id: DRIVE })
+    expect((await as(null, `select id from public.files where id = $1`, [L1])).rows).toHaveLength(1)
+  })
+
+  it('accepts folders, Google Docs, Sheets and Slides', async () => {
+    for (const [i, mime] of ['folder', 'document', 'spreadsheet', 'presentation'].entries()) {
+      const id = `cccccccc-0000-4000-8000-00000000010${i}`
+      await as(A, insert, [id, colA, A, DRIVE, `application/vnd.google-apps.${mime}`])
+    }
+  })
+
+  it('refuses links on someone else’s shelf, from anonymous users, and for blocked people', async () => {
+    await fails(B, insert, [L2, colA, B, DRIVE, 'application/vnd.google-apps.file'])
+    await fails(null, insert, [L2, colA, A, DRIVE, 'application/vnd.google-apps.file'])
+    await as(ADMIN, `select public.set_user_banned($1, true)`, [A])
+    await fails(A, insert, [L2, colA, A, DRIVE, 'application/vnd.google-apps.file'])
+    await as(ADMIN, `select public.set_user_banned($1, false)`, [A])
+  })
+
+  it('rejects malformed rows: both sources, no source, wrong type, bad id', async () => {
+    await fails(A, `insert into public.files (id, collection_id, owner_id, drive_id, storage_path, name, mime, size_bytes) values ($1, $2, $3, $4, $5, 'x', 'application/pdf', 10)`,
+      [L2, colA, A, DRIVE, path(A, colA, L2)])
+    await fails(A, `insert into public.files (id, collection_id, owner_id, name, mime) values ($1, $2, $3, 'x', 'application/vnd.google-apps.file')`, [L2, colA, A])
+    await fails(A, insert, [L2, colA, A, DRIVE, 'application/pdf'])
+    await fails(A, insert, [L2, colA, A, 'short', 'application/vnd.google-apps.file'])
+    await fails(A, insert, [L2, colA, A, "bad id with spaces & symbols!", 'application/vnd.google-apps.file'])
+    await fails(A, insert, [L2, colA, A, DRIVE, 'text/html'])
+  })
+
+  it('cannot be pointed at a different Drive file afterwards', async () => {
+    await fails(A, `update public.files set drive_id = '1AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' where id = $1`, [L1])
+  })
+
+  it('can be hidden by its owner, and permanently deleted by an admin once hidden', async () => {
+    await as(A, `update public.files set deleted_at = now() where id = $1`, [L1])
+    expect((await as(null, `select id from public.files where id = $1`, [L1])).rows).toHaveLength(0)
+    const r = await as(ADMIN, `select public.admin_purge_file($1) as paths`, [L1])
+    expect(r.rows[0]!.paths).toEqual([])
+    expect((await db.query(`select count(*)::int as n from public.files where id = '${L1}'`)).rows[0]).toEqual({ n: 0 })
+  })
+})

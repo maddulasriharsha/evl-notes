@@ -196,7 +196,7 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
       id: string
       name: string
       mime: string
-      size_bytes: number
+      size_bytes: number | null
       created_at: string
       deleted_at: string | null
       profiles: { display_name: string; role: string } | null
@@ -209,7 +209,8 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
             <td className={td}>
               <Link href={`/view/u/${f.id}`} className="font-medium hover:text-accent">{f.name}</Link>
               <p className="text-xs text-ink-3">
-                {f.mime === 'application/pdf' ? 'PDF' : 'Image'} · {formatBytes(f.size_bytes)}
+                {f.mime.startsWith('application/vnd.google-apps.') ? 'Drive link' : f.mime === 'application/pdf' ? 'PDF' : 'Image'}
+                {f.size_bytes != null && ` · ${formatBytes(f.size_bytes)}`}
                 {f.deleted_at && ' · hidden'}
               </p>
             </td>

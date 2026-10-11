@@ -7,12 +7,15 @@ export interface NoteFile {
   id: string
   collection_id: string
   owner_id: string
-  storage_path: string
+  /** Where the bytes live in Storage; null for a Google Drive link. */
+  storage_path: string | null
+  /** Google Drive id when this note is a link instead of an upload. */
+  drive_id: string | null
   thumb_path: string | null
   preview_path: string | null
   name: string
   mime: string
-  size_bytes: number
+  size_bytes: number | null
   page_count: number | null
   width: number | null
   height: number | null
@@ -35,7 +38,7 @@ export interface NoteCollection {
 }
 
 const FILE_COLUMNS =
-  'id, collection_id, owner_id, storage_path, thumb_path, preview_path, name, mime, size_bytes, page_count, width, height, position, created_at, comments(count)'
+  'id, collection_id, owner_id, storage_path, drive_id, thumb_path, preview_path, name, mime, size_bytes, page_count, width, height, position, created_at, comments(count)'
 
 type Owner = { display_name: string; role: string } | null
 type FileRow = Omit<NoteFile, 'comment_count'> & { comments?: { count: number }[] }

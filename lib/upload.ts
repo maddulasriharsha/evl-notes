@@ -1,5 +1,6 @@
 'use client'
 
+import { DRIVE_MIME, type DriveLinkKind } from '@/lib/drive-link'
 import { STORAGE_BUCKET } from '@/lib/env'
 import { resizedCopy } from '@/lib/images'
 import { pdfThumbnail } from '@/lib/pdf'
@@ -126,4 +127,27 @@ export async function uploadOne(
   if (error) throw new Error(error.message)
   onStage('done')
   return id
+}
+
+/** Saves a Google Drive link as a note. Only the link is stored, so it uses no storage space. */
+export async function addDriveLink(opts: {
+  userId: string
+  collectionId: string
+  position: number
+  name: string
+  driveId: string
+  kind: DriveLinkKind
+}) {
+  const { error } = await supabaseBrowser()
+    .from('files')
+    .insert({
+      id: crypto.randomUUID(),
+      collection_id: opts.collectionId,
+      owner_id: opts.userId,
+      drive_id: opts.driveId,
+      mime: DRIVE_MIME[opts.kind],
+      name: opts.name.trim().slice(0, 200) || 'Google Drive link',
+      position: opts.position,
+    })
+  if (error) throw new Error(error.message)
 }

@@ -3,13 +3,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowDown, ArrowUp, Camera, Check, CloudUpload, FileStack, FileText, Loader2, TriangleAlert, X } from 'lucide-react'
-import { refreshChapter } from '@/app/upload/actions'
+import { ArrowDown, ArrowUp, Camera, Check, CloudUpload, FileStack, FileText, Link2, Loader2, TriangleAlert, X } from 'lucide-react'
+import { inspectDriveLink, refreshChapter } from '@/app/upload/actions'
 import { regularSemesters, extras, sectionHref, sectionLabel, sectionsOf, sectionTitle, findSubject, type Semester } from '@/lib/curriculum'
 import { formatBytes, plural } from '@/lib/format'
 import { CameraCapture, cameraSupported } from '@/components/camera-capture'
+import { DRIVE_KIND_LABEL, parseDriveLink, type DriveLinkKind } from '@/lib/drive-link'
 import { photosToPdf } from '@/lib/photos-to-pdf'
-import { checkFile, ensureCollection, MAX_FILES, nextPosition, uploadOne, type Stage } from '@/lib/upload'
+import { addDriveLink, checkFile, ensureCollection, MAX_FILES, nextPosition, uploadOne, type Stage } from '@/lib/upload'
 
 interface Item {
   key: string
@@ -19,6 +20,17 @@ interface Item {
   stage: Stage
   error?: string
 }
+
+interface LinkItem {
+  key: string
+  id: string
+  kind: DriveLinkKind
+  name: string
+  stage: Stage
+  error?: string
+}
+
+const MAX_LINKS = 30
 
 const allSemesters: Semester[] = extras ? [...regularSemesters, extras] : regularSemesters
 
@@ -49,6 +61,11 @@ export function Uploader({
     initial && initialUnit !== undefined && sectionsOf(initial.subject).includes(initialUnit) ? initialUnit : undefined,
   )
   const [items, setItems] = useState<Item[]>([])
+  const [mode, setMode] = useState<'files' | 'drive'>('files')
+  const [links, setLinks] = useState<LinkItem[]>([])
+  const [linkText, setLinkText] = useState('')
+  const [linkBusy, setLinkBusy] = useState(false)
+  const [linkErrors, setLinkErrors] = useState<string[]>([])
   const [description, setDescription] = useState('')
   const [combine, setCombine] = useState(true)
   const [pdfName, setPdfName] = useState('')
@@ -106,13 +123,48 @@ export function Uploader({
     setItems((cur) => cur.map((x) => (x.key === key ? { ...x, ...p } : x)))
   }
 
+  function patchLink(key: string, p: Partial<LinkItem>) {
+    setLinks((cur) => cur.map((x) => (x.key === key ? { ...x, ...p } : x)))
+  }
+
+  /** Reads every link in the box, checks each opens for visitors, and queues the good ones. */
+  async function addLinks() {
+    const parts = linkText.split(/[\s,]+/).filter(Boolean)
+    if (parts.length === 0) return
+    setLinkBusy(true)
+    setLinkErrors([])
+    setFinished(false)
+    const errors: string[] = []
+    const added: LinkItem[] = []
+    const seen = new Set(links.filter((l) => l.stage !== 'done').map((l) => l.id))
+    for (const part of parts.slice(0, MAX_LINKS)) {
+      if (!parseDriveLink(part)) {
+        errors.push(`“${part.slice(0, 60)}” is not a Google Drive link.`)
+        continue
+      }
+      const res = await inspectDriveLink(part)
+      if (!res.ok) {
+        errors.push(res.message)
+        continue
+      }
+      if (seen.has(res.id)) continue
+      seen.add(res.id)
+      added.push({ key: crypto.randomUUID(), id: res.id, kind: res.kind, name: res.title ?? DRIVE_KIND_LABEL[res.kind], stage: 'queued' })
+    }
+    setLinks((cur) => [...cur.filter((l) => l.stage !== 'done'), ...added].slice(0, MAX_LINKS))
+    setLinkErrors(errors)
+    if (errors.length === 0) setLinkText('')
+    setLinkBusy(false)
+  }
+
   const pending = useMemo(() => items.filter((i) => i.stage === 'queued' || i.stage === 'error'), [items])
   const pendingPhotos = pending.filter((i) => i.file.type.startsWith('image/'))
   const merging = combine && pendingPhotos.length > 0
   const totalBytes = pending.reduce((n, i) => n + i.file.size, 0)
   const today = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
   const defaultPdfName = `${chosen?.subject.short ?? 'Notes'}${unit !== undefined ? ` ${sectionLabel(unit)}` : ''} notes ${today}`
-  const ready = subject !== undefined && unit !== undefined && pending.length > 0 && !running
+  const pendingLinks = useMemo(() => links.filter((l) => l.stage === 'queued' || l.stage === 'error'), [links])
+  const ready = subject !== undefined && unit !== undefined && pending.length + pendingLinks.length > 0 && !running
 
   async function start() {
     if (!ready || subject === undefined || unit === undefined) return
@@ -160,6 +212,16 @@ export function Uploader({
           }
         }),
       )
+      // Drive links go after the files, in the order they were added.
+      for (const [i, l] of pendingLinks.entries()) {
+        patchLink(l.key, { stage: 'saving', error: undefined })
+        try {
+          await addDriveLink({ userId, collectionId, position: base + offset + queue.length + i, name: l.name, driveId: l.id, kind: l.kind })
+          patchLink(l.key, { stage: 'done' })
+        } catch (e) {
+          patchLink(l.key, { stage: 'error', error: e instanceof Error ? e.message : 'Could not save this link' })
+        }
+      }
       await refreshChapter(subject, unit)
       setFinished(true)
       router.refresh()
@@ -170,9 +232,15 @@ export function Uploader({
     }
   }
 
-  const doneCount = items.filter((i) => i.stage === 'done').length
+  const doneCount = items.filter((i) => i.stage === 'done').length + links.filter((l) => l.stage === 'done').length
   const uploadCount = pending.length - (merging ? pendingPhotos.length - 1 : 0)
-  const failed = items.filter((i) => i.stage === 'error').length
+  const failed = items.filter((i) => i.stage === 'error').length + links.filter((l) => l.stage === 'error').length
+  const summary = [
+    pending.length ? plural(merging ? uploadCount : pending.length, 'file') : '',
+    pendingLinks.length ? plural(pendingLinks.length, 'Drive link') : '',
+  ]
+    .filter(Boolean)
+    .join(' + ')
 
   return (
     <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_1.15fr]">
@@ -240,8 +308,95 @@ export function Uploader({
 
       {/* Files */}
       <section className="rounded-3xl border border-line bg-surface p-5 shadow-card sm:p-6">
-        <Step n={2} title="Add photos or PDFs" />
+        <Step n={2} title={mode === 'files' ? 'Add photos or PDFs' : 'Paste a Google Drive link'} />
+        <div className="mt-4 grid grid-cols-2 gap-1 rounded-xl bg-surface-2 p-1 text-sm font-medium">
+          {(
+            [
+              ['files', 'Upload files', CloudUpload],
+              ['drive', 'Google Drive link', Link2],
+            ] as const
+          ).map(([id, label, Icon]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setMode(id)}
+              className={`inline-flex h-9 items-center justify-center gap-2 rounded-lg ${mode === id ? 'bg-surface text-ink shadow-card' : 'text-ink-3 hover:text-ink'}`}
+            >
+              <Icon className="size-4" /> {label}
+            </button>
+          ))}
+        </div>
+
+        {mode === 'drive' && (
+          <div className="mt-4 rounded-2xl border border-line bg-bg p-4">
+            <textarea
+              value={linkText}
+              onChange={(e) => setLinkText(e.target.value)}
+              rows={3}
+              disabled={linkBusy || running}
+              placeholder="https://drive.google.com/file/d/…  (you can paste several, one per line)"
+              className="w-full rounded-xl border border-line bg-surface px-3 py-2 text-sm outline-none focus:border-accent"
+            />
+            <button
+              type="button"
+              onClick={addLinks}
+              disabled={linkBusy || running || !linkText.trim()}
+              className="mt-3 inline-flex h-10 items-center gap-2 rounded-xl bg-ink px-4 text-sm font-medium text-bg hover:opacity-90 disabled:opacity-40"
+            >
+              {linkBusy ? <Loader2 className="size-4 animate-spin" /> : <Link2 className="size-4" />}
+              {linkBusy ? 'Checking links…' : 'Add link'}
+            </button>
+            <p className="mt-3 text-xs leading-relaxed text-ink-3">
+              Works with files, folders, Google Docs, Sheets and Slides. The link is only saved here, so it uses none of the
+              site&rsquo;s storage. In Drive set <strong className="text-ink-2">Share &rarr; Anyone with the link &rarr; Viewer</strong>, then
+              copy the link. If you delete the file from your Drive, it disappears from here too.
+            </p>
+          </div>
+        )}
+
+        {linkErrors.length > 0 && (
+          <ul className="mt-3 space-y-1 rounded-xl bg-danger-soft px-3 py-2 text-sm text-danger">
+            {linkErrors.map((e, i) => (
+              <li key={i}>{e}</li>
+            ))}
+          </ul>
+        )}
+
+        {links.length > 0 && (
+          <ul className="mt-4 space-y-2">
+            {links.map((l) => (
+              <li key={l.key} className="flex items-center gap-3 rounded-xl border border-line bg-bg p-2">
+                <div className="grid size-14 shrink-0 place-items-center rounded-lg bg-surface-2">
+                  <Link2 className="size-6 text-ink-3" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <input
+                    value={l.name}
+                    disabled={running || l.stage === 'done'}
+                    onChange={(e) => patchLink(l.key, { name: e.target.value.slice(0, 200) })}
+                    aria-label="Link title"
+                    className="w-full truncate rounded-md bg-transparent px-1 py-0.5 text-sm font-medium outline-none focus:bg-surface"
+                  />
+                  <p className={`px-1 text-xs ${l.stage === 'error' ? 'text-danger' : l.stage === 'done' ? 'text-ok' : 'text-ink-3'}`}>
+                    {l.stage === 'error' ? l.error : l.stage === 'done' ? 'Saved' : l.stage === 'saving' ? 'Saving…' : 'Ready'} · {DRIVE_KIND_LABEL[l.kind]}
+                  </p>
+                </div>
+                {l.stage === 'done' ? (
+                  <Check className="size-5 shrink-0 text-ok" />
+                ) : l.stage === 'saving' ? (
+                  <Loader2 className="size-5 shrink-0 animate-spin text-ink-3" />
+                ) : (
+                  <IconBtn label="Remove link" disabled={running} onClick={() => setLinks((cur) => cur.filter((x) => x.key !== l.key))}>
+                    <X className="size-4" />
+                  </IconBtn>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+
         <div
+          hidden={mode !== 'files'}
           onDragOver={(e) => {
             e.preventDefault()
             setDragging(true)
@@ -389,14 +544,14 @@ export function Uploader({
           >
             {running ? <Loader2 className="size-4 animate-spin" /> : <CloudUpload className="size-4" />}
             {running
-              ? (converting ?? 'Uploading…')
-              : pending.length
-                ? merging
-                  ? `Upload ${plural(uploadCount, 'file')}${pendingPhotos.length ? ` (photos as 1 PDF)` : ''}`
-                  : `Upload ${plural(pending.length, 'file')} (${formatBytes(totalBytes)})`
+              ? (converting ?? 'Saving…')
+              : pending.length + pendingLinks.length
+                ? `${pending.length ? 'Upload' : 'Add'} ${summary}${merging ? ' (photos as 1 PDF)' : pending.length ? ` (${formatBytes(totalBytes)})` : ''}`
                 : subject === undefined || unit === undefined
                   ? 'Choose a chapter first'
-                  : 'Add files to upload'}
+                  : mode === 'drive'
+                    ? 'Add a Drive link'
+                    : 'Add files to upload'}
           </button>
           {finished && subject && unit !== undefined && (
             <div className={`mt-4 flex flex-wrap items-center gap-3 rounded-xl px-4 py-3 text-sm ${failed ? 'bg-gold-soft text-gold' : 'bg-ok-soft text-ok'}`}>

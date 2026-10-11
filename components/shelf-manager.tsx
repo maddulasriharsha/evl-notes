@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { FileText, Loader2, Pencil, RotateCcw, Trash2 } from 'lucide-react'
 import { refreshChapter } from '@/app/upload/actions'
-import { publicFileUrl } from '@/lib/env'
+import { DRIVE_KIND_LABEL, driveKindFromMime, isDriveMime } from '@/lib/drive-link'
+import { thumbFor } from '@/lib/file-thumb'
 import { formatBytes, formatDate } from '@/lib/format'
 import { supabaseBrowser } from '@/lib/supabase/browser'
 
@@ -12,9 +13,10 @@ export interface ShelfFile {
   id: string
   name: string
   mime: string
-  size_bytes: number
+  size_bytes: number | null
   thumb_path: string | null
-  storage_path: string
+  storage_path: string | null
+  drive_id: string | null
   position: number
   created_at: string
   deleted_at: string | null
@@ -61,7 +63,7 @@ export function ShelfManager({
       <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line">
         {sorted.map((f) => {
           const removed = !!f.deleted_at
-          const thumb = f.thumb_path ? publicFileUrl(f.thumb_path) : f.mime !== 'application/pdf' ? publicFileUrl(f.storage_path) : null
+          const thumb = thumbFor(f)
           return (
             <li key={f.id} className={`flex items-center gap-3 bg-bg px-3 py-2 ${removed ? 'opacity-55' : ''}`}>
               <div className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-md bg-surface-2">
@@ -88,7 +90,9 @@ export function ShelfManager({
                   <a href={`/view/u/${f.id}`} className="block truncate text-sm font-medium hover:text-accent">{f.name}</a>
                 )}
                 <p className="text-xs text-ink-3">
-                  {removed ? 'Deleted · not shown on the site' : `${formatBytes(f.size_bytes)} · ${formatDate(f.created_at)}`}
+                  {removed
+                    ? 'Deleted · not shown on the site'
+                    : `${isDriveMime(f.mime) ? DRIVE_KIND_LABEL[driveKindFromMime(f.mime)] : formatBytes(f.size_bytes ?? 0)} · ${formatDate(f.created_at)}`}
                 </p>
               </div>
               {busy === f.id ? (

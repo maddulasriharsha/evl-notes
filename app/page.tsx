@@ -17,7 +17,7 @@ import { OwnerName } from '@/components/ui'
 import { allSubjects, extras, findSubject, regularSemesters, sectionHref, sectionLabel, semesterLabel, subjectHref } from '@/lib/curriculum'
 import { contributors, countsBySubject, recentlyUpdated, uploadTotals } from '@/lib/data'
 import { DRIVE_LIBRARY } from '@/lib/drive-stats'
-import { publicFileUrl } from '@/lib/env'
+import { thumbFor } from '@/lib/file-thumb'
 import { plural, timeAgo } from '@/lib/format'
 import { driveCount } from '@/lib/library'
 
@@ -170,11 +170,7 @@ export default async function Home() {
             <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {recent.map((c) => {
                 const found = findSubject(c.subject_code)
-                const cover = c.cover?.thumb_path
-                  ? publicFileUrl(c.cover.thumb_path)
-                  : c.cover && c.cover.mime !== 'application/pdf'
-                    ? publicFileUrl(c.cover.storage_path)
-                    : null
+                const cover = c.cover ? thumbFor(c.cover) : null
                 return (
                   <Link
                     key={c.id}

@@ -13,6 +13,9 @@ download. Students sign in (Google or any email) to upload photos or PDFs to a c
 - **One shelf per person per chapter.** When Arjun uploads to *DS · Unit II*, the files go on "Arjun's notes"
   for that chapter. Uploading again later adds to the same shelf, it never creates a second post. Only Arjun
   can add to, rename or hide files on his shelf.
+- **Google Drive links.** Instead of uploading, people can paste a Drive link (a file, a folder, or a Google Doc, Sheet or
+  Slides). Only the link is stored, so it uses no Supabase Storage; the site checks the link is public and previews it
+  from Drive. Links get comments, hide/delete and admin tools like any other note.
 - **Comments.** Every uploaded file has a comment section. Anyone can read it; signed-in people can post.
   Authors can delete their own comments and the admin can delete any. Uploads and comments by the admin
   show an **Admin** badge.
@@ -40,7 +43,7 @@ can never overwrite another.
 
 1. Create a free project at <https://supabase.com> (region: Mumbai `ap-south-1`).
 2. **SQL Editor → New query**: paste and run each file in `supabase/migrations/`, oldest first
-   (`…_init.sql`, `…_comments.sql`, `…_admin_powers.sql`, `…_dashboard.sql`).
+   (`…_init.sql`, `…_comments.sql`, `…_admin_powers.sql`, `…_dashboard.sql`, `…_drive_links.sql`).
 3. **Project Settings → API**: copy the *Project URL* and the *anon / publishable* key.
 4. **Authentication → URL Configuration**: set *Site URL* to your live address (for example
    `https://evl-notes.vercel.app`) and add `https://evl-notes.vercel.app/auth/callback` and
