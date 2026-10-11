@@ -160,7 +160,7 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
                   </div>
                 ))}
               </div>
-              <DailyChart title="Visitors per day" unit="visitors" points={visits.daily.map((d) => ({ day: d.day, value: Number(d.visitors) }))} />
+              <DailyChart title="Visitors per day" unit="visitors" points={visits.daily.map((d) => ({ day: String(d.day).slice(0, 10), value: Number(d.visitors) }))} />
               <p className="text-xs text-ink-3">Counted once per browser session, by a random id. Visitors who block storage or send Do Not Track are not counted.</p>
             </div>
           )}
