@@ -7,7 +7,7 @@ import { ArrowDown, ArrowUp, Camera, Check, CloudUpload, FileStack, FileText, Li
 import { inspectDriveLink, refreshChapter } from '@/app/upload/actions'
 import { aiSortAvailable } from '@/app/upload/classify-actions'
 import { autoSort } from '@/lib/auto-sort'
-import { branches, extras, sectionHref, sectionLabel, sectionsOf, sectionTitle, findSubject, type Semester } from '@/lib/curriculum'
+import { branches, sectionHref, sectionLabel, sectionsOf, sectionTitle, findSubject, type Semester } from '@/lib/curriculum'
 import { combineHashes, fileHash } from '@/lib/hash'
 import { autoFileName } from '@/lib/organise'
 import { formatBytes, plural } from '@/lib/format'
@@ -123,7 +123,8 @@ export function Uploader({
   const [cameraOpen, setCameraOpen] = useState(false)
 
   const branch = branches.find((b) => b.id === branchId) ?? branches[0]
-  const allSemesters: Semester[] = [...(branch?.semesters ?? []), ...(extras ? [extras] : [])]
+  // The shared "Extras" shelf (BEEE) is not offered for new uploads; its existing notes stay readable.
+  const allSemesters: Semester[] = [...(branch?.semesters ?? [])]
   const semester = allSemesters.find((s) => s.sem === sem) ?? allSemesters[0]!
   const chosen = subject ? findSubject(subject) : undefined
   const shelf = existing.find((c) => c.subject === subject && c.unit === unit)
