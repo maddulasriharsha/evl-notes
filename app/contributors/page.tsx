@@ -23,7 +23,7 @@ export default async function ContributorsPage() {
                 <span className={`w-6 text-right font-display text-lg font-semibold tabular-nums ${i < 3 ? 'text-gold' : 'text-ink-3'}`}>{i + 1}</span>
                 <span className="grid size-10 place-items-center rounded-full bg-accent-soft font-semibold text-accent">{p.name.charAt(0).toUpperCase()}</span>
                 <div className="min-w-0 flex-1">
-                  <p className="flex font-medium"><OwnerName name={p.name} admin={p.is_admin} /></p>
+                  <p className="flex font-medium"><OwnerName name={p.name} admin={p.is_admin} moderator={p.is_mod} /></p>
                   <p className="text-xs text-ink-3">
                     {plural(p.chapters, 'chapter')} · {plural(p.subjects, 'subject')} · last upload {timeAgo(p.last)}
                   </p>

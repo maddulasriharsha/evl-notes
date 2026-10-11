@@ -29,6 +29,7 @@ export interface NoteCollection {
   owner_id: string
   owner_name: string
   owner_is_admin: boolean
+  owner_is_mod: boolean
   subject_code: string
   unit: number
   description: string | null
@@ -47,7 +48,7 @@ function shapeFile({ comments, ...f }: FileRow): NoteFile {
   return { ...f, comment_count: comments?.[0]?.count ?? 0 }
 }
 
-type CollectionRow = Omit<NoteCollection, 'owner_name' | 'owner_is_admin' | 'files'> & {
+type CollectionRow = Omit<NoteCollection, 'owner_name' | 'owner_is_admin' | 'owner_is_mod' | 'files'> & {
   profiles: Owner
   files: FileRow[]
 }
@@ -58,6 +59,7 @@ function shape(rows: CollectionRow[]): NoteCollection[] {
       ...c,
       owner_name: profiles?.display_name ?? 'Unknown',
       owner_is_admin: profiles?.role === 'admin',
+      owner_is_mod: profiles?.role === 'moderator',
       files: files.map(shapeFile).sort(
         (a, b) => a.position - b.position || a.created_at.localeCompare(b.created_at),
       ),
@@ -142,6 +144,7 @@ export interface RecentCollection {
   unit: number
   owner_name: string
   owner_is_admin: boolean
+  owner_is_mod: boolean
   updated_at: string
   file_count: number
   cover: NoteFile | null
@@ -164,6 +167,7 @@ export async function recentlyUpdated(limit = 8): Promise<RecentCollection[]> {
       unit: c.unit,
       owner_name: c.owner_name,
       owner_is_admin: c.owner_is_admin,
+      owner_is_mod: c.owner_is_mod,
       updated_at: c.updated_at,
       file_count: c.files.length,
       cover: c.files.find((f) => f.thumb_path) ?? c.files[0] ?? null,
@@ -174,6 +178,7 @@ export interface Contributor {
   id: string
   name: string
   is_admin: boolean
+  is_mod: boolean
   files: number
   chapters: number
   subjects: number
@@ -200,6 +205,7 @@ export async function contributors(): Promise<Contributor[]> {
       id: row.owner_id,
       name: row.profiles?.display_name ?? 'Unknown',
       is_admin: row.profiles?.role === 'admin',
+      is_mod: row.profiles?.role === 'moderator',
       files: 0,
       chapters: 0,
       subjects: 0,
@@ -221,6 +227,7 @@ export async function contributors(): Promise<Contributor[]> {
 export interface FileWithContext extends NoteFile {
   owner_name: string
   owner_is_admin: boolean
+  owner_is_mod: boolean
   subject_code: string
   unit: number
   siblings: NoteFile[]
@@ -246,6 +253,7 @@ export async function fileById(id: string): Promise<FileWithContext | null> {
     ...shapeFile(own),
     owner_name: c.profiles?.display_name ?? 'Unknown',
     owner_is_admin: c.profiles?.role === 'admin',
+    owner_is_mod: c.profiles?.role === 'moderator',
     subject_code: c.subject_code,
     unit: c.unit,
     siblings: c.files.map(shapeFile).sort((a, b) => a.position - b.position || a.created_at.localeCompare(b.created_at)),
@@ -260,6 +268,7 @@ export interface FileHit {
   unit: number
   owner_name: string
   owner_is_admin: boolean
+  owner_is_mod: boolean
 }
 
 export async function searchFiles(q: string): Promise<FileHit[]> {
@@ -285,5 +294,6 @@ export async function searchFiles(q: string): Promise<FileHit[]> {
     unit: r.collections.unit,
     owner_name: r.collections.profiles?.display_name ?? 'Unknown',
     owner_is_admin: r.collections.profiles?.role === 'admin',
+    owner_is_mod: r.collections.profiles?.role === 'moderator',
   }))
 }

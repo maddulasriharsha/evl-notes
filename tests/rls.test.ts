@@ -391,3 +391,82 @@ describe('google drive links', () => {
     expect((await db.query(`select count(*)::int as n from public.files where id = '${L1}'`)).rows[0]).toEqual({ n: 0 })
   })
 })
+
+describe('moderator role', () => {
+  const MOD = '44444444-4444-4444-8444-444444444444'
+  const M1 = 'dddddddd-0000-4000-8000-000000000001'
+  let shelf = ''
+  let commentId = ''
+
+  it('can be assigned only by an admin', async () => {
+    await db.exec(`insert into auth.users (id, email) values ('${MOD}', 'mod@x.in')`)
+    await db.exec(`insert into public.profiles (id, display_name) values ('${MOD}', 'Moderator')`)
+    await fails(A, `select public.set_user_role($1, 'moderator')`, [MOD])
+    await fails(MOD, `select public.set_user_role($1, 'admin')`, [MOD])
+    await as(ADMIN, `select public.set_user_role($1, 'moderator')`, [MOD])
+    expect((await db.query(`select role from public.profiles where id = '${MOD}'`)).rows[0]).toEqual({ role: 'moderator' })
+    await fails(ADMIN, `select public.set_user_role($1, 'overlord')`, [MOD])
+    await fails(MOD, `update public.profiles set role = 'admin' where id = $1`, [MOD])
+  })
+
+  it('can hide and restore anyone’s file, and see hidden ones', async () => {
+    const r = await as(A, `insert into public.collections (owner_id, subject_code, unit) values ($1, '25ES1CS101', 1) returning id`, [A])
+    shelf = r.rows[0]!.id as string
+    await as(A, `insert into public.files (id, collection_id, owner_id, storage_path, name, mime, size_bytes) values ($1, $2, $3, $4, 'Notes', 'application/pdf', 1000)`,
+      [M1, shelf, A, path(A, shelf, M1)])
+    await as(MOD, `update public.files set deleted_at = now() where id = $1`, [M1])
+    expect((await as(null, `select id from public.files where id = $1`, [M1])).rows).toHaveLength(0)
+    expect((await as(MOD, `select id from public.files where id = $1`, [M1])).rows).toHaveLength(1)
+    await as(MOD, `update public.files set deleted_at = null where id = $1`, [M1])
+    expect((await as(null, `select id from public.files where id = $1`, [M1])).rows).toHaveLength(1)
+    // an ordinary member still cannot
+    const nope = await as(B, `update public.files set deleted_at = now() where id = $1 returning id`, [M1])
+    expect(nope.rows).toHaveLength(0)
+  })
+
+  it('can hide a shelf and remove any comment', async () => {
+    await as(MOD, `select public.set_collection_hidden($1, true)`, [shelf])
+    expect((await as(null, `select id from public.collections where id = $1`, [shelf])).rows).toHaveLength(0)
+    await as(MOD, `select public.set_collection_hidden($1, false)`, [shelf])
+    await fails(B, `select public.set_collection_hidden($1, true)`, [shelf])
+    const c = await as(B, `insert into public.comments (file_id, author_id, body) values ($1, $2, 'spam link') returning id`, [M1, B])
+    commentId = c.rows[0]!.id as string
+    await as(MOD, `update public.comments set deleted_at = now() where id = $1`, [commentId])
+    expect((await as(null, `select id from public.comments where id = $1`, [commentId])).rows).toHaveLength(0)
+  })
+
+  it('can block and unblock members, but not admins or other moderators', async () => {
+    await as(MOD, `select public.set_user_banned($1, true)`, [B])
+    await fails(B, `insert into public.comments (file_id, author_id, body) values ($1, $2, 'x')`, [M1, B])
+    await as(MOD, `select public.set_user_banned($1, false)`, [B])
+    await fails(MOD, `select public.set_user_banned($1, true)`, [ADMIN])
+    await fails(MOD, `select public.set_user_banned($1, true)`, [MOD])
+    await as(ADMIN, `select public.set_user_banned($1, true)`, [MOD])
+    await as(ADMIN, `select public.set_user_banned($1, false)`, [MOD])
+  })
+
+  it('cannot delete forever, read emails, or see the dashboard and sign-in log', async () => {
+    await as(MOD, `update public.files set deleted_at = now() where id = $1`, [M1])
+    await fails(MOD, `select public.admin_purge_file($1)`, [M1])
+    await fails(MOD, `select * from public.admin_users()`)
+    await fails(MOD, `select * from public.admin_people()`)
+    await fails(MOD, `select public.admin_overview()`)
+    await fails(MOD, `select * from public.admin_recent_logins(5)`)
+    await fails(MOD, `select * from public.login_events`)
+    await fails(MOD, `delete from public.files where id = $1`, [M1])
+    await as(MOD, `update public.files set deleted_at = null where id = $1`, [M1])
+  })
+
+  it('gets a people list without emails, and members get nothing', async () => {
+    const r = await as(MOD, `select * from public.staff_people()`)
+    expect(r.rows.length).toBeGreaterThanOrEqual(4)
+    expect(Object.keys(r.rows[0]!)).not.toContain('email')
+    await fails(A, `select * from public.staff_people()`)
+    await fails(null, `select * from public.staff_people()`)
+  })
+
+  it('leaves public reading unchanged for visitors who are not signed in', async () => {
+    expect((await as(null, `select id from public.files where id = $1`, [M1])).rows).toHaveLength(1)
+    expect((await as(null, `select id from public.collections where id = $1`, [shelf])).rows).toHaveLength(1)
+  })
+})

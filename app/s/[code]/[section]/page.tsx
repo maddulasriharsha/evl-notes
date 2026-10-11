@@ -104,6 +104,7 @@ export default async function SectionPage({ params }: PageProps<'/s/[code]/[sect
               {cards.map(({ key, collection: c, drive: driveList }) => {
                 const name = c?.owner_name ?? LIBRARY_OWNER.name
                 const admin = c ? c.owner_is_admin : LIBRARY_OWNER.admin
+                const mod = c ? c.owner_is_mod : false
                 const count = (c?.files.length ?? 0) + driveList.length
                 return (
                   <article
@@ -118,7 +119,7 @@ export default async function SectionPage({ params }: PageProps<'/s/[code]/[sect
                       </span>
                       <div className="min-w-0 flex-1">
                         <p className="flex items-center font-semibold">
-                          <OwnerName name={`${name}’s notes`} admin={admin} />
+                          <OwnerName name={`${name}’s notes`} admin={admin} moderator={mod} />
                         </p>
                         <p className="text-xs text-ink-3">
                           {plural(count, 'file')}

@@ -45,7 +45,7 @@ export async function currentUser(): Promise<{ id: string; email?: string } | nu
 export interface Profile {
   id: string
   display_name: string
-  role: 'member' | 'admin'
+  role: 'member' | 'moderator' | 'admin'
   banned_at: string | null
 }
 

@@ -11,7 +11,7 @@ interface Account {
   id: string
   email: string
   name: string
-  isAdmin: boolean
+  role: 'member' | 'moderator' | 'admin'
 }
 
 /** Client-side so public pages stay cacheable; reads the session from the browser. */
@@ -32,7 +32,7 @@ export function AccountButton() {
         id: user.id,
         email: user.email ?? '',
         name: p?.display_name ?? String(user.user_metadata?.full_name ?? user.email ?? 'You'),
-        isAdmin: p?.role === 'admin',
+        role: p?.role === 'admin' ? 'admin' : p?.role === 'moderator' ? 'moderator' : 'member',
       })
     }
     supabase.auth.getSession().then(({ data }) => load(data.session?.user ?? null))
@@ -96,8 +96,11 @@ export function AccountButton() {
           <div className="px-3 py-2">
             <p className="flex items-center gap-1.5 truncate text-sm font-semibold">
               <span className="truncate">{account.name}</span>
-              {account.isAdmin && (
+              {account.role === 'admin' && (
                 <span className="rounded-md bg-gold-soft px-1.5 py-0.5 text-[10px] font-semibold tracking-wider text-gold uppercase">Admin</span>
+              )}
+              {account.role === 'moderator' && (
+                <span className="rounded-md bg-accent-soft px-1.5 py-0.5 text-[10px] font-semibold tracking-wider text-accent uppercase">Mod</span>
               )}
             </p>
             <p className="truncate text-xs text-ink-3">{account.email}</p>
@@ -112,9 +115,9 @@ export function AccountButton() {
           <Link role="menuitem" href="/upload" onClick={() => setOpen(false)} className={item}>
             <CloudUpload className="size-4 text-ink-3" /> Upload notes
           </Link>
-          {account.isAdmin && (
+          {account.role !== 'member' && (
             <Link role="menuitem" href="/admin" onClick={() => setOpen(false)} className={item}>
-              <LayoutDashboard className="size-4 text-ink-3" /> Admin dashboard
+              <LayoutDashboard className="size-4 text-ink-3" /> {account.role === 'admin' ? 'Admin dashboard' : 'Moderation'}
             </Link>
           )}
           <div className="my-1 h-px bg-line" />

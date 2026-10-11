@@ -54,7 +54,7 @@ export default async function UploadViewer({ params }: PageProps<'/view/u/[id]'>
         title: file.name,
         meta: (
           <>
-            <OwnerName name={file.owner_name} admin={file.owner_is_admin} />
+            <OwnerName name={file.owner_name} admin={file.owner_is_admin} moderator={file.owner_is_mod} />
             <span className="truncate">
               &nbsp;· {found?.subject.short ?? file.subject_code} · {sectionLabel(file.unit)} · {detail} · added {formatDate(file.created_at)}
             </span>

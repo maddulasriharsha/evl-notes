@@ -46,9 +46,9 @@ export default async function MePage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          {me.profile.role === 'admin' && (
+          {(me.profile.role === 'admin' || me.profile.role === 'moderator') && (
             <Link href="/admin" className="inline-flex h-11 items-center gap-2 rounded-xl border border-line bg-surface px-4 text-sm font-medium hover:border-line-strong">
-              <ShieldCheck className="size-4" /> Admin
+              <ShieldCheck className="size-4" /> {me.profile.role === 'admin' ? 'Admin' : 'Moderation'}
             </Link>
           )}
           <Link href="/upload" className="inline-flex h-11 items-center gap-2 rounded-xl bg-ink px-4 text-sm font-medium text-bg hover:opacity-90">

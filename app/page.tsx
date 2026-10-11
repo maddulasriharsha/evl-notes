@@ -35,7 +35,11 @@ export default async function Home() {
   const totalPages = uploads.pages + DRIVE_LIBRARY.pages
   const chapters = allSubjects().reduce((sum, { subject }) => sum + subject.units.length, 0)
   const total = (code: string) => (counts[code] ?? 0) + driveCount(code)
-  const strip = allSubjects().filter(({ subject }) => subject.kind !== 'extra')
+  // The strip shows the courses with the most notes (every course is reachable from its branch).
+  const strip = allSubjects()
+    .filter(({ subject }) => subject.kind !== 'extra')
+    .sort((x, y) => total(y.subject.code) - total(x.subject.code) || x.subject.name.localeCompare(y.subject.name))
+    .slice(0, 30)
 
   return (
     <>
@@ -197,7 +201,7 @@ export default async function Home() {
                         {found?.subject.short ?? c.subject_code} · {sectionLabel(c.unit)}
                       </p>
                       <p className="mt-1 flex text-sm text-ink-2">
-                        by&nbsp;<OwnerName name={c.owner_name} admin={c.owner_is_admin} />
+                        by&nbsp;<OwnerName name={c.owner_name} admin={c.owner_is_admin} moderator={c.owner_is_mod} />
                       </p>
                       <p className="mt-2 text-xs text-ink-3">
                         {plural(c.file_count, 'file')} · {timeAgo(c.updated_at)}

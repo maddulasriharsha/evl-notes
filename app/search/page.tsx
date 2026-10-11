@@ -46,6 +46,7 @@ export default async function SearchPage({ searchParams }: PageProps<'/search'>)
           unit: f.unit ?? 0,
           owner_name: LIBRARY_OWNER.name,
           owner_is_admin: LIBRARY_OWNER.admin,
+          owner_is_mod: false,
         }))
     : []
   const uploads = [...uploaded.map((u) => ({ ...u, href: `/view/u/${u.id}` })), ...fromDrive]
@@ -108,7 +109,7 @@ export default async function SearchPage({ searchParams }: PageProps<'/search'>)
               <Link key={u.id} href={u.href} className="rounded-xl border border-line bg-surface px-4 py-3 hover:border-line-strong">
                 <span className="flex text-xs text-ink-3">
                   {findSubject(u.subject_code)?.subject.short ?? u.subject_code} · {sectionLabel(u.unit)} · by&nbsp;
-                  <OwnerName name={u.owner_name} admin={u.owner_is_admin} />
+                  <OwnerName name={u.owner_name} admin={u.owner_is_admin} moderator={u.owner_is_mod} />
                 </span>
                 <span className="block truncate font-medium">{u.name}</span>
               </Link>

@@ -33,7 +33,20 @@ function Btn({ onClick, busy, danger, dark, children }: { onClick: () => void; b
   )
 }
 
-export function FileModButtons({ id, hidden, subject, unit }: { id: string; hidden: boolean; subject: string; unit: number }) {
+export function FileModButtons({
+  id,
+  hidden,
+  subject,
+  unit,
+  canPurge = true,
+}: {
+  id: string
+  hidden: boolean
+  subject: string
+  unit: number
+  /** Permanent deletion is for admins only. */
+  canPurge?: boolean
+}) {
   const { busy, run } = useAction()
   const db = () => supabaseBrowser()
   const refresh = () => refreshChapter(subject, unit)
@@ -46,7 +59,7 @@ export function FileModButtons({ id, hidden, subject, unit }: { id: string; hidd
       >
         {hidden ? 'Restore' : 'Hide'}
       </Btn>
-      {hidden && (
+      {hidden && canPurge && (
         <Btn
           danger
           busy={busy === 'purge'}
@@ -86,45 +99,78 @@ export function CommentModButtons({ id, deleted }: { id: string; deleted: boolea
   )
 }
 
-export function UserModButtons({ id, banned, role, self }: { id: string; banned: boolean; role: string; self: boolean }) {
+export function UserModButtons({
+  id,
+  banned,
+  role,
+  self,
+  viewerIsAdmin = true,
+}: {
+  id: string
+  banned: boolean
+  role: string
+  self: boolean
+  viewerIsAdmin?: boolean
+}) {
   const { busy, run } = useAction()
   if (self) return <span className="text-xs text-ink-3">You</span>
   const db = () => supabaseBrowser()
+  // Moderators can only act on ordinary members.
+  const canBlock = viewerIsAdmin || role === 'member'
   return (
-    <div className="flex justify-end gap-1.5">
-      <Btn
-        busy={busy === 'ban'}
-        danger={!banned}
-        dark={banned}
-        onClick={() =>
-          run(
-            'ban',
-            () => db().rpc('set_user_banned', { p_user: id, p_banned: !banned }),
-            undefined,
-            banned ? undefined : 'Block this person from uploading and commenting? They can still read the site.',
-          )
-        }
-      >
-        {banned ? 'Unblock' : 'Block'}
-      </Btn>
-      <Btn
-        busy={busy === 'role'}
-        onClick={() =>
-          run(
-            'role',
-            () => db().rpc('set_user_role', { p_user: id, p_role: role === 'admin' ? 'member' : 'admin' }),
-            undefined,
-            role === 'admin' ? 'Remove admin powers from this person?' : 'Give this person full admin powers?',
-          )
-        }
-      >
-        {role === 'admin' ? 'Remove admin' : 'Make admin'}
-      </Btn>
+    <div className="flex items-center justify-end gap-1.5">
+      {canBlock ? (
+        <Btn
+          busy={busy === 'ban'}
+          danger={!banned}
+          dark={banned}
+          onClick={() =>
+            run(
+              'ban',
+              () => db().rpc('set_user_banned', { p_user: id, p_banned: !banned }),
+              undefined,
+              banned ? undefined : 'Block this person from uploading and commenting? They can still read the site.',
+            )
+          }
+        >
+          {banned ? 'Unblock' : 'Block'}
+        </Btn>
+      ) : (
+        <span className="text-xs text-ink-3">Staff</span>
+      )}
+      {viewerIsAdmin && (
+        <label className="relative inline-flex">
+          <span className="sr-only">Role</span>
+          <select
+            value={role}
+            disabled={busy === 'role'}
+            onChange={(e) => {
+              const next = e.target.value
+              if (next === role) return
+              void run(
+                'role',
+                () => db().rpc('set_user_role', { p_user: id, p_role: next }),
+                undefined,
+                next === 'admin'
+                  ? 'Give this person full admin powers?'
+                  : next === 'moderator'
+                    ? 'Make this person a moderator? They can hide notes and comments and block members.'
+                    : 'Make this person an ordinary member?',
+              )
+            }}
+            className="h-8 rounded-lg border border-line bg-surface px-2 text-xs font-medium"
+          >
+            <option value="member">Member</option>
+            <option value="moderator">Moderator</option>
+            <option value="admin">Admin</option>
+          </select>
+        </label>
+      )}
     </div>
   )
 }
 
-/** Shown on a file's page to admins only: hide it from the site right away. */
+/** Shown on a file's page to admins and moderators only: hide it from the site right away. */
 export function AdminFileQuickHide({ id, subject, unit }: { id: string; subject: string; unit: number }) {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null)
   const { busy, run } = useAction()
@@ -135,7 +181,8 @@ export function AdminFileQuickHide({ id, subject, unit }: { id: string; subject:
     supabase.auth.getUser().then(async ({ data }) => {
       if (!data.user) return setIsAdmin(false)
       const { data: p } = await supabase.from('profiles').select('role').eq('id', data.user.id).maybeSingle()
-      setIsAdmin((p as { role: string } | null)?.role === 'admin')
+      const r = (p as { role: string } | null)?.role
+      setIsAdmin(r === 'admin' || r === 'moderator')
     })
   }, [])
 

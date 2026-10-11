@@ -19,7 +19,7 @@ interface Comment {
 interface Me {
   id: string
   hasProfile: boolean
-  isAdmin: boolean
+  isStaff: boolean
   banned: boolean
 }
 
@@ -54,7 +54,7 @@ function CommentsPanel({ fileId, ownerId, onCount }: { fileId: string; ownerId: 
       if (!data.user) return setMe(null)
       const { data: p } = await supabase.from('profiles').select('role, banned_at').eq('id', data.user.id).maybeSingle()
       const prof = p as { role: string; banned_at: string | null } | null
-      setMe({ id: data.user.id, hasProfile: !!prof, isAdmin: prof?.role === 'admin', banned: !!prof?.banned_at })
+      setMe({ id: data.user.id, hasProfile: !!prof, isStaff: prof?.role === 'admin' || prof?.role === 'moderator', banned: !!prof?.banned_at })
     })
   }, [load])
 
@@ -90,7 +90,7 @@ function CommentsPanel({ fileId, ownerId, onCount }: { fileId: string; ownerId: 
         ) : (
           comments?.map((c) => {
             const name = c.profiles?.display_name ?? 'Unknown'
-            const canDelete = me && (me.id === c.author_id || me.isAdmin)
+            const canDelete = me && (me.id === c.author_id || me.isStaff)
             return (
               <div key={c.id} className="group flex gap-3">
                 <span className="grid size-8 shrink-0 place-items-center rounded-full bg-accent-soft text-xs font-semibold text-accent">
@@ -98,7 +98,7 @@ function CommentsPanel({ fileId, ownerId, onCount }: { fileId: string; ownerId: 
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 text-xs">
-                    <OwnerName name={name} admin={c.profiles?.role === 'admin'} className="font-semibold text-ink" />
+                    <OwnerName name={name} admin={c.profiles?.role === 'admin'} moderator={c.profiles?.role === 'moderator'} className="font-semibold text-ink" />
                     {c.author_id === ownerId && <span className="shrink-0 rounded-md bg-surface-2 px-1.5 py-0.5 text-[10px] font-semibold text-ink-2 uppercase">Uploader</span>}
                     <span className="shrink-0 text-ink-3">{timeAgo(c.created_at)}</span>
                     {canDelete && (

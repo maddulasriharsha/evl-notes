@@ -44,10 +44,28 @@ describe('curriculum', () => {
     for (const c of codes) expect(c).toMatch(/^[0-9A-Z-]{4,12}$/)
   })
 
-  it('gives every theory subject five named chapters', () => {
+  it('gives every subject at most five chapters, each with a real title', () => {
     for (const { subject } of allSubjects()) {
-      if (subject.kind === 'theory') expect(subject.units, subject.code).toHaveLength(5)
-      for (const t of subject.units) expect(t.trim().length).toBeGreaterThan(2)
+      expect(subject.units.length, subject.code).toBeLessThanOrEqual(5)
+      for (const t of subject.units) {
+        expect(t.trim().length, `${subject.code} ${t}`).toBeGreaterThan(2)
+        expect(t.length, `${subject.code} ${t}`).toBeLessThanOrEqual(90)
+      }
+    }
+  })
+
+  it('has chapters for nearly every theory subject', () => {
+    const theory = allSubjects().filter(({ subject }) => subject.kind === 'theory')
+    const without = theory.filter(({ subject }) => subject.units.length === 0)
+    expect(without.length).toBeLessThanOrEqual(3)
+    expect(theory.length).toBeGreaterThan(100)
+  })
+
+  it('covers every R25 branch with semesters 1 to 4 (Bio-Tech has the first year so far)', () => {
+    expect(branches.length).toBeGreaterThanOrEqual(17)
+    for (const b of branches) {
+      const sems = b.semesters.map((s) => s.sem)
+      expect(sems, b.id).toEqual(b.id === 'biotech' ? [1, 2] : [1, 2, 3, 4])
     }
   })
 

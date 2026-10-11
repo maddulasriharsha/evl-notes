@@ -12,14 +12,14 @@ import { currentProfile, supabaseServer } from '@/lib/supabase/server'
 export const metadata: Metadata = { title: 'Admin' }
 export const dynamic = 'force-dynamic'
 
-const tabs = [
-  { id: 'overview', label: 'Dashboard' },
-  { id: 'files', label: 'Files' },
-  { id: 'comments', label: 'Comments' },
-  { id: 'people', label: 'People' },
-  { id: 'shelves', label: 'Shelves' },
+const allTabs = [
+  { id: 'overview', label: 'Dashboard', adminOnly: true },
+  { id: 'files', label: 'Files', adminOnly: false },
+  { id: 'comments', label: 'Comments', adminOnly: false },
+  { id: 'people', label: 'People', adminOnly: false },
+  { id: 'shelves', label: 'Shelves', adminOnly: false },
 ] as const
-type Tab = (typeof tabs)[number]['id']
+type Tab = (typeof allTabs)[number]['id']
 
 const where = (subject: string, unit: number) => `${findSubject(subject)?.subject.short ?? subject} · ${sectionLabel(unit)}`
 
@@ -66,9 +66,12 @@ const rowCls = (off: boolean) => `border-b border-line last:border-0 ${off ? 'bg
 export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
   const me = await currentProfile()
   if (!me) redirect('/login?next=/admin')
-  if (me.profile?.role !== 'admin') notFound()
+  const role = me.profile?.role
+  if (role !== 'admin' && role !== 'moderator') notFound()
+  const isAdmin = role === 'admin'
+  const tabs = allTabs.filter((t) => isAdmin || !t.adminOnly)
   const sp = await searchParams
-  const tab: Tab = tabs.some((t) => t.id === sp.tab) ? (sp.tab as Tab) : 'overview'
+  const tab: Tab = tabs.some((t) => t.id === sp.tab) ? (sp.tab as Tab) : isAdmin ? 'overview' : 'files'
   const supabase = await supabaseServer()
 
   let body: React.ReactNode = null
@@ -215,12 +218,14 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
               </p>
             </td>
             <td className={td}>
-              <OwnerName name={f.profiles?.display_name ?? 'Unknown'} admin={f.profiles?.role === 'admin'} />
+              <OwnerName name={f.profiles?.display_name ?? 'Unknown'} admin={f.profiles?.role === 'admin'} moderator={f.profiles?.role === 'moderator'} />
             </td>
             <td className={`${td} whitespace-nowrap`}>{f.collections ? where(f.collections.subject_code, f.collections.unit) : '—'}</td>
             <td className={`${td} whitespace-nowrap text-ink-3`}>{timeAgo(f.created_at)}</td>
             <td className={td}>
-              {f.collections && <FileModButtons id={f.id} hidden={!!f.deleted_at} subject={f.collections.subject_code} unit={f.collections.unit} />}
+              {f.collections && (
+                <FileModButtons id={f.id} hidden={!!f.deleted_at} subject={f.collections.subject_code} unit={f.collections.unit} canPurge={isAdmin} />
+              )}
             </td>
           </tr>
         ))}
@@ -251,7 +256,7 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
               <p className="line-clamp-3 break-words whitespace-pre-line">{c.body}</p>
             </td>
             <td className={td}>
-              <OwnerName name={c.profiles?.display_name ?? 'Unknown'} admin={c.profiles?.role === 'admin'} />
+              <OwnerName name={c.profiles?.display_name ?? 'Unknown'} admin={c.profiles?.role === 'admin'} moderator={c.profiles?.role === 'moderator'} />
             </td>
             <td className={td}>
               <Link href={`/view/u/${c.file_id}`} className="hover:text-accent">{c.files?.name ?? 'File'}</Link>
@@ -268,7 +273,7 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
     )
   }
 
-  if (tab === 'people') {
+  if (tab === 'people' && isAdmin) {
     const { data, error } = await supabase.rpc('admin_people')
     const rows = (data ?? []) as PersonRow[]
     body = error ? (
@@ -279,7 +284,7 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
           <tr key={u.id} className={rowCls(!!u.banned_at)}>
             <td className={td}>
               <Link href={`/admin/people/${u.id}`} className="hover:text-accent">
-                <OwnerName name={u.display_name} admin={u.role === 'admin'} className="font-medium" />
+                <OwnerName name={u.display_name} admin={u.role === 'admin'} moderator={u.role === 'moderator'} className="font-medium" />
               </Link>
               {u.banned_at && <p className="text-xs text-danger">Blocked {timeAgo(u.banned_at)}</p>}
             </td>
@@ -291,12 +296,39 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
               {plural(Number(u.files), 'file')} · {plural(Number(u.comments), 'comment')}
             </td>
             <td className={`${td} whitespace-nowrap text-ink-3`}>
-              {u.last_sign_in ? timeAgo(u.last_sign_in) : '—'}
+              {u.last_sign_in ? timeAgo(u.last_sign_in) : '\u2014'}
               <p className="text-xs">{plural(Number(u.sign_ins), 'sign-in')}</p>
             </td>
             <td className={`${td} whitespace-nowrap text-ink-3`}>{formatDate(u.joined)}</td>
             <td className={td}>
               <UserModButtons id={u.id} banned={!!u.banned_at} role={u.role} self={u.id === me.user.id} />
+            </td>
+          </tr>
+        ))}
+      </Table>
+    )
+  }
+
+  if (tab === 'people' && !isAdmin) {
+    // Moderators see names and activity only: no emails and no sign-in history.
+    const { data, error } = await supabase.rpc('staff_people')
+    const rows = (data ?? []) as { id: string; display_name: string; role: string; banned_at: string | null; joined: string; files: number; comments: number }[]
+    body = error ? (
+      <p className="text-danger">{error.message}</p>
+    ) : (
+      <Table head={['Person', 'Contribution', 'Joined', '']}>
+        {rows.map((u) => (
+          <tr key={u.id} className={rowCls(!!u.banned_at)}>
+            <td className={td}>
+              <OwnerName name={u.display_name} admin={u.role === 'admin'} moderator={u.role === 'moderator'} className="font-medium" />
+              {u.banned_at && <p className="text-xs text-danger">Blocked {timeAgo(u.banned_at)}</p>}
+            </td>
+            <td className={`${td} whitespace-nowrap text-ink-3`}>
+              {plural(Number(u.files), 'file')} · {plural(Number(u.comments), 'comment')}
+            </td>
+            <td className={`${td} whitespace-nowrap text-ink-3`}>{formatDate(u.joined)}</td>
+            <td className={td}>
+              <UserModButtons id={u.id} banned={!!u.banned_at} role={u.role} self={u.id === me.user.id} viewerIsAdmin={false} />
             </td>
           </tr>
         ))}
@@ -329,7 +361,7 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
               </Link>
             </td>
             <td className={td}>
-              <OwnerName name={r.profiles?.display_name ?? 'Unknown'} admin={r.profiles?.role === 'admin'} />
+              <OwnerName name={r.profiles?.display_name ?? 'Unknown'} admin={r.profiles?.role === 'admin'} moderator={r.profiles?.role === 'moderator'} />
             </td>
             <td className={`${td} tabular-nums`}>{plural(r.files.filter((f) => !f.deleted_at).length, 'file')}</td>
             <td className={`${td} text-ink-3`}>{timeAgo(r.updated_at)}</td>
@@ -344,10 +376,19 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
 
   return (
     <Container className="py-10">
-      <h1 className="font-display text-4xl font-semibold tracking-tight">Admin</h1>
+      <h1 className="font-display text-4xl font-semibold tracking-tight">{isAdmin ? 'Admin' : 'Moderation'}</h1>
       <p className="mt-2 max-w-2xl text-ink-2">
-        Hide anything that shouldn&rsquo;t be here, block people who misuse the site, and clean up junk. Hidden files and
-        comments can be restored; &ldquo;Delete forever&rdquo; cannot be undone.
+        {isAdmin ? (
+          <>
+            Hide anything that shouldn&rsquo;t be here, block people who misuse the site, and clean up junk. Hidden files and
+            comments can be restored; &ldquo;Delete forever&rdquo; cannot be undone.
+          </>
+        ) : (
+          <>
+            Hide notes and comments that don&rsquo;t belong, and block members who misuse the site. Everything you hide can be
+            restored. Only the admin can delete things permanently or change roles.
+          </>
+        )}
       </p>
       <nav className="mt-6 mb-5 flex flex-wrap gap-1 rounded-xl border border-line bg-surface p-1 text-sm sm:w-fit">
         {tabs.map((t) => (

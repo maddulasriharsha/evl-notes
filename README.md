@@ -43,7 +43,7 @@ can never overwrite another.
 
 1. Create a free project at <https://supabase.com> (region: Mumbai `ap-south-1`).
 2. **SQL Editor → New query**: paste and run each file in `supabase/migrations/`, oldest first
-   (`…_init.sql`, `…_comments.sql`, `…_admin_powers.sql`, `…_dashboard.sql`, `…_drive_links.sql`).
+   (`…_init.sql`, `…_comments.sql`, `…_admin_powers.sql`, `…_dashboard.sql`, `…_drive_links.sql`, `…_moderator.sql`).
 3. **Project Settings → API**: copy the *Project URL* and the *anon / publishable* key.
 4. **Authentication → URL Configuration**: set *Site URL* to your live address (for example
    `https://evl-notes.vercel.app`) and add `https://evl-notes.vercel.app/auth/callback` and
@@ -103,12 +103,23 @@ An **Admin** button then appears on *My notes*. The admin area has:
 - **People**: emails, contribution, last sign-in; block someone from uploading and commenting; add co-admins.
 - **Shelves**: hide or show a person's whole shelf for a chapter.
 
+## Roles
+
+| Role | Can do |
+|---|---|
+| **Member** | Upload, comment, manage their own notes |
+| **Moderator** | Also hide or restore any note, shelf or comment, see hidden items, and block or unblock members. Cannot delete permanently, see emails or the sign-in log, change roles, or act on admins and moderators |
+| **Admin** | Everything: dashboard, emails and sign-ins, permanent delete, and choosing roles |
+
+Admins pick a person's role from the **People** tab of the admin area (Member / Moderator / Admin).
+
 ## Adding a branch
 
 The site is organised as **branch → semester → subject → chapter**. Branches live in `data/curriculum.json` under
 `branches`; each has an `id` (the URL, for example `cse` → `/b/cse`), a `short` name, a full `name`, and its `semesters`
-with subjects and chapter titles (copied from that branch's syllabus book, titles only). To add one, send the syllabus
-PDF; nothing else changes.
+with subjects and chapter titles (copied from that branch's syllabus book, titles only). All 17 R25 branches (1st and 2nd year) were
+loaded from the syllabus books on <https://www.vnrvjiet.ac.in/academics/syllabus>. Bio-Tech has only the first year so
+far because no second-year book is published yet. To add a year or a branch, send the syllabus PDF; nothing else changes.
 
 A **subject code identifies the course**. When two branches teach the same code (for example the common first-year
 courses), they share one set of notes, and the subject page lists every branch that teaches it. Use the exact same
