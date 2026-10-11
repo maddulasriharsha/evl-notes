@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { Bookmark, ChevronDown, CloudUpload, LayoutDashboard, LogIn, LogOut, NotebookText, UserRound } from 'lucide-react'
+import { InstallButton } from '@/components/install-button'
 import { supabaseConfigured } from '@/lib/env'
 import { supabaseBrowser } from '@/lib/supabase/browser'
 
@@ -123,6 +124,7 @@ export function AccountButton() {
               <LayoutDashboard className="size-4 text-ink-3" /> {account.role === 'admin' ? 'Admin dashboard' : 'Moderation'}
             </Link>
           )}
+          <InstallButton className={`${item} w-full`} onDone={() => setOpen(false)} />
           <div className="my-1 h-px bg-line" />
           <button role="menuitem" type="button" onClick={signOut} className={`${item} text-danger`}>
             <LogOut className="size-4" /> Sign out

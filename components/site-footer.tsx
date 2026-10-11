@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { InstallButton } from '@/components/install-button'
 import { LogoMark } from '@/components/logo'
 
 export function SiteFooter() {
@@ -15,6 +16,7 @@ export function SiteFooter() {
           <Link href="/search" className="hover:text-ink">Search</Link>
           <Link href="/upload" className="hover:text-ink">Upload</Link>
           <Link href="/privacy" className="hover:text-ink">Privacy</Link>
+          <InstallButton className="inline-flex items-center gap-1.5 font-medium text-ink-2 hover:text-ink" />
         </div>
       </div>
       <p className="pb-8 text-center text-xs tracking-wide text-ink-3">Created by: Sriharsha Reddy (EVL)</p>
