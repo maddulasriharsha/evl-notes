@@ -3,8 +3,26 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
-import { Bell, Bookmark, ChevronDown, Lightbulb, CloudUpload, LayoutDashboard, LogIn, LogOut, NotebookText, UserRound } from 'lucide-react'
+import {
+  Bell,
+  Bookmark,
+  ChevronDown,
+  CloudUpload,
+  HandHelping,
+  LayoutDashboard,
+  Lightbulb,
+  LogIn,
+  LogOut,
+  Menu,
+  NotebookText,
+  Search,
+  Share2,
+  ShieldCheck,
+  Users,
+  UserRound,
+} from 'lucide-react'
 import { InstallButton } from '@/components/install-button'
+import { ThemeToggle } from '@/components/theme-toggle'
 import { supabaseConfigured } from '@/lib/env'
 import { supabaseBrowser } from '@/lib/supabase/browser'
 
@@ -64,19 +82,68 @@ export function AccountButton() {
 
   if (account === undefined) return <span className="size-10" aria-hidden="true" />
 
+  const item = 'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-surface-2'
+
+  /** Links everyone can use, signed in or not. */
+  const shared = (
+    <>
+      <Link role="menuitem" href="/requests" onClick={() => setOpen(false)} className={item}>
+        <HandHelping className="size-4 text-ink-3" /> Note requests
+      </Link>
+      <Link role="menuitem" href="/suggest" onClick={() => setOpen(false)} className={item}>
+        <Lightbulb className="size-4 text-ink-3" /> Suggestion box
+      </Link>
+      <Link role="menuitem" href="/share" onClick={() => setOpen(false)} className={item}>
+        <Share2 className="size-4 text-ink-3" /> Share VJNOTES
+      </Link>
+      <InstallButton className={`${item} w-full`} onDone={() => setOpen(false)} />
+      <ThemeToggle withLabel className={`${item} w-full`} />
+    </>
+  )
+
   if (account === null) {
     return (
-      <Link
-        href="/login"
-        className="inline-flex h-10 items-center gap-2 rounded-xl border border-line bg-surface px-2.5 text-sm font-medium whitespace-nowrap hover:border-line-strong sm:px-3"
-      >
-        <LogIn className="hidden size-4 sm:block" />
-        <span>Sign in</span>
-      </Link>
+      <div ref={box} className="relative flex items-center gap-1.5">
+        <Link
+          href="/login"
+          className="inline-flex h-10 items-center gap-2 rounded-xl border border-line bg-surface px-2.5 text-sm font-medium whitespace-nowrap hover:border-line-strong sm:px-3"
+        >
+          <LogIn className="hidden size-4 sm:block" />
+          <span>Sign in</span>
+        </Link>
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          aria-haspopup="menu"
+          aria-expanded={open}
+          aria-label="Menu"
+          className="grid size-10 place-items-center rounded-xl border border-line bg-surface hover:border-line-strong"
+        >
+          <Menu className="size-4" />
+        </button>
+        {open && (
+          <div role="menu" className="absolute top-full right-0 z-50 mt-2 w-64 rounded-2xl border border-line bg-surface p-2 shadow-pop">
+            <Link role="menuitem" href="/#branches" onClick={() => setOpen(false)} className={item}>
+              <NotebookText className="size-4 text-ink-3" /> Browse branches
+            </Link>
+            <Link role="menuitem" href="/search" onClick={() => setOpen(false)} className={item}>
+              <Search className="size-4 text-ink-3" /> Search
+            </Link>
+            <Link role="menuitem" href="/contributors" onClick={() => setOpen(false)} className={item}>
+              <Users className="size-4 text-ink-3" /> Contributors
+            </Link>
+            <div className="my-1 h-px bg-line" />
+            {shared}
+            <div className="my-1 h-px bg-line" />
+            <Link role="menuitem" href="/privacy" onClick={() => setOpen(false)} className={item}>
+              <ShieldCheck className="size-4 text-ink-3" /> Privacy
+            </Link>
+          </div>
+        )}
+      </div>
     )
   }
 
-  const item = 'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-surface-2'
   return (
     <div ref={box} className="relative">
       <button
@@ -116,9 +183,6 @@ export function AccountButton() {
           <Link role="menuitem" href="/following" onClick={() => setOpen(false)} className={item}>
             <Bell className="size-4 text-ink-3" /> Following
           </Link>
-          <Link role="menuitem" href="/suggest" onClick={() => setOpen(false)} className={item}>
-            <Lightbulb className="size-4 text-ink-3" /> Suggestion box
-          </Link>
           <Link role="menuitem" href="/saved" onClick={() => setOpen(false)} className={item}>
             <Bookmark className="size-4 text-ink-3" /> Saved notes
           </Link>
@@ -130,7 +194,8 @@ export function AccountButton() {
               <LayoutDashboard className="size-4 text-ink-3" /> {account.role === 'admin' ? 'Admin dashboard' : 'Moderation'}
             </Link>
           )}
-          <InstallButton className={`${item} w-full`} onDone={() => setOpen(false)} />
+          <div className="my-1 h-px bg-line" />
+          {shared}
           <div className="my-1 h-px bg-line" />
           <button role="menuitem" type="button" onClick={signOut} className={`${item} text-danger`}>
             <LogOut className="size-4" /> Sign out
