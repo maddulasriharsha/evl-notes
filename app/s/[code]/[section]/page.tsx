@@ -24,7 +24,8 @@ import {
 import { openRequestCount } from '@/lib/community'
 import { collectionsFor, type NoteCollection } from '@/lib/data'
 import { publicFileUrl } from '@/lib/env'
-import { driveFilesFor, LIBRARY_OWNER, type DriveFile } from '@/lib/library'
+import { LIBRARY_OWNER, type DriveFile } from '@/lib/library'
+import { liveLibrary } from '@/lib/library-live'
 import { formatDate, plural, timeAgo } from '@/lib/format'
 
 export const revalidate = 60
@@ -60,7 +61,7 @@ export default async function SectionPage({ params }: PageProps<'/s/[code]/[sect
   const idx = order.indexOf(unit)
   const prev = idx > 0 ? order[idx - 1] : undefined
   const next = idx < order.length - 1 ? order[idx + 1] : undefined
-  const drive = driveFilesFor(subject.code, unit)
+  const drive = (await liveLibrary()).filesFor(subject.code, unit)
   // PDFs and photos that can be joined into one downloadable PDF (Drive links cannot).
   const sourcesOf = (c: NoteCollection) =>
     c.files

@@ -8,7 +8,7 @@ import { ButtonLink, Container, Crumbs } from '@/components/ui'
 import { allSubjects, completeHref, findSubject, PAPERS_UNIT, QUESTION_BANK_UNIT, subjectCrumbs, subjectHref } from '@/lib/curriculum'
 import { collectionsFor, taggedQuestionsFor, type NoteCollection } from '@/lib/data'
 import { plural } from '@/lib/format'
-import { driveFilesFor } from '@/lib/library'
+import { liveLibrary } from '@/lib/library-live'
 
 export const revalidate = 60
 
@@ -26,6 +26,8 @@ export default async function CompletePage({ params }: PageProps<'/s/[code]/comp
   if (!found) notFound()
   const { subject } = found
 
+  const lib = await liveLibrary()
+  const driveFilesFor = lib.filesFor
   const [papers, notes, bankHere, tagged] = await Promise.all([
     collectionsFor(subject.code, PAPERS_UNIT),
     collectionsFor(subject.code, 0),

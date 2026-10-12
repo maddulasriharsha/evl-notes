@@ -99,7 +99,7 @@ export function ShelfCards({
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
               {c?.files.map((f) => <UploadFileCard key={f.id} file={f} subject={subjectCode} unit={c.unit ?? unit} />)}
               {driveList.map((f) => (
-                <DriveFileCard key={f.id} file={f} />
+                <DriveFileCard key={f.id} file={f} placeUnit={unit} />
               ))}
             </div>
           </article>

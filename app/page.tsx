@@ -19,7 +19,7 @@ import { contributors, countsBySubject, recentlyUpdated, uploadTotals } from '@/
 import { DRIVE_LIBRARY } from '@/lib/drive-stats'
 import { thumbFor } from '@/lib/file-thumb'
 import { plural, timeAgo } from '@/lib/format'
-import { driveCount } from '@/lib/library'
+import { liveLibrary } from '@/lib/library-live'
 
 export const revalidate = 60
 
@@ -30,11 +30,11 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
 }
 
 export default async function Home() {
-  const [counts, recent, people, uploads] = await Promise.all([countsBySubject(), recentlyUpdated(6), contributors(), uploadTotals()])
+  const [counts, recent, people, uploads, lib] = await Promise.all([countsBySubject(), recentlyUpdated(6), contributors(), uploadTotals(), liveLibrary()])
   const totalMaterials = uploads.files + DRIVE_LIBRARY.files
   const totalPages = uploads.pages + DRIVE_LIBRARY.pages
   const chapters = allSubjects().reduce((sum, { subject }) => sum + subject.units.length, 0)
-  const total = (code: string) => (counts[code] ?? 0) + driveCount(code)
+  const total = (code: string) => (counts[code] ?? 0) + lib.count(code)
   // The strip shows the courses with the most notes (every course is reachable from its branch).
   const strip = allSubjects()
     .filter(({ subject }) => subject.kind !== 'extra')

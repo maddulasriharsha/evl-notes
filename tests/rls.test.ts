@@ -808,3 +808,19 @@ describe('question tags', () => {
     expect(off.rows[0]!.t).toEqual([])
   })
 })
+
+describe('admins move Google Drive library files', () => {
+  const DRIVE_ID = '1p6KUg1olQgaUrA1b8M8KQIDulXp9X1v_'
+
+  it('lets admins place a library file somewhere else; everyone can read where it is', async () => {
+    await fails(B, `select public.staff_move_drive_file($1, '25BS1PH102', 7)`, [DRIVE_ID])
+    await fails(null, `select public.staff_move_drive_file($1, '25BS1PH102', 7)`, [DRIVE_ID])
+    await fails(ADMIN, `select public.staff_move_drive_file($1, 'bad code', 7)`, [DRIVE_ID])
+    await fails(ADMIN, `select public.staff_move_drive_file($1, '25BS1PH102', 9)`, [DRIVE_ID])
+    await as(ADMIN, `select public.staff_move_drive_file($1, '25BS1PH102', 7)`, [DRIVE_ID])
+    await as(ADMIN, `select public.staff_move_drive_file($1, '25BS1PH102', 3)`, [DRIVE_ID])
+    const seen = await as(null, `select subject_code, unit from public.drive_placements where file_id = $1`, [DRIVE_ID])
+    expect(seen.rows).toEqual([{ subject_code: '25BS1PH102', unit: 3 }])
+    await fails(B, `insert into public.drive_placements (file_id, subject_code, unit) values ('abcdefghijk', '25BS1PH102', 1)`)
+  })
+})

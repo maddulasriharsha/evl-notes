@@ -25,22 +25,40 @@ export interface DriveFile {
 
 export const driveFiles = data as DriveFile[]
 
-const bySubject = new Map<string, DriveFile[]>()
-const byId = new Map<string, DriveFile>()
-for (const f of driveFiles) {
-  byId.set(f.id, f)
-  const placements = [{ subject: f.subject, unit: f.unit }, ...(f.also ?? [])]
-  for (const p of placements) {
-    const placed: DriveFile = p.subject === f.subject && p.unit === f.unit ? f : { ...f, subject: p.subject, unit: p.unit }
-    const list = bySubject.get(p.subject) ?? []
-    list.push(placed)
-    bySubject.set(p.subject, list)
+export type Placement = { subject: string; unit: number }
+
+/** A file as listed: moved files are placed exactly where they were put (and count as "forced"). */
+type Entry = DriveFile & { forced?: boolean }
+
+function buildIndex(moves?: ReadonlyMap<string, Placement>) {
+  const bySubject = new Map<string, Entry[]>()
+  const byId = new Map<string, DriveFile>()
+  for (const f of driveFiles) {
+    const move = moves?.get(f.id)
+    if (move) {
+      const moved: Entry = { ...f, subject: move.subject, unit: move.unit, forced: true }
+      byId.set(f.id, moved)
+      const list = bySubject.get(move.subject) ?? []
+      list.push(moved)
+      bySubject.set(move.subject, list)
+      continue
+    }
+    byId.set(f.id, f)
+    const placements = [{ subject: f.subject, unit: f.unit }, ...(f.also ?? [])]
+    for (const p of placements) {
+      const placed: DriveFile = p.subject === f.subject && p.unit === f.unit ? f : { ...f, subject: p.subject, unit: p.unit }
+      const list = bySubject.get(p.subject) ?? []
+      list.push(placed)
+      bySubject.set(p.subject, list)
+    }
   }
+  return { bySubject, byId }
 }
 
 /** Previous question papers are the official exam papers imported from the college library. */
 const PAPERS_SOURCE = 'Previous papers'
-const isPaper = (f: DriveFile) => f.kind === 'questions' && f.source === PAPERS_SOURCE
+const isPaper = (f: Entry) => (f.forced ? f.unit === 6 : f.kind === 'questions' && f.source === PAPERS_SOURCE)
+const isBank = (f: Entry) => (f.forced ? f.unit === 7 : f.kind === 'questions' && !isPaper(f))
 
 const kindOrder: Record<DriveKind, number> = { notes: 0, slides: 1, lab: 2, questions: 3 }
 
@@ -48,28 +66,45 @@ function sortFiles(a: DriveFile, b: DriveFile) {
   return kindOrder[a.kind] - kindOrder[b.kind] || a.title.localeCompare(b.title, undefined, { numeric: true })
 }
 
-export function driveFilesFor(subject: string, unit?: number) {
-  const list = bySubject.get(subject) ?? []
+function filesIn(index: ReturnType<typeof buildIndex>, subject: string, unit?: number) {
+  const list = index.bySubject.get(subject) ?? []
   // Section 6 is "Previous question papers" (the official exam papers); section 7 is the "Question
-  // bank" (important questions, assignments, question sets). Both draw on the owner's question files.
+  // bank" (important questions, assignments, question sets). Moved files go where they were put.
   const filtered =
     unit === undefined
       ? list
       : unit === 6
         ? list.filter(isPaper)
         : unit === 7
-          ? list.filter((f) => f.kind === 'questions' && !isPaper(f))
-          : list.filter((f) => (f.unit ?? 0) === unit)
+          ? list.filter(isBank)
+          : list.filter((f) => (f.forced ? f.unit === unit : (f.unit ?? 0) === unit))
   return [...filtered].sort(sortFiles)
 }
 
+const base = buildIndex()
+
+export function driveFilesFor(subject: string, unit?: number) {
+  return filesIn(base, subject, unit)
+}
+
 export function driveFile(id: string) {
-  return byId.get(id)
+  return base.byId.get(id)
 }
 
 /** Drive file counts per subject and per subject+unit, for the counters on listing pages. */
 export function driveCount(subject: string, unit?: number) {
   return driveFilesFor(subject, unit).length
+}
+
+/** The same lookups with the admins' moves applied (see lib/library-live.ts). */
+export function libraryWith(moves: ReadonlyMap<string, Placement>) {
+  const index = buildIndex(moves)
+  return {
+    files: driveFiles.map((f) => index.byId.get(f.id) ?? f),
+    filesFor: (subject: string, unit?: number) => filesIn(index, subject, unit),
+    count: (subject: string, unit?: number) => filesIn(index, subject, unit).length,
+    file: (id: string) => index.byId.get(id),
+  }
 }
 
 export function isImage(ext: string) {

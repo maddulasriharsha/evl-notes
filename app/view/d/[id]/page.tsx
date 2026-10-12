@@ -4,7 +4,8 @@ import { Download, ExternalLink } from 'lucide-react'
 import { OwnerName } from '@/components/ui'
 import { ActionLink, ViewerShell } from '@/components/viewer-shell'
 import { findSubject, sectionHref, sectionLabel } from '@/lib/curriculum'
-import { LIBRARY_OWNER, driveDownloadUrl, driveFile, driveFiles, driveFilesFor, driveOpenUrl, drivePreviewUrl, kindLabel } from '@/lib/library'
+import { LIBRARY_OWNER, driveDownloadUrl, driveFile, driveFiles, driveOpenUrl, drivePreviewUrl, kindLabel } from '@/lib/library'
+import { liveLibrary } from '@/lib/library-live'
 
 export const dynamicParams = false
 
@@ -18,11 +19,13 @@ export async function generateMetadata({ params }: PageProps<'/view/d/[id]'>): P
 }
 
 export default async function DriveViewer({ params }: PageProps<'/view/d/[id]'>) {
-  const file = driveFile((await params).id)
+  const id = (await params).id
+  const lib = await liveLibrary()
+  const file = lib.file(id) ?? driveFile(id)
   if (!file) notFound()
   const found = findSubject(file.subject)
   const unit = file.unit ?? 0
-  const siblings = driveFilesFor(file.subject, unit)
+  const siblings = lib.filesFor(file.subject, unit)
   const i = siblings.findIndex((f) => f.id === file.id)
   const prev = siblings[i - 1]
   const next = siblings[i + 1]

@@ -18,6 +18,7 @@ export function MoveFileButton({
   unit,
   className,
   compact,
+  drive = false,
 }: {
   id: string
   name: string
@@ -26,6 +27,8 @@ export function MoveFileButton({
   className?: string
   /** Icon only (used on cards). */
   compact?: boolean
+  /** A Google Drive library file (its id is the Drive id), moved by admins only. */
+  drive?: boolean
 }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
@@ -62,7 +65,9 @@ export function MoveFileButton({
   async function move() {
     setBusy(true)
     setError(null)
-    const { error } = await supabaseBrowser().rpc('staff_move_file', { p_file: id, p_subject: code, p_unit: target })
+    const { error } = drive
+      ? await supabaseBrowser().rpc('staff_move_drive_file', { p_file: id, p_subject: code, p_unit: target })
+      : await supabaseBrowser().rpc('staff_move_file', { p_file: id, p_subject: code, p_unit: target })
     if (error) {
       setBusy(false)
       return setError(error.message)

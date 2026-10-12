@@ -6,7 +6,7 @@ import { Container, Crumbs } from '@/components/ui'
 import { branches, findBranch, semesterHref, semesterLabel } from '@/lib/curriculum'
 import { countsBySubject } from '@/lib/data'
 import { plural } from '@/lib/format'
-import { driveCount } from '@/lib/library'
+import { liveLibrary } from '@/lib/library-live'
 
 export const revalidate = 60
 
@@ -22,8 +22,8 @@ export async function generateMetadata({ params }: PageProps<'/b/[branch]'>): Pr
 export default async function BranchPage({ params }: PageProps<'/b/[branch]'>) {
   const branch = findBranch((await params).branch)
   if (!branch) notFound()
-  const counts = await countsBySubject()
-  const total = (code: string) => (counts[code] ?? 0) + driveCount(code)
+  const [counts, lib] = await Promise.all([countsBySubject(), liveLibrary()])
+  const total = (code: string) => (counts[code] ?? 0) + lib.count(code)
 
   return (
     <Container className="pt-10">

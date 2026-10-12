@@ -4,7 +4,8 @@ import { Search } from 'lucide-react'
 import { Container, Empty, OwnerName, SectionHeading } from '@/components/ui'
 import { allSubjects, findSubject, PAPERS_UNIT, QUESTION_BANK_UNIT, sectionHref, sectionLabel, sectionsOf, sectionTitle, semesterLabel, subjectHref } from '@/lib/curriculum'
 import { searchFiles } from '@/lib/data'
-import { driveFiles, LIBRARY_OWNER } from '@/lib/library'
+import { LIBRARY_OWNER } from '@/lib/library'
+import { liveLibrary } from '@/lib/library-live'
 import { plural } from '@/lib/format'
 
 export const metadata: Metadata = { title: 'Search' }
@@ -75,7 +76,7 @@ export default async function SearchPage({ searchParams }: PageProps<'/search'>)
   }
   const matcher = relaxed ? matchesAny : matches
   const fromDrive = terms.length
-    ? driveFiles
+    ? (await liveLibrary()).files
         .filter((f) => semOk(f.subject) && kindOk(f.unit ?? 0) && matcher(`${f.title} ${findSubject(f.subject)?.subject.short ?? ''}`, terms))
         .slice(0, 40)
         .map((f) => ({

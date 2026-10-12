@@ -7,7 +7,7 @@ import { QrButton } from '@/components/qr-button'
 import { ButtonLink, Container, Crumbs, SectionHeading } from '@/components/ui'
 import { allSubjects, completeHref, findSubject, PAPERS_UNIT, QUESTION_BANK_UNIT, sectionHref, sectionLabel, sectionMark, sectionsOf, sectionTitle, semesterHref, subjectCrumbs, subjectHref } from '@/lib/curriculum'
 import { countsForSubject } from '@/lib/data'
-import { driveCount } from '@/lib/library'
+import { liveLibrary } from '@/lib/library-live'
 import { plural } from '@/lib/format'
 
 export const revalidate = 60
@@ -25,7 +25,8 @@ export default async function SubjectPage({ params }: PageProps<'/s/[code]'>) {
   const found = findSubject((await params).code)
   if (!found) notFound()
   const { subject, semester } = found
-  const counts = await countsForSubject(subject.code)
+  const [counts, lib] = await Promise.all([countsForSubject(subject.code), liveLibrary()])
+  const driveCount = lib.count
   const sections = sectionsOf(subject)
 
   return (

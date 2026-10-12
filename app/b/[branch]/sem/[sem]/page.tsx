@@ -5,7 +5,7 @@ import { SubjectCard } from '@/components/subject-card'
 import { Container, Crumbs } from '@/components/ui'
 import { branches, branchHref, findBranch, semesterHref, semesterLabel } from '@/lib/curriculum'
 import { countsBySubject } from '@/lib/data'
-import { driveCount } from '@/lib/library'
+import { liveLibrary } from '@/lib/library-live'
 
 export const revalidate = 60
 
@@ -30,10 +30,10 @@ export default async function SemesterPage({ params }: PageProps<'/b/[branch]/se
   const found = find(branchId, sem)
   if (!found) notFound()
   const { branch, semester } = found
-  const counts = await countsBySubject()
+  const [counts, lib] = await Promise.all([countsBySubject(), liveLibrary()])
   const theory = semester.subjects.filter((s) => s.kind !== 'lab')
   const labs = semester.subjects.filter((s) => s.kind === 'lab')
-  const count = (code: string) => (counts[code] ?? 0) + driveCount(code)
+  const count = (code: string) => (counts[code] ?? 0) + lib.count(code)
 
   return (
     <Container className="pt-10">

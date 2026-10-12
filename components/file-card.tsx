@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { DriveMove } from '@/components/drive-move'
 import { MessageCircle, ThumbsUp } from 'lucide-react'
 import { FileTools } from '@/components/file-tools'
 import { Thumb, type ThumbIcon } from '@/components/thumb'
@@ -63,9 +64,11 @@ function iconFor(ext: string): ThumbIcon {
 }
 
 /** A file from the owner's Google Drive notes, previewed from Drive. */
-export function DriveFileCard({ file }: { file: DriveFile }) {
+export function DriveFileCard({ file, placeUnit }: { file: DriveFile; placeUnit?: number }) {
   const tone = file.kind === 'questions' ? 'gold' : file.kind === 'lab' ? 'ok' : 'neutral'
   return (
+    <div className="relative">
+    <DriveMove id={file.id} name={file.title} subject={file.subject} unit={placeUnit ?? file.unit ?? 0} />
     <Link
       href={`/view/d/${file.id}`}
       className="group flex flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-card transition hover:-translate-y-0.5 hover:border-line-strong hover:shadow-pop"
@@ -82,5 +85,6 @@ export function DriveFileCard({ file }: { file: DriveFile }) {
         </div>
       </div>
     </Link>
+    </div>
   )
 }
