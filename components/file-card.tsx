@@ -15,7 +15,7 @@ export function UploadFileCard({ file, subject, unit }: { file: NoteFile; subjec
   const thumb = thumbFor(file)
   return (
     <div className="group relative flex">
-    <FileTools id={file.id} ownerId={file.owner_id} name={file.name} subject={subject} unit={unit} variant="card" />
+    <FileTools id={file.id} ownerId={file.owner_id} name={file.name} subject={subject} unit={unit} variant="card" tagged={file.tags?.includes('questions')} />
     <Link
       href={`/view/u/${file.id}`}
       className="flex w-full flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-card transition hover:-translate-y-0.5 hover:border-line-strong hover:shadow-pop"

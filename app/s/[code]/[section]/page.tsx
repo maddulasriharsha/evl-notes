@@ -1,11 +1,11 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { ArrowLeft, ArrowRight, CloudUpload, ThumbsUp } from 'lucide-react'
 import { RequestNotesButton } from '@/components/community-buttons'
 import { DownloadShelfButton } from '@/components/download-shelf'
 import { QrButton } from '@/components/qr-button'
-import { DriveFileCard, UploadFileCard } from '@/components/file-card'
+import { ShelfCards } from '@/components/shelf-cards'
 import { ButtonLink, Container, Crumbs, Empty, OwnerName } from '@/components/ui'
 import {
   findSubject,
@@ -18,6 +18,8 @@ import {
   subjectHref,
   allSubjects,
   sectionSlug,
+  completeHref,
+  QUESTION_BANK_UNIT,
 } from '@/lib/curriculum'
 import { openRequestCount } from '@/lib/community'
 import { collectionsFor, type NoteCollection } from '@/lib/data'
@@ -51,26 +53,20 @@ export default async function SectionPage({ params }: PageProps<'/s/[code]/[sect
   const r = await resolve(params)
   if (!r) notFound()
   const { subject, semester, unit } = r
+  // Complete notes (General) and the Question bank live together on one page.
+  if (unit === 0 || unit === QUESTION_BANK_UNIT) redirect(completeHref(subject.code))
   const [collections, waiting] = await Promise.all([collectionsFor(subject.code, unit), openRequestCount(subject.code, unit)])
   const order = sectionsOf(subject)
   const idx = order.indexOf(unit)
   const prev = idx > 0 ? order[idx - 1] : undefined
   const next = idx < order.length - 1 ? order[idx + 1] : undefined
-  // The owner's Drive notes join the owner's own shelf (if any) as one card, shown first.
   const drive = driveFilesFor(subject.code, unit)
-  const isOwner = (c: NoteCollection) => c.owner_is_admin && c.owner_name === LIBRARY_OWNER.name
-  const ownerShelf = collections.find(isOwner)
-  const cards: { key: string; collection?: NoteCollection; drive: DriveFile[] }[] = [
-    ...(ownerShelf || drive.length ? [{ key: ownerShelf?.id ?? 'owner', collection: ownerShelf, drive }] : []),
-    ...collections.filter((c) => c !== ownerShelf).map((c) => ({ key: c.id, collection: c, drive: [] as DriveFile[] })),
-  ]
   // PDFs and photos that can be joined into one downloadable PDF (Drive links cannot).
   const sourcesOf = (c: NoteCollection) =>
     c.files
       .filter((f) => f.storage_path && !f.original_removed_at && (f.mime === 'application/pdf' || f.mime.startsWith('image/')))
       .map((f) => ({ name: f.name, mime: f.mime, url: publicFileUrl(f.storage_path!) }))
   const allSources = collections.flatMap(sourcesOf)
-  const topHelpful = collections.reduce((m, c) => Math.max(m, c.helpful), 0)
   const totalFiles = collections.reduce((n, c) => n + c.files.length, 0) + drive.length
   const uploadHref = `/upload?subject=${subject.code}&unit=${unit}`
 
@@ -94,7 +90,7 @@ export default async function SectionPage({ params }: PageProps<'/s/[code]/[sect
                 {sectionTitle(subject, unit)}
               </h1>
               <p className="mt-3 text-sm text-ink-3">
-                {plural(cards.length, 'contributor')} · {plural(totalFiles, 'file')}
+                {plural(collections.length + (drive.length ? 1 : 0), 'contributor')} · {plural(totalFiles, 'file')}
               </p>
             </div>
             <ButtonLink href={uploadHref}>
@@ -123,59 +119,17 @@ export default async function SectionPage({ params }: PageProps<'/s/[code]/[sect
       <Container className="mt-10 space-y-14">
         <section>
           <h2 className="mb-4 font-display text-xl font-semibold tracking-tight">Notes</h2>
-          {cards.length === 0 ? (
-            <Empty title="No notes for this chapter yet">
-              Took notes in class? <Link href={uploadHref} className="font-medium text-accent">Upload them</Link> and they will appear here under your name.
-            </Empty>
-          ) : (
-            <div className="space-y-6">
-              {cards.map(({ key, collection: c, drive: driveList }) => {
-                const name = c?.owner_name ?? LIBRARY_OWNER.name
-                const admin = c ? c.owner_is_admin : LIBRARY_OWNER.admin
-                const mod = c ? c.owner_is_mod : false
-                const count = (c?.files.length ?? 0) + driveList.length
-                return (
-                  <article
-                    key={key}
-                    id={c && !driveList.length ? `c-${c.id}` : 'owner-notes'}
-                    className="scroll-mt-24 rounded-2xl border border-line bg-surface p-4 shadow-card sm:p-5"
-                  >
-                    {c && driveList.length > 0 && <span id={`c-${c.id}`} className="block scroll-mt-24" />}
-                    <header className="mb-4 flex flex-wrap items-center gap-3">
-                      <span className="grid size-10 place-items-center rounded-full bg-accent-soft font-semibold text-accent">
-                        {name.charAt(0).toUpperCase()}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="flex items-center font-semibold">
-                          <OwnerName name={`${name}’s notes`} admin={admin} moderator={mod} />
-                          {c && topHelpful > 0 && c.helpful === topHelpful && (
-                            <span className="ml-2 inline-flex items-center gap-1 rounded-md bg-ok-soft px-1.5 py-0.5 text-[10px] font-semibold tracking-wider text-ok uppercase">
-                              <ThumbsUp className="size-3" /> Most helpful
-                            </span>
-                          )}
-                        </p>
-                        <p className="text-xs text-ink-3">
-                          {plural(count, 'file')}
-                          {c && c.helpful > 0 && ` · ${plural(c.helpful, 'helpful vote')}`}
-                          {c && ` · started ${formatDate(c.created_at)} · updated ${timeAgo(c.updated_at)}`}
-                        </p>
-                      </div>
-                      {c && sourcesOf(c).length > 1 && (
-                        <DownloadShelfButton sources={sourcesOf(c)} title={`${name} - ${subject.short} ${sectionLabel(unit)}`} label="Download as one PDF" />
-                      )}
-                    </header>
-                    {c?.description && <p className="mb-4 text-sm whitespace-pre-line text-ink-2">{c.description}</p>}
-                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-                      {c?.files.map((f) => <UploadFileCard key={f.id} file={f} subject={subject.code} unit={unit} />)}
-                      {driveList.map((f) => (
-                        <DriveFileCard key={f.id} file={f} />
-                      ))}
-                    </div>
-                  </article>
-                )
-              })}
-            </div>
-          )}
+          <ShelfCards
+            collections={collections}
+            drive={drive}
+            subjectCode={subject.code}
+            subjectShort={subject.short}
+            unit={unit}
+            label={sectionLabel(unit)}
+            uploadHref={uploadHref}
+            emptyTitle="No notes for this chapter yet"
+            emptyHint="Took notes in class?"
+          />
         </section>
 
 

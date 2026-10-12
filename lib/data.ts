@@ -28,6 +28,8 @@ export interface NoteFile {
   backup_drive_id: string | null
   /** Set once the Storage original was removed; the note is then served from the Drive copy. */
   original_removed_at: string | null
+  /** Staff tags; "questions" also lists the note in the subject's Question bank. */
+  tags: string[]
 }
 
 export interface NoteCollection {
@@ -52,9 +54,11 @@ const BASE_COLUMNS =
 // Helpful votes and the Drive-backup columns arrive with later migrations. Until they exist, read
 // without them so the site keeps working; a failed read switches the missing part off for the rest
 // of the process.
-const optional = { votes: true, backup: true }
+const optional = { votes: true, backup: true, tags: true }
 const fileColumns = () =>
-  [BASE_COLUMNS, optional.backup && 'backup_drive_id, original_removed_at', optional.votes && 'file_votes(count)'].filter(Boolean).join(', ')
+  [BASE_COLUMNS, optional.backup && 'backup_drive_id, original_removed_at', optional.tags && 'tags', optional.votes && 'file_votes(count)']
+    .filter(Boolean)
+    .join(', ')
 
 /** Runs a read that selects file columns, retrying without any optional part that is missing. */
 async function readWithVotes<T extends { error: { message: string } | null }>(run: (columns: string) => PromiseLike<T>): Promise<T> {
@@ -64,22 +68,25 @@ async function readWithVotes<T extends { error: { message: string } | null }>(ru
     if (!res.error) return res
     if (optional.votes && /file_votes/.test(message)) optional.votes = false
     else if (optional.backup && /backup_drive_id|original_removed_at/.test(message)) optional.backup = false
+    else if (optional.tags && /\btags\b/.test(message)) optional.tags = false
     else return res
   }
   return run(fileColumns())
 }
 
 type Owner = { display_name: string; role: string } | null
-type FileRow = Omit<NoteFile, 'comment_count' | 'helpful_count' | 'backup_drive_id' | 'original_removed_at'> & {
+type FileRow = Omit<NoteFile, 'comment_count' | 'helpful_count' | 'backup_drive_id' | 'original_removed_at' | 'tags'> & {
+  tags?: string[] | null
   comments?: { count: number }[]
   file_votes?: { count: number }[]
   backup_drive_id?: string | null
   original_removed_at?: string | null
 }
 
-function shapeFile({ comments, file_votes, backup_drive_id, original_removed_at, ...f }: FileRow): NoteFile {
+function shapeFile({ comments, file_votes, backup_drive_id, original_removed_at, tags, ...f }: FileRow): NoteFile {
   return {
     ...f,
+    tags: tags ?? [],
     comment_count: comments?.[0]?.count ?? 0,
     helpful_count: file_votes?.[0]?.count ?? 0,
     backup_drive_id: backup_drive_id ?? null,
@@ -126,6 +133,28 @@ export async function collectionsFor(subject: string, unit: number): Promise<Not
   }
   // Most helpful shelf first; Array.sort is stable, so ties keep "recently updated" order.
   return shape((data ?? []) as unknown as CollectionRow[]).sort((a, b) => b.helpful - a.helpful)
+}
+
+/**
+ * Notes that staff tagged "questions", from any chapter of the subject, shelved by uploader.
+ * They are listed in the Question bank next to the notes uploaded there.
+ */
+export async function taggedQuestionsFor(subject: string): Promise<NoteCollection[]> {
+  if (!supabaseConfigured || !optional.tags) return []
+  const { data, error } = await readWithVotes((cols) =>
+    supabasePublic()
+      .from('collections')
+      .select(`id, owner_id, subject_code, unit, description, created_at, updated_at, profiles(display_name, role), files(${cols})`)
+      .eq('subject_code', subject)
+      .is('files.deleted_at', null)
+      .contains('files.tags', ['questions'])
+      .order('updated_at', { ascending: false }),
+  )
+  if (error) {
+    if (/\btags\b/.test(error.message)) optional.tags = false
+    return []
+  }
+  return shape((data ?? []) as unknown as CollectionRow[])
 }
 
 /** Live file counts per unit for a subject: { [unit]: count }. */

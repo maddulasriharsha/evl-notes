@@ -782,3 +782,29 @@ describe('owner powers', () => {
     expect(paths.rows).toHaveLength(1)
   })
 })
+
+describe('question tags', () => {
+  const TC = '88888888-0000-4000-8000-0000000000c1'
+  const TF = '88888888-0000-4000-8000-000000000001'
+  const TMOD = '88888888-0000-4000-8000-0000000000a1'
+
+  it('lets staff tag a note as questions, and nobody else', async () => {
+    await db.exec(`insert into auth.users (id, email) values ('${TMOD}', 'tagmod@x.in')`)
+    await db.exec(`insert into public.profiles (id, display_name, role) values ('${TMOD}', 'Tag Mod', 'moderator')`)
+    await db.exec(`insert into public.collections (id, owner_id, subject_code, unit) values ('${TC}', '${B}', '25ES1CS105', 2)`)
+    await db.exec(
+      `insert into public.files (id, collection_id, owner_id, storage_path, name, mime, size_bytes)
+       values ('${TF}', '${TC}', '${B}', '${B}/${TC}/${TF}/notes.pdf', 'Unit 2 questions', 'application/pdf', 100)`,
+    )
+    await fails(B, `select public.staff_set_file_tag($1, 'questions', true)`, [TF])
+    await fails(null, `select public.staff_set_file_tag($1, 'questions', true)`, [TF])
+    await fails(B, `update public.files set tags = array['questions'] where id = $1`, [TF])
+    await fails(TMOD, `select public.staff_set_file_tag($1, 'anything', true)`, [TF])
+    const on = await as(TMOD, `select public.staff_set_file_tag($1, 'questions', true) as t`, [TF])
+    expect(on.rows[0]!.t).toEqual(['questions'])
+    const twice = await as(TMOD, `select public.staff_set_file_tag($1, 'questions', true) as t`, [TF])
+    expect(twice.rows[0]!.t).toEqual(['questions'])
+    const off = await as(TMOD, `select public.staff_set_file_tag($1, 'questions', false) as t`, [TF])
+    expect(off.rows[0]!.t).toEqual([])
+  })
+})

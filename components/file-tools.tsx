@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2, Pencil, Trash2 } from 'lucide-react'
+import { HelpCircle, Loader2, Pencil, Trash2 } from 'lucide-react'
 import { refreshFile } from '@/app/upload/actions'
 import { MoveFileButton } from '@/components/move-file'
 import { supabaseBrowser } from '@/lib/supabase/browser'
@@ -51,6 +51,7 @@ export function FileTools({
   unit,
   variant,
   after,
+  tagged = false,
 }: {
   id: string
   ownerId: string
@@ -60,12 +61,15 @@ export function FileTools({
   variant: 'card' | 'bar'
   /** Where to go once the note is deleted (used on the file's own page). */
   after?: string
+  /** Already tagged "questions" (it is listed in the Question bank). */
+  tagged?: boolean
 }) {
   const viewer = useViewer()
   const router = useRouter()
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(name)
-  const [busy, setBusy] = useState<'rename' | 'delete' | null>(null)
+  const [busy, setBusy] = useState<'rename' | 'delete' | 'tag' | null>(null)
+  const [isTagged, setIsTagged] = useState(tagged)
 
   const isStaff = viewer?.role === 'moderator' || viewer?.role === 'admin'
   if (!viewer || (viewer.id !== ownerId && !isStaff)) return null
@@ -87,6 +91,17 @@ export function FileTools({
     router.refresh()
   }
 
+  async function toggleQuestionsTag() {
+    setBusy('tag')
+    const next = !isTagged
+    const { error } = await supabaseBrowser().rpc('staff_set_file_tag', { p_file: id, p_tag: 'questions', p_on: next })
+    setBusy(null)
+    if (error) return alert(error.message)
+    setIsTagged(next)
+    await refreshFile(id, subject, unit).catch(() => undefined)
+    router.refresh()
+  }
+
   async function remove() {
     const who = byStaff ? ' It is someone else’s note; the owner can restore it from My notes.' : ''
     if (!confirm(`Delete “${name}”? It will disappear from the site.${who}`)) return
@@ -104,6 +119,24 @@ export function FileTools({
 
   const buttons = (
     <>
+      {isStaff && (
+        <button
+          type="button"
+          aria-label={isTagged ? 'Remove the Questions tag' : 'Tag as Questions'}
+          aria-pressed={isTagged}
+          title={isTagged ? 'Tagged Questions: listed in the Question bank (click to remove)' : 'Tag as Questions: also list in the Question bank'}
+          disabled={busy !== null}
+          onClick={toggleQuestionsTag}
+          className={
+            variant === 'card'
+              ? `grid size-8 place-items-center rounded-lg shadow-card backdrop-blur ${isTagged ? 'bg-accent text-accent-ink' : 'bg-bg/90 text-ink-2 hover:text-ink'}`
+              : `inline-flex h-9 items-center gap-1.5 rounded-lg border px-2.5 text-sm font-medium ${isTagged ? 'border-accent bg-accent-soft text-accent' : 'border-line hover:bg-surface-2'}`
+          }
+        >
+          {busy === 'tag' ? <Loader2 className="size-4 animate-spin" /> : <HelpCircle className="size-4" />}
+          {variant === 'bar' && <span className="hidden md:inline">{isTagged ? 'Questions ✓' : 'Tag: Questions'}</span>}
+        </button>
+      )}
       {isStaff && <MoveFileButton id={id} name={name} subject={subject} unit={unit} compact={variant === 'card'} className={variant === 'bar' ? 'inline-flex h-9 items-center gap-1.5 rounded-lg border border-line px-2.5 text-sm font-medium hover:bg-surface-2' : undefined} />}
       <button
         type="button"

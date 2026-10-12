@@ -5,7 +5,7 @@ import { ArrowRight, CloudUpload } from 'lucide-react'
 import { FollowButton } from '@/components/community-buttons'
 import { QrButton } from '@/components/qr-button'
 import { ButtonLink, Container, Crumbs, SectionHeading } from '@/components/ui'
-import { allSubjects, findSubject, sectionHref, sectionLabel, sectionMark, sectionsOf, sectionTitle, semesterHref, subjectCrumbs, subjectHref } from '@/lib/curriculum'
+import { allSubjects, completeHref, findSubject, QUESTION_BANK_UNIT, sectionHref, sectionLabel, sectionMark, sectionsOf, sectionTitle, semesterHref, subjectCrumbs, subjectHref } from '@/lib/curriculum'
 import { countsForSubject } from '@/lib/data'
 import { driveCount } from '@/lib/library'
 import { plural } from '@/lib/format'
@@ -73,8 +73,22 @@ export default async function SubjectPage({ params }: PageProps<'/s/[code]'>) {
 
       <Container className="mt-10">
         <SectionHeading title={subject.units.length ? 'Chapters' : 'Sections'} hint="Open a chapter to see everyone’s notes for it." />
+        <Link
+          href={completeHref(subject.code)}
+          className="group mb-4 flex items-center gap-4 rounded-2xl border border-accent bg-accent-soft px-5 py-4 shadow-card transition hover:opacity-90"
+        >
+          <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-accent font-display text-lg font-semibold text-accent-ink">★</span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-xs font-semibold tracking-widest text-accent uppercase">Start here</span>
+            <span className="block truncate font-medium">Complete notes &amp; Question bank</span>
+          </span>
+          <span className="hidden rounded-md bg-bg/70 px-2 py-0.5 text-xs font-medium text-ink-2 sm:block">
+            {plural((counts[0] ?? 0) + (counts[QUESTION_BANK_UNIT] ?? 0) + driveCount(subject.code, 0) + driveCount(subject.code, QUESTION_BANK_UNIT), 'file')}
+          </span>
+          <ArrowRight className="size-4 text-ink-3 transition group-hover:translate-x-0.5 group-hover:text-ink" />
+        </Link>
         <ol className="overflow-hidden rounded-2xl border border-line bg-surface shadow-card">
-          {sections.map((unit) => {
+          {sections.filter((u) => u !== 0 && u !== QUESTION_BANK_UNIT).map((unit) => {
             const mine = (counts[unit] ?? 0) + driveCount(subject.code, unit)
             return (
               <li key={unit} className="border-b border-line last:border-0">

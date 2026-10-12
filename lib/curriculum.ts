@@ -171,6 +171,14 @@ export function subjectHref(code: string) {
   return `/s/${code.toLowerCase()}`
 }
 
+/** Complete notes (General) and the Question bank share one page: /s/{code}/complete. */
+export const COMPLETE_SLUG = 'complete'
+
+export function completeHref(code: string) {
+  return `${subjectHref(code)}/${COMPLETE_SLUG}`
+}
+
 export function sectionHref(code: string, unit: number) {
+  if (unit === 0 || unit === QUESTION_BANK_UNIT) return completeHref(code)
   return `${subjectHref(code)}/${sectionSlug(unit)}`
 }

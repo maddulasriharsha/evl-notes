@@ -87,6 +87,7 @@ export default async function UploadViewer({ params }: PageProps<'/view/u/[id]'>
               subject={file.subject_code}
               unit={file.unit}
               variant="bar"
+              tagged={file.tags?.includes('questions')}
               after={sectionHref(file.subject_code, file.unit)}
             />
             <ActionLink href={openHref} newTab>
