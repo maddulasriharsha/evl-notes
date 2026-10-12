@@ -19,6 +19,8 @@ export interface DriveFile {
   kind: DriveKind
   pages: number | null
   source: string
+  /** Other subjects and chapters that show the same file (for example BEEE notes also used by BEE and EEEE). */
+  also?: { subject: string; unit: number | null }[]
 }
 
 export const driveFiles = data as DriveFile[]
@@ -26,10 +28,14 @@ export const driveFiles = data as DriveFile[]
 const bySubject = new Map<string, DriveFile[]>()
 const byId = new Map<string, DriveFile>()
 for (const f of driveFiles) {
-  const list = bySubject.get(f.subject) ?? []
-  list.push(f)
-  bySubject.set(f.subject, list)
   byId.set(f.id, f)
+  const placements = [{ subject: f.subject, unit: f.unit }, ...(f.also ?? [])]
+  for (const p of placements) {
+    const placed: DriveFile = p.subject === f.subject && p.unit === f.unit ? f : { ...f, subject: p.subject, unit: p.unit }
+    const list = bySubject.get(p.subject) ?? []
+    list.push(placed)
+    bySubject.set(p.subject, list)
+  }
 }
 
 const PAPER_TITLE = /\b(mid|pyq|paper|sem\s*end|end\s*sem|exam|previous)/i
