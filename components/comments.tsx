@@ -37,7 +37,7 @@ function CommentsPanel({ fileId, ownerId, onCount }: { fileId: string; ownerId: 
   const load = useCallback(async () => {
     const { data, error } = await supabaseBrowser()
       .from('comments')
-      .select('id, author_id, body, created_at, profiles(display_name, role)')
+      .select('id, author_id, body, created_at, profiles!author_id(display_name, role)')
       .eq('file_id', fileId)
       .is('deleted_at', null)
       .order('created_at', { ascending: true })

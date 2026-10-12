@@ -364,7 +364,7 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
   if (tab === 'files') {
     const { data, error: filesError } = await supabase
       .from('files')
-      .select('id, name, mime, size_bytes, created_at, deleted_at, profiles(display_name, role), collections(subject_code, unit)')
+      .select('id, name, mime, size_bytes, created_at, deleted_at, profiles!owner_id(display_name, role), collections(subject_code, unit)')
       .order('created_at', { ascending: false })
       .limit(200)
     const rows = (data ?? []) as unknown as {
@@ -410,7 +410,7 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
   if (tab === 'comments') {
     const { data } = await supabase
       .from('comments')
-      .select('id, body, created_at, deleted_at, file_id, profiles(display_name, role), files(name)')
+      .select('id, body, created_at, deleted_at, file_id, profiles!author_id(display_name, role), files(name)')
       .order('created_at', { ascending: false })
       .limit(200)
     const rows = (data ?? []) as unknown as {
@@ -540,7 +540,7 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
   if (tab === 'shelves') {
     const { data } = await supabase
       .from('collections')
-      .select('id, subject_code, unit, hidden, updated_at, profiles(display_name, role), files(id, deleted_at)')
+      .select('id, subject_code, unit, hidden, updated_at, profiles!owner_id(display_name, role), files(id, deleted_at)')
       .order('updated_at', { ascending: false })
       .limit(200)
     const rows = (data ?? []) as unknown as {
