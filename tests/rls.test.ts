@@ -735,8 +735,8 @@ describe('staff move a note to another subject or chapter', () => {
 describe('owner powers', () => {
   const ADMIN2 = 'dddddddd-0000-4000-8000-0000000000a1'
   const VICTIM = 'dddddddd-0000-4000-8000-0000000000b1'
-  const OC = 'ffffffff-0000-4000-8000-0000000000c1'
-  const OF = 'ffffffff-0000-4000-8000-000000000001'
+  const OC = '99999999-0000-4000-8000-0000000000c1'
+  const OF = '99999999-0000-4000-8000-000000000001'
 
   it('knows who the owner is, and only that account', async () => {
     await db.exec(`insert into public.site_owners (email) values ('owner@x.in') on conflict do nothing`)
