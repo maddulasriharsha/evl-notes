@@ -14,7 +14,7 @@ import {
 } from 'lucide-react'
 import { Thumb } from '@/components/thumb'
 import { OwnerName } from '@/components/ui'
-import { allSubjects, branches, branchHref, branchSubjects, extras, findSubject, sectionHref, sectionLabel, subjectHref } from '@/lib/curriculum'
+import { allSubjects, branches, branchHref, branchSubjects, findSubject, sectionHref, sectionLabel, subjectHref } from '@/lib/curriculum'
 import { contributors, countsBySubject, recentlyUpdated, uploadTotals } from '@/lib/data'
 import { DRIVE_LIBRARY } from '@/lib/drive-stats'
 import { thumbFor } from '@/lib/file-thumb'
@@ -166,16 +166,6 @@ export default async function Home() {
               <p className="mt-1 text-sm text-ink-3">Don&rsquo;t see yours yet? It&rsquo;s coming. Subjects shared by several branches already share their notes.</p>
             </div>
           </div>
-          {extras && (
-            <p className="mt-5 text-center text-sm text-ink-3">
-              Also available:{' '}
-              {extras.subjects.map((x) => (
-                <Link key={x.code} href={subjectHref(x.code)} className="font-medium text-ink-2 underline decoration-line-strong underline-offset-4 hover:text-ink">
-                  {x.name}
-                </Link>
-              ))}
-            </p>
-          )}
         </section>
 
         {/* ---------- Recently updated ---------- */}
