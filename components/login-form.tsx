@@ -17,7 +17,7 @@ function GoogleIcon() {
   )
 }
 
-type Mode = 'signin' | 'signup' | 'link' | 'code'
+type Mode = 'signin' | 'signup' | 'link' | 'code' | 'verify'
 
 const MIN_PASSWORD = 8
 
@@ -39,6 +39,7 @@ export function LoginForm({ next }: { next: string }) {
   const [password, setPassword] = useState('')
   const [show, setShow] = useState(false)
   const [code, setCode] = useState('')
+  const [signupToken, setSignupToken] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
@@ -81,11 +82,36 @@ export function LoginForm({ next }: { next: string }) {
       if (/confirm/i.test(error.message)) return setError('Confirm your email first: open the link we sent when you created the account.')
       return setError('Wrong email or password. If you used to sign in with an email link, use that once and set a password on “My notes”.')
     }
-    // Create the account on the server without an email, then sign in with the same password.
+    // 1. Ask the server to email a verification code (it answers "not required" when codes are not set up).
+    const ask = await fetch('/api/signup/code', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: email.trim() }),
+    }).catch(() => null)
+    const asked = ask ? ((await ask.json().catch(() => ({}))) as { required?: boolean; token?: string; reason?: string }) : {}
+    if (ask && !ask.ok) {
+      setBusy(false)
+      if (asked.reason === 'busy') return setError('Too many codes were requested. Wait a few minutes and try again.')
+      if (asked.reason === 'email') return setError('That email address does not look right. Check it and try again.')
+      return setError('Could not send the code. Check the email address, or use “Continue with Google”.')
+    }
+    if (ask && asked.required && asked.token) {
+      setBusy(false)
+      setSignupToken(asked.token)
+      setCode('')
+      setInfo(`We emailed a 6-digit code to ${email.trim()}. Enter it below to finish creating your account.`)
+      return setMode('verify')
+    }
+    await createAccount()
+  }
+
+  /** Creates the account on the server (with the emailed code when one was required), then signs in. */
+  async function createAccount() {
+    const supabase = supabaseBrowser()
     const res = await fetch('/api/signup', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ email: email.trim(), password, website: '' }),
+      body: JSON.stringify({ email: email.trim(), password, website: '', code: code.trim(), token: signupToken }),
     }).catch(() => null)
     if (res && res.ok) {
       const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
@@ -99,6 +125,7 @@ export function LoginForm({ next }: { next: string }) {
     if (res && res.status !== 501) {
       const reason = ((await res.json().catch(() => ({}))) as { reason?: string }).reason
       setBusy(false)
+      if (reason === 'code') return setError('That code is wrong or has expired. Check it, or go back and request a new one.')
       if (reason === 'exists') return setError('That email already has an account. Sign in instead.')
       if (reason === 'email') return setError('That email address does not look right. Check it and try again.')
       if (reason === 'password') return setError(`Choose a stronger password (at least ${MIN_PASSWORD} characters).`)
@@ -112,6 +139,14 @@ export function LoginForm({ next }: { next: string }) {
     if (data.session) return done('password')
     setInfo('Account created. Open the confirmation link we just emailed you (only needed once), then sign in with your password.')
     setMode('signin')
+  }
+
+  async function verifySignup(e: React.FormEvent) {
+    e.preventDefault()
+    setError(null)
+    setInfo(null)
+    setBusy(true)
+    await createAccount()
   }
 
   async function sendLink(e: React.FormEvent) {
@@ -231,6 +266,26 @@ export function LoginForm({ next }: { next: string }) {
           <p className="text-xs text-ink-3">After signing in you can set a new password on &ldquo;My notes&rdquo;.</p>
           <button type="button" onClick={() => switchTo('signin')} className="w-full text-sm text-ink-3 hover:text-ink">
             Back to password sign-in
+          </button>
+        </form>
+      )}
+
+      {mode === 'verify' && (
+        <form onSubmit={verifySignup} className="space-y-3">
+          <input
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            value={code}
+            onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+            placeholder="6-digit code"
+            aria-label="Code from your email"
+            className="h-12 w-full rounded-xl border border-line bg-bg px-4 text-center font-mono text-lg tracking-[0.3em] outline-none focus:border-accent"
+          />
+          <button type="submit" disabled={busy || code.length < 6} className={primary}>
+            {busy ? <Loader2 className="size-4 animate-spin" /> : 'Verify and create account'}
+          </button>
+          <button type="button" onClick={() => switchTo('signup')} className="w-full text-sm text-ink-3 hover:text-ink">
+            Wrong email or no code? Go back
           </button>
         </form>
       )}

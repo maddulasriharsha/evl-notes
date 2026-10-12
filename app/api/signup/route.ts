@@ -1,8 +1,11 @@
 import { NextResponse, type NextRequest } from 'next/server'
+import { codeIsValid, emailCodesConfigured } from '@/lib/signup-code'
 import { adminConfigured, supabaseAdmin } from '@/lib/supabase/admin'
 
 /**
- * Creates an email + password account WITHOUT sending a confirmation email.
+ * Creates an email + password account as already confirmed, without Supabase's own confirmation email.
+ * If email codes are configured (lib/signup-code.ts) the caller must also send the code that was emailed
+ * to them; otherwise no verification is possible and the address is taken as given.
  *
  * Why: Supabase's built-in email sender allows only a couple of emails per hour for the whole
  * project, so most students could not create an account. This route creates the account as already
@@ -36,7 +39,7 @@ export async function POST(request: NextRequest) {
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
   if (tooMany(ip)) return NextResponse.json({ ok: false, reason: 'busy' }, { status: 429 })
 
-  let body: { email?: unknown; password?: unknown; website?: unknown }
+  let body: { email?: unknown; password?: unknown; website?: unknown; code?: unknown; token?: unknown }
   try {
     body = await request.json()
   } catch {
@@ -49,6 +52,13 @@ export async function POST(request: NextRequest) {
   const password = typeof body.password === 'string' ? body.password : ''
   if (!EMAIL.test(email)) return NextResponse.json({ ok: false, reason: 'email' }, { status: 400 })
   if (password.length < MIN_PASSWORD || password.length > 200) return NextResponse.json({ ok: false, reason: 'password' }, { status: 400 })
+
+  // When email codes are set up, the person must prove they own the address first.
+  if (emailCodesConfigured()) {
+    const code = typeof body.code === 'string' ? body.code.trim() : ''
+    const token = typeof body.token === 'string' ? body.token : ''
+    if (!codeIsValid(email, code, token)) return NextResponse.json({ ok: false, reason: 'code' }, { status: 400 })
+  }
 
   const { error } = await supabaseAdmin().auth.admin.createUser({ email, password, email_confirm: true })
   if (error) {
