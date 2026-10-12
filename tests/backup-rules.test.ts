@@ -5,15 +5,15 @@ const now = new Date('2026-10-20T12:00:00Z')
 
 describe('isDueForRemoval', () => {
   it('waits three full days', () => {
-    expect(isDueForRemoval('2026-10-17T12:00:00Z', now)).toBe(true)
-    expect(isDueForRemoval('2026-10-17T12:00:01Z', now)).toBe(false)
-    expect(isDueForRemoval('2026-10-19T12:00:00Z', now)).toBe(false)
+    expect(isDueForRemoval('2026-10-17T12:00:00Z', now, 3)).toBe(true)
+    expect(isDueForRemoval('2026-10-17T12:00:01Z', now, 3)).toBe(false)
+    expect(isDueForRemoval('2026-10-19T12:00:00Z', now, 3)).toBe(false)
   })
   it('never removes on a bad date', () => {
     expect(isDueForRemoval('not a date', now)).toBe(false)
   })
   it('gives the database the same cutoff', () => {
-    expect(removalCutoff(now)).toBe('2026-10-17T12:00:00.000Z')
+    expect(removalCutoff(now, 3)).toBe('2026-10-17T12:00:00.000Z')
   })
 })
 

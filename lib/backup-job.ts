@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { copyIsSafe, backupFileName, removalCutoff } from '@/lib/backup-rules'
+import { copyIsSafe, backupFileName, KEEP_ORIGINAL_DAYS, removalCutoff } from '@/lib/backup-rules'
 import { deleteBackup, driveBackupConfigured, inspectBackup, md5, uploadBackup } from '@/lib/drive-backup'
 import { publicFileUrl, STORAGE_BUCKET } from '@/lib/env'
 import { adminConfigured, supabaseAdmin } from '@/lib/supabase/admin'
@@ -25,8 +25,9 @@ export function backupReady() {
 
 /**
  * One pass of the job:
- *   1. Originals whose Drive copy is 3 days old and still intact are removed from Storage.
- *   2. New uploads are copied to Drive, checked (size and checksum) and recorded.
+ *   1. Originals whose Drive copy is old enough (KEEP_ORIGINAL_DAYS) and still intact are removed from Storage.
+ *   2. New uploads are copied to Drive, checked (size and checksum) and recorded. With KEEP_ORIGINAL_DAYS = 0
+ *      the original is removed right away, as soon as the Drive copy has been verified.
  * It stops when the time budget is used up; the next run picks up where this one left off.
  * An original is only ever removed after the Drive copy has been looked at again just beforehand.
  */
@@ -103,11 +104,22 @@ export async function runBackup(budgetMs = 45_000): Promise<BackupReport> {
           await deleteBackup(copy.id).catch(() => undefined)
         } else {
           report.backedUp += 1
+          if (KEEP_ORIGINAL_DAYS === 0) {
+            // The copy's size and checksum were just checked, so the original can go now.
+            const gone = await db.storage.from(STORAGE_BUCKET).remove([f.storage_path])
+            if (gone.error) throw new Error(`copied, but the original could not be removed: ${gone.error.message}`)
+            await db.from('files').update({ original_removed_at: new Date().toISOString() }).eq('id', f.id)
+            report.removed += 1
+          }
         }
       } catch (e) {
         report.failed += 1
         report.errors.push(`backup ${f.id}: ${short(e)}`)
-        if (uploaded) await deleteBackup(uploaded).catch(() => undefined)
+        // Only drop the Drive copy if it was never recorded; a recorded copy must stay.
+        const recorded = uploaded
+          ? ((await db.from('files').select('backup_drive_id').eq('id', f.id).maybeSingle()).data as { backup_drive_id: string | null } | null)?.backup_drive_id === uploaded
+          : false
+        if (uploaded && !recorded) await deleteBackup(uploaded).catch(() => undefined)
         await db.from('files').update({ backup_error: short(e) }).eq('id', f.id)
       }
     }
