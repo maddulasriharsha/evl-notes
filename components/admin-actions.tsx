@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { removeBackupCopy } from '@/app/admin/backup-actions'
+import { MoveFileButton } from '@/components/move-file'
 import { refreshChapter } from '@/app/upload/actions'
 import { STORAGE_BUCKET } from '@/lib/env'
 import { supabaseBrowser } from '@/lib/supabase/browser'
@@ -67,6 +68,7 @@ export function FileModButtons({
           Rename
         </Btn>
       )}
+      {!hidden && <MoveFileButton id={id} name={name ?? 'this note'} subject={subject} unit={unit} />}
       <Btn
         busy={busy === 'hide'}
         dark={hidden}

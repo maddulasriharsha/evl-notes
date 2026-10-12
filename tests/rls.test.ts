@@ -688,3 +688,44 @@ describe('reports: broken reason, automatic hiding after five people, storage fi
     expect(r.rows[0]!.deleted_at).toBeNull()
   })
 })
+
+describe('staff move a note to another subject or chapter', () => {
+  const MV_COL = 'cccccccc-0000-4000-8000-0000000000c1'
+  const MV_FILE = 'cccccccc-0000-4000-8000-000000000001'
+  const MOD2 = 'cccccccc-0000-4000-8000-0000000000a1'
+
+  it('lets a moderator move a member note, but not an owner doing it by plain update', async () => {
+    await db.exec(`insert into auth.users (id, email) values ('${MOD2}', 'mod2@x.in')`)
+    await db.exec(`insert into public.profiles (id, display_name, role) values ('${MOD2}', 'Mod Two', 'moderator')`)
+    await db.exec(`insert into public.collections (id, owner_id, subject_code, unit) values ('${MV_COL}', '${B}', '25ES1CS102', 1)`)
+    await db.exec(
+      `insert into public.files (id, collection_id, owner_id, storage_path, name, mime, size_bytes)
+       values ('${MV_FILE}', '${MV_COL}', '${B}', '${B}/${MV_COL}/${MV_FILE}/notes.pdf', 'Movable', 'application/pdf', 100)`,
+    )
+    // The owner cannot move it with a plain update (the guard still blocks that)
+    await fails(B, `update public.files set collection_id = $1 where id = $2`, [MV_COL, MV_FILE])
+    // A member cannot call the staff function
+    await fails(A, `select public.staff_move_file($1, '25ES1CS103', 2)`, [MV_FILE])
+    // A moderator can
+    const moved = await as(MOD2, `select public.staff_move_file($1, '25ES1CS103', 2) as id`, [MV_FILE])
+    const targetCol = moved.rows[0]!.id as string
+    expect(targetCol).not.toBe(MV_COL)
+    const row = await db.query<{ collection_id: string }>(`select collection_id from public.files where id = '${MV_FILE}'`)
+    expect(row.rows[0]!.collection_id).toBe(targetCol)
+    const col = await db.query<{ owner_id: string; subject_code: string; unit: number }>(`select owner_id, subject_code, unit from public.collections where id = '${targetCol}'`)
+    expect(col.rows[0]).toMatchObject({ owner_id: B, subject_code: '25ES1CS103', unit: 2 })
+  })
+
+  it('stops a moderator moving staff notes, and rejects a bad chapter', async () => {
+    const adminCol = 'cccccccc-0000-4000-8000-0000000000c2'
+    const adminFile = 'cccccccc-0000-4000-8000-000000000002'
+    await db.exec(`insert into public.collections (id, owner_id, subject_code, unit) values ('${adminCol}', '${ADMIN}', '25ES1CS102', 3)`)
+    await db.exec(
+      `insert into public.files (id, collection_id, owner_id, storage_path, name, mime, size_bytes)
+       values ('${adminFile}', '${adminCol}', '${ADMIN}', '${ADMIN}/${adminCol}/${adminFile}/notes.pdf', 'Admin note', 'application/pdf', 100)`,
+    )
+    await fails(MOD2, `select public.staff_move_file($1, '25ES1CS103', 2)`, [adminFile])
+    await as(ADMIN, `select public.staff_move_file($1, '25ES1CS103', 3)`, [adminFile])
+    await fails(ADMIN, `select public.staff_move_file($1, '25ES1CS103', 9)`, [adminFile])
+  })
+})

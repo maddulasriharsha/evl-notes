@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2, Pencil, Trash2 } from 'lucide-react'
 import { refreshFile } from '@/app/upload/actions'
+import { MoveFileButton } from '@/components/move-file'
 import { supabaseBrowser } from '@/lib/supabase/browser'
 
 type Viewer = { id: string; role: string } | null
@@ -103,6 +104,7 @@ export function FileTools({
 
   const buttons = (
     <>
+      {isStaff && <MoveFileButton id={id} name={name} subject={subject} unit={unit} compact={variant === 'card'} className={variant === 'bar' ? 'inline-flex h-9 items-center gap-1.5 rounded-lg border border-line px-2.5 text-sm font-medium hover:bg-surface-2' : undefined} />}
       <button
         type="button"
         aria-label="Rename"
