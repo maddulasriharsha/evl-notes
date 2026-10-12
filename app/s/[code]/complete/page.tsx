@@ -68,7 +68,7 @@ export default async function CompletePage({ params }: PageProps<'/s/[code]/comp
     for (const [y, files] of byYear) slot(y).collections.push({ ...c, files })
   }
   const papersByYear = [...years.entries()]
-    .sort((a, b) => b[0].localeCompare(a[0]))
+    .sort((a, b) => (a[0] === 'Other' ? 1 : b[0] === 'Other' ? -1 : b[0].localeCompare(a[0])))
     .map(([year, v]) => ({ year, ...v, count: v.drive.length + v.collections.reduce((n, c) => n + c.files.length, 0) }))
 
   return (
