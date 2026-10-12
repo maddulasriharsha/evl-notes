@@ -41,6 +41,29 @@ export function BackupPanel({ service, drive, cron, columns, status }: BackupPan
   const [error, setError] = useState<string | null>(null)
   const ready = service && drive && columns
 
+  const [dbBusy, setDbBusy] = useState(false)
+  const [dbNote, setDbNote] = useState<string | null>(null)
+
+  async function runDatabase() {
+    setDbBusy(true)
+    setDbNote(null)
+    try {
+      const res = await fetch('/api/admin/backup?what=database', { method: 'POST' })
+      const json = (await res.json()) as { database?: { ok: boolean; file?: string; rows?: number; skipped: string[]; error?: string }; error?: string }
+      if (!res.ok || !json.database) throw new Error(json.error ?? `Failed (${res.status})`)
+      const d = json.database
+      setDbNote(
+        d.ok
+          ? `Saved ${d.file} (${d.rows} rows).${d.skipped.length ? ` Skipped: ${d.skipped.join('; ')}` : ''}`
+          : `Not saved: ${d.error ?? 'unknown error'}`,
+      )
+    } catch (e) {
+      setDbNote(e instanceof Error ? e.message : 'Backup failed')
+    } finally {
+      setDbBusy(false)
+    }
+  }
+
   async function run() {
     setBusy(true)
     setError(null)
@@ -90,6 +113,23 @@ export function BackupPanel({ service, drive, cron, columns, status }: BackupPan
           it keeps failing, check the Drive account.
         </p>
       )}
+
+      <section className="rounded-2xl border border-line bg-surface p-5 shadow-card">
+        <h2 className="font-semibold">Database export</h2>
+        <p className="mt-1 text-sm text-ink-2">
+          Every day the list of people, notes, comments, reports and requests is also saved as one private file in the backup Drive
+          (the newest 7 are kept). No passwords are in it; those exist only as hashes inside Supabase.
+        </p>
+        <button
+          type="button"
+          onClick={runDatabase}
+          disabled={!ready || dbBusy}
+          className="mt-3 inline-flex h-10 items-center gap-2 rounded-xl border border-line px-4 text-sm font-medium hover:border-line-strong disabled:opacity-50"
+        >
+          {dbBusy ? 'Saving…' : 'Export database now'}
+        </button>
+        {dbNote && <p className="mt-2 text-sm text-ink-2">{dbNote}</p>}
+      </section>
 
       <section className="rounded-2xl border border-line bg-surface p-5 shadow-card">
         <h2 className="font-semibold">How it works</h2>

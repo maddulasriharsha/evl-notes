@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { runBackup } from '@/lib/backup-job'
+import { runDatabaseBackup } from '@/lib/db-backup'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -10,5 +11,8 @@ export async function GET(request: Request) {
   if (!secret || request.headers.get('authorization') !== `Bearer ${secret}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
-  return NextResponse.json(await runBackup(50_000))
+  // Files first (time-boxed), then the database export, which is quick.
+  const files = await runBackup(38_000)
+  const database = await runDatabaseBackup()
+  return NextResponse.json({ ...files, database })
 }

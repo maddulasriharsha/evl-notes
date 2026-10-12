@@ -63,3 +63,11 @@ Press **Run backup now** until *Waiting* reaches 0. After that the daily job kee
 - Free Google accounts have 15 GB. Watch it on the Backup tab's counts.
 - Drive can throttle files that many people open at once ("too many views"). It is rare for class notes.
 - Files already removed from Storage cannot be put back automatically; the Drive copy is the only one.
+
+## Database export
+Once a day (and with **Export database now** on Admin → Backup) the main tables (people, notes,
+collections, comments, reports, votes, follows, requests, announcements, suggestions, sign-in log and
+visits) are saved as one JSON file, `vjnotes-database-YYYY-MM-DD.json`, in the same **VJNOTES backup**
+folder. Unlike the note copies it is **private** (not shared by link), and only the newest 7 are kept.
+Passwords are not included: they exist only as one-way hashes inside Supabase and cannot be exported.
+To restore, the JSON holds every row of those tables.

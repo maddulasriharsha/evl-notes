@@ -87,7 +87,13 @@ export function md5(bytes: Uint8Array) {
 }
 
 /** Uploads the bytes and makes the copy readable by anyone with the link. Returns Drive's id, size and checksum. */
-export async function uploadBackup(opts: { name: string; mime: string; bytes: Uint8Array }): Promise<{ id: string; size: number; md5: string }> {
+export async function uploadBackup(opts: {
+  name: string
+  mime: string
+  bytes: Uint8Array
+  /** false keeps the copy private to the backup account (used for the database export). */
+  shared?: boolean
+}): Promise<{ id: string; size: number; md5: string }> {
   const folder = await ensureFolder()
   const boundary = `vj${crypto.randomUUID()}`
   const meta = JSON.stringify({ name: opts.name, parents: [folder] })
@@ -105,6 +111,7 @@ export async function uploadBackup(opts: { name: string; mime: string; bytes: Ui
     'upload',
   )
   const file = (await up.json()) as { id: string; size?: string; md5Checksum?: string }
+  if (opts.shared === false) return { id: file.id, size: Number(file.size ?? -1), md5: file.md5Checksum ?? '' }
   try {
     await ok(
       await call(`${API}/files/${file.id}/permissions`, {
@@ -147,4 +154,13 @@ export async function inspectBackup(id: string): Promise<CopyState> {
 export async function deleteBackup(id: string): Promise<void> {
   const res = await call(`${API}/files/${encodeURIComponent(id)}`, { method: 'DELETE' })
   if (res.status !== 404) await ok(res, 'delete')
+}
+
+/** Files this app created whose name starts with the prefix, newest first. */
+export async function listBackups(prefix: string): Promise<{ id: string; name: string; createdTime: string }[]> {
+  const folder = await ensureFolder()
+  const safe = prefix.replace(/['\\]/g, '')
+  const q = encodeURIComponent(`'${folder}' in parents and name contains '${safe}' and trashed=false`)
+  const res = await ok(await call(`${API}/files?q=${q}&fields=files(id,name,createdTime)&orderBy=createdTime desc&pageSize=100`), 'list')
+  return ((await res.json()) as { files?: { id: string; name: string; createdTime: string }[] }).files ?? []
 }
