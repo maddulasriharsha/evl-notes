@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { ArrowLeft, ArrowRight, CloudUpload, ThumbsUp } from 'lucide-react'
 import { RequestNotesButton } from '@/components/community-buttons'
 import { DownloadShelfButton } from '@/components/download-shelf'
+import { QrButton } from '@/components/qr-button'
 import { DriveFileCard, UploadFileCard } from '@/components/file-card'
 import { ButtonLink, Container, Crumbs, Empty, OwnerName } from '@/components/ui'
 import {
@@ -102,6 +103,7 @@ export default async function SectionPage({ params }: PageProps<'/s/[code]/[sect
           </div>
           <div className="mt-6 flex flex-wrap items-start gap-3">
             <RequestNotesButton subject={subject.code} unit={unit} />
+            <QrButton path={sectionHref(subject.code, unit)} title={sectionTitle(subject, unit)} subtitle={`${subject.short} · ${sectionLabel(unit)}`} />
             {allSources.length > 1 && (
               <DownloadShelfButton
                 sources={allSources}

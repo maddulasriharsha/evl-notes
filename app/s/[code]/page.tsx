@@ -3,8 +3,9 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowRight, CloudUpload } from 'lucide-react'
 import { FollowButton } from '@/components/community-buttons'
+import { QrButton } from '@/components/qr-button'
 import { ButtonLink, Container, Crumbs, SectionHeading } from '@/components/ui'
-import { allSubjects, findSubject, sectionHref, sectionLabel, sectionMark, sectionsOf, sectionTitle, semesterHref, subjectCrumbs } from '@/lib/curriculum'
+import { allSubjects, findSubject, sectionHref, sectionLabel, sectionMark, sectionsOf, sectionTitle, semesterHref, subjectCrumbs, subjectHref } from '@/lib/curriculum'
 import { countsForSubject } from '@/lib/data'
 import { driveCount } from '@/lib/library'
 import { plural } from '@/lib/format'
@@ -44,6 +45,7 @@ export default async function SubjectPage({ params }: PageProps<'/s/[code]'>) {
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <FollowButton subject={subject.code} />
+              <QrButton path={subjectHref(subject.code)} title={subject.name} subtitle={subject.short} />
               <ButtonLink href={`/upload?subject=${subject.code}`}>
                 <CloudUpload className="size-4" /> Upload notes
               </ButtonLink>

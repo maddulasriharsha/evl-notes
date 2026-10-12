@@ -45,8 +45,11 @@ export function codeIsValid(email: string, code: string, token: string) {
   return want.length === got.length && timingSafeEqual(want, got)
 }
 
+/** 'ok', 'quota' (the free daily limit is used up) or 'failed'. */
+export type SendResult = 'ok' | 'quota' | 'failed'
+
 /** Sends the code through Brevo's HTTP API (free: 300 emails a day). */
-export async function sendCodeEmail(to: string, code: string): Promise<boolean> {
+export async function sendCodeEmail(to: string, code: string): Promise<SendResult> {
   const res = await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
     headers: { 'api-key': process.env.BREVO_API_KEY!, 'content-type': 'application/json', accept: 'application/json' },
@@ -62,5 +65,9 @@ export async function sendCodeEmail(to: string, code: string): Promise<boolean> 
       </div>`,
     }),
   }).catch(() => null)
-  return !!res && res.ok
+  if (!res) return 'failed'
+  if (res.ok) return 'ok'
+  const text = (await res.text().catch(() => '')).toLowerCase()
+  const quota = res.status === 429 || res.status === 402 || /credit|quota|limit|daily|sending/.test(text)
+  return quota ? 'quota' : 'failed'
 }

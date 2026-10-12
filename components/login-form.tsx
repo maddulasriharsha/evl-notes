@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowRight, Eye, EyeOff, KeyRound, Loader2, Mail } from 'lucide-react'
+import { HumanCheck, type HumanProof } from '@/components/human-check'
 import { deviceFromUserAgent } from '@/lib/device'
 import { supabaseBrowser } from '@/lib/supabase/browser'
 
@@ -40,6 +41,9 @@ export function LoginForm({ next }: { next: string }) {
   const [show, setShow] = useState(false)
   const [code, setCode] = useState('')
   const [signupToken, setSignupToken] = useState('')
+  const [proof, setProof] = useState<HumanProof>({})
+  const [proofKey, setProofKey] = useState(0)
+  const [quota, setQuota] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
@@ -86,11 +90,17 @@ export function LoginForm({ next }: { next: string }) {
     const ask = await fetch('/api/signup/code', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ email: email.trim() }),
+      body: JSON.stringify({ email: email.trim(), proof }),
     }).catch(() => null)
     const asked = ask ? ((await ask.json().catch(() => ({}))) as { required?: boolean; token?: string; reason?: string }) : {}
     if (ask && !ask.ok) {
       setBusy(false)
+      setProofKey((k) => k + 1)
+      if (asked.reason === 'quota') {
+        setQuota(true)
+        return
+      }
+      if (asked.reason === 'human') return setError('Please answer the quick check correctly, then try again.')
       if (asked.reason === 'busy') return setError('Too many codes were requested. Wait a few minutes and try again.')
       if (asked.reason === 'email') return setError('That email address does not look right. Check it and try again.')
       return setError('Could not send the code. Check the email address, or use “Continue with Google”.')
@@ -111,7 +121,7 @@ export function LoginForm({ next }: { next: string }) {
     const res = await fetch('/api/signup', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ email: email.trim(), password, website: '', code: code.trim(), token: signupToken }),
+      body: JSON.stringify({ email: email.trim(), password, website: '', code: code.trim(), token: signupToken, proof }),
     }).catch(() => null)
     if (res && res.ok) {
       const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
@@ -125,6 +135,10 @@ export function LoginForm({ next }: { next: string }) {
     if (res && res.status !== 501) {
       const reason = ((await res.json().catch(() => ({}))) as { reason?: string }).reason
       setBusy(false)
+      if (reason === 'human') {
+        setProofKey((k) => k + 1)
+        return setError('Please answer the quick check correctly, then try again.')
+      }
       if (reason === 'code') return setError('That code is wrong or has expired. Check it, or go back and request a new one.')
       if (reason === 'exists') return setError('That email already has an account. Sign in instead.')
       if (reason === 'email') return setError('That email address does not look right. Check it and try again.')
@@ -247,7 +261,8 @@ export function LoginForm({ next }: { next: string }) {
                 </button>
               </div>
             </label>
-            <button type="submit" disabled={busy} className={primary}>
+            {mode === 'signup' && <HumanCheck onChange={setProof} resetKey={proofKey} />}
+            <button type="submit" disabled={busy || (mode === 'signup' && !proof.answer && !proof.turnstile)} className={primary}>
               {busy ? <Loader2 className="size-4 animate-spin" /> : <>{mode === 'signin' ? 'Sign in' : 'Create account'} <ArrowRight className="size-4" /></>}
             </button>
           </form>
@@ -312,6 +327,16 @@ export function LoginForm({ next }: { next: string }) {
         </form>
       )}
 
+      {quota && (
+        <div className="rounded-xl border border-line bg-gold-soft px-4 py-3 text-sm text-gold">
+          <p className="font-semibold">We have reached today&rsquo;s sign-up limit</p>
+          <p className="mt-1">
+            As this is a self-funded, student-made and student-run website, we have some restrictions: the free email service we use can only
+            send a limited number of verification emails per day. Please use <strong>Continue with Google</strong> right now (it is not
+            affected), or come back tomorrow to create an email account. Thank you for understanding.
+          </p>
+        </div>
+      )}
       {info && <p className="rounded-xl bg-ok-soft px-3 py-2 text-sm text-ok">{info}</p>}
       {error && <p className="rounded-xl bg-danger-soft px-3 py-2 text-sm text-danger">{error}</p>}
     </div>

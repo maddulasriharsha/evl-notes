@@ -36,6 +36,12 @@ export default async function SuggestPage() {
         Missing a subject? Found something broken? Have an idea? Tell us. The site&rsquo;s admin reads every suggestion.
       </p>
 
+      <p className="mt-4 rounded-xl border border-line bg-surface px-4 py-3 text-sm text-ink-2">
+        VJNOTES is a self-funded, student-made and student-run website, so we work with a few restrictions (free hosting, a daily email
+        limit, limited storage). If something is missing, slow or could be better, please tell us here. Every suggestion is read, and we
+        will fix what we can.
+      </p>
+
       <div className="mt-8">
         {user ? (
           <SuggestionForm userId={user.id} />

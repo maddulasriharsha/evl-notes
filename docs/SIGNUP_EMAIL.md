@@ -32,3 +32,12 @@ signing secret, add `SIGNUP_SECRET` (any long random text).
   Brevo, avoids this.
 - Existing accounts are unaffected. Google sign-in does not use this at all.
 - Remove `BREVO_API_KEY` to switch back to "no email needed".
+
+## "Are you a person?" check
+Account creation shows a quick check. By default it is a one-line sum (no setup, no tracking). For
+Cloudflare Turnstile instead (free), create a Turnstile widget at <https://dash.cloudflare.com> and add
+`NEXT_PUBLIC_TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY` in Vercel, then redeploy.
+
+## When the 300-a-day limit is reached
+The sign-up form shows a message explaining the limit and pointing to Google sign-in, which is not
+affected. The counter resets daily.

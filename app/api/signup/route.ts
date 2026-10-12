@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server'
+import { humanVerified, type HumanProof } from '@/lib/captcha'
 import { codeIsValid, emailCodesConfigured } from '@/lib/signup-code'
 import { adminConfigured, supabaseAdmin } from '@/lib/supabase/admin'
 
@@ -39,7 +40,7 @@ export async function POST(request: NextRequest) {
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
   if (tooMany(ip)) return NextResponse.json({ ok: false, reason: 'busy' }, { status: 429 })
 
-  let body: { email?: unknown; password?: unknown; website?: unknown; code?: unknown; token?: unknown }
+  let body: { email?: unknown; password?: unknown; website?: unknown; code?: unknown; token?: unknown; proof?: HumanProof }
   try {
     body = await request.json()
   } catch {
@@ -58,6 +59,9 @@ export async function POST(request: NextRequest) {
     const code = typeof body.code === 'string' ? body.code.trim() : ''
     const token = typeof body.token === 'string' ? body.token : ''
     if (!codeIsValid(email, code, token)) return NextResponse.json({ ok: false, reason: 'code' }, { status: 400 })
+  } else if (!(await humanVerified(body.proof, ip))) {
+    // No email step, so the "are you a person?" check is what stands between a script and an account.
+    return NextResponse.json({ ok: false, reason: 'human' }, { status: 400 })
   }
 
   const { error } = await supabaseAdmin().auth.admin.createUser({ email, password, email_confirm: true })
