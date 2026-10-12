@@ -59,6 +59,8 @@ beforeAll(async () => {
     await db.exec(readFileSync(join(dir, f), 'utf8'))
   }
   await db.exec(`insert into auth.users (id, email) values ('${A}', 'a@x.in'), ('${B}', 'b@x.in'), ('${ADMIN}', 'owner@x.in');`)
+  // The site owner is the account whose email is listed in site_owners (the real one is added by the migration).
+  await db.exec(`insert into public.site_owners (email) values ('owner@x.in') on conflict do nothing;`)
 })
 
 describe('profiles', () => {
@@ -727,5 +729,56 @@ describe('staff move a note to another subject or chapter', () => {
     await fails(MOD2, `select public.staff_move_file($1, '25ES1CS103', 2)`, [adminFile])
     await as(ADMIN, `select public.staff_move_file($1, '25ES1CS103', 3)`, [adminFile])
     await fails(ADMIN, `select public.staff_move_file($1, '25ES1CS103', 9)`, [adminFile])
+  })
+})
+
+describe('owner powers', () => {
+  const ADMIN2 = 'dddddddd-0000-4000-8000-0000000000a1'
+  const VICTIM = 'dddddddd-0000-4000-8000-0000000000b1'
+  const OC = 'ffffffff-0000-4000-8000-0000000000c1'
+  const OF = 'ffffffff-0000-4000-8000-000000000001'
+
+  it('knows who the owner is, and only that account', async () => {
+    await db.exec(`insert into public.site_owners (email) values ('owner@x.in') on conflict do nothing`)
+    await db.exec(`insert into auth.users (id, email) values ('${ADMIN2}', 'admin2@x.in'), ('${VICTIM}', 'victim@x.in')`)
+    await db.exec(`insert into public.profiles (id, display_name, role) values ('${ADMIN2}', 'Second Admin', 'admin'), ('${VICTIM}', 'Victim', 'member')`)
+    expect((await as(ADMIN, `select public.is_owner() as o`)).rows[0]!.o).toBe(true)
+    expect((await as(ADMIN2, `select public.is_owner() as o`)).rows[0]!.o).toBe(false)
+    expect((await as(A, `select public.is_owner() as o`)).rows[0]!.o).toBe(false)
+    await fails(null, `select public.is_owner()`)
+    // the owner list itself cannot be read or edited through the API
+    await fails(ADMIN, `select * from public.site_owners`)
+    await fails(ADMIN, `insert into public.site_owners (email) values ('x@x.in')`)
+  })
+
+  it('lets only the owner make or remove admins', async () => {
+    await fails(ADMIN2, `select public.set_user_role($1, 'admin')`, [VICTIM])
+    await as(ADMIN2, `select public.set_user_role($1, 'moderator')`, [VICTIM])
+    await as(ADMIN, `select public.set_user_role($1, 'admin')`, [VICTIM])
+    await fails(ADMIN2, `select public.set_user_role($1, 'member')`, [VICTIM])
+    await as(ADMIN, `select public.set_user_role($1, 'member')`, [VICTIM])
+  })
+
+  it('protects the owner from being blocked or demoted, and admins from other admins', async () => {
+    await fails(ADMIN2, `select public.set_user_banned($1, true)`, [ADMIN])
+    await fails(ADMIN2, `select public.set_user_role($1, 'member')`, [ADMIN])
+    await fails(ADMIN, `select public.set_user_role($1, 'member')`, [ADMIN])
+    await fails(ADMIN2, `select public.set_user_banned($1, true)`, [VICTIM]).catch(() => undefined)
+    await as(ADMIN, `select public.set_user_role($1, 'admin')`, [VICTIM])
+    await fails(ADMIN2, `select public.set_user_banned($1, true)`, [VICTIM])
+    await as(ADMIN, `select public.set_user_banned($1, true)`, [VICTIM])
+    await as(ADMIN, `select public.set_user_banned($1, false)`, [VICTIM])
+    await as(ADMIN, `select public.set_user_role($1, 'member')`, [VICTIM])
+  })
+
+  it('lets only the owner delete a file forever', async () => {
+    await db.exec(`insert into public.collections (id, owner_id, subject_code, unit) values ('${OC}', '${A}', '25ES1CS104', 1)`)
+    await db.exec(
+      `insert into public.files (id, collection_id, owner_id, storage_path, name, mime, size_bytes, deleted_at)
+       values ('${OF}', '${OC}', '${A}', '${A}/${OC}/${OF}/notes.pdf', 'Doomed', 'application/pdf', 100, now())`,
+    )
+    await fails(ADMIN2, `select public.admin_purge_file($1)`, [OF])
+    const paths = await as(ADMIN, `select public.admin_purge_file($1) as p`, [OF])
+    expect(paths.rows).toHaveLength(1)
   })
 })

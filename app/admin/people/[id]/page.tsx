@@ -7,7 +7,7 @@ import { UserAccountPanel } from '@/components/user-account-panel'
 import { Container, OwnerName } from '@/components/ui'
 import { findSubject, sectionHref, sectionLabel } from '@/lib/curriculum'
 import { formatBytes, formatDate, plural, timeAgo } from '@/lib/format'
-import { currentProfile, supabaseServer } from '@/lib/supabase/server'
+import { currentIsOwner, currentProfile, supabaseServer } from '@/lib/supabase/server'
 
 export const metadata: Metadata = { title: 'Person · Admin' }
 export const dynamic = 'force-dynamic'
@@ -46,6 +46,7 @@ export default async function PersonPage({ params }: PageProps<'/admin/people/[i
   const me = await currentProfile()
   if (!me) redirect('/login?next=/admin')
   if (me.profile?.role !== 'admin') notFound()
+  const isOwner = await currentIsOwner()
   const { id } = await params
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound()
 
@@ -117,7 +118,7 @@ export default async function PersonPage({ params }: PageProps<'/admin/people/[i
             </p>
           </div>
         </div>
-        <UserModButtons id={person.id} banned={!!person.banned_at} role={person.role} self={person.id === me.user.id} />
+        <UserModButtons id={person.id} banned={!!person.banned_at} role={person.role} self={person.id === me.user.id} viewerIsOwner={isOwner} />
       </div>
 
       <div className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -131,7 +132,7 @@ export default async function PersonPage({ params }: PageProps<'/admin/people/[i
       </div>
 
       <div className="mt-8">
-        <UserAccountPanel userId={person.id} name={person.display_name} email={person.email} isAdminAccount={person.role === 'admin' && person.id !== me.user.id} />
+        <UserAccountPanel userId={person.id} name={person.display_name} email={person.email} isAdminAccount={person.role === 'admin' && person.id !== me.user.id && !isOwner} />
       </div>
 
       <div className="mt-10 grid gap-8 xl:grid-cols-[1.4fr_1fr]">
@@ -157,7 +158,7 @@ export default async function PersonPage({ params }: PageProps<'/admin/people/[i
                         <Link href={sectionHref(f.collections.subject_code, f.collections.unit)} className="text-xs text-ink-3 hover:text-ink">
                           Chapter
                         </Link>
-                        <FileModButtons id={f.id} hidden={!!f.deleted_at} subject={f.collections.subject_code} unit={f.collections.unit} />
+                        <FileModButtons id={f.id} hidden={!!f.deleted_at} subject={f.collections.subject_code} unit={f.collections.unit} canPurge={isOwner} />
                       </>
                     )}
                   </li>

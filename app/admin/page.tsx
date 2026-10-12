@@ -12,7 +12,7 @@ import { formatBytes, formatDate, plural, timeAgo } from '@/lib/format'
 import { backupStatus } from '@/lib/backup-job'
 import { driveBackupConfigured } from '@/lib/drive-backup'
 import { adminConfigured } from '@/lib/supabase/admin'
-import { currentProfile, supabaseServer } from '@/lib/supabase/server'
+import { currentIsOwner, currentProfile, supabaseServer } from '@/lib/supabase/server'
 
 export const metadata: Metadata = { title: 'Admin' }
 export const dynamic = 'force-dynamic'
@@ -26,7 +26,7 @@ const allTabs = [
   { id: 'people', label: 'People', adminOnly: false },
   { id: 'shelves', label: 'Shelves', adminOnly: false },
   { id: 'announcements', label: 'Announcements', adminOnly: false },
-  { id: 'backup', label: 'Backup', adminOnly: true },
+  { id: 'backup', label: 'Backup', adminOnly: true, ownerOnly: true },
 ] as const
 type Tab = (typeof allTabs)[number]['id']
 
@@ -79,7 +79,8 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
   const role = me.profile?.role
   if (role !== 'admin' && role !== 'moderator') notFound()
   const isAdmin = role === 'admin'
-  const tabs = allTabs.filter((t) => isAdmin || !t.adminOnly)
+  const isOwner = isAdmin && (await currentIsOwner())
+  const tabs = allTabs.filter((t) => (isAdmin || !t.adminOnly) && (isOwner || !('ownerOnly' in t && t.ownerOnly)))
   const sp = await searchParams
   const tab: Tab = tabs.some((t) => t.id === sp.tab) ? (sp.tab as Tab) : isAdmin ? 'overview' : 'files'
   const supabase = await supabaseServer()
@@ -398,7 +399,7 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
             <td className={`${td} whitespace-nowrap text-ink-3`}>{timeAgo(f.created_at)}</td>
             <td className={td}>
               {f.collections && (
-                <FileModButtons id={f.id} name={f.name} hidden={!!f.deleted_at} subject={f.collections.subject_code} unit={f.collections.unit} canPurge={isAdmin} />
+                <FileModButtons id={f.id} name={f.name} hidden={!!f.deleted_at} subject={f.collections.subject_code} unit={f.collections.unit} canPurge={isOwner} />
               )}
             </td>
           </tr>
@@ -475,7 +476,7 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
             </td>
             <td className={`${td} whitespace-nowrap text-ink-3`}>{formatDate(u.joined)}</td>
             <td className={td}>
-              <UserModButtons id={u.id} banned={!!u.banned_at} role={u.role} self={u.id === me.user.id} />
+              <UserModButtons id={u.id} banned={!!u.banned_at} role={u.role} self={u.id === me.user.id} viewerIsOwner={isOwner} />
             </td>
           </tr>
         ))}
@@ -510,7 +511,7 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
     )
   }
 
-  if (tab === 'backup' && isAdmin) {
+  if (tab === 'backup' && isOwner) {
     // Do the new columns exist yet? Selecting one is the cheapest way to find out.
     const probe = await supabase.from('files').select('backup_drive_id').limit(1)
     body = (

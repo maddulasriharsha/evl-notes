@@ -1,7 +1,7 @@
 import { randomInt } from 'node:crypto'
 import { NextResponse, type NextRequest } from 'next/server'
 import { adminConfigured, supabaseAdmin } from '@/lib/supabase/admin'
-import { currentProfile } from '@/lib/supabase/server'
+import { currentProfile, supabaseServer } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,9 +36,17 @@ export async function POST(request: NextRequest) {
   const db = supabaseAdmin()
   const { data: target } = await db.from('profiles').select('id, role').eq('id', userId).maybeSingle()
   if (!target) return NextResponse.json({ ok: false, error: 'Unknown person.' }, { status: 404 })
-  // Another admin's account can only be changed by that admin.
-  if ((target as { role: string }).role === 'admin' && userId !== me.user.id) {
-    return NextResponse.json({ ok: false, error: 'Another admin’s account can only be changed by that admin.' }, { status: 403 })
+  // Admin accounts (and the owner's) can only be changed by the owner, or by the account's own holder.
+  if (userId !== me.user.id) {
+    const rls = await supabaseServer()
+    const { data: iAmOwner } = await rls.rpc('is_owner')
+    const { data: targetIsOwner } = await rls.rpc('is_owner_account', { p_user: userId })
+    if (targetIsOwner === true) {
+      return NextResponse.json({ ok: false, error: 'The owner’s account can only be changed by the owner.' }, { status: 403 })
+    }
+    if ((target as { role: string }).role === 'admin' && iAmOwner !== true) {
+      return NextResponse.json({ ok: false, error: 'Only the owner can change another admin’s account.' }, { status: 403 })
+    }
   }
 
   switch (body.action) {

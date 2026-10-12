@@ -126,18 +126,21 @@ export function UserModButtons({
   role,
   self,
   viewerIsAdmin = true,
+  viewerIsOwner = false,
 }: {
   id: string
   banned: boolean
   role: string
   self: boolean
   viewerIsAdmin?: boolean
+  /** Making, removing or blocking an admin is the owner's alone. */
+  viewerIsOwner?: boolean
 }) {
   const { busy, run } = useAction()
   if (self) return <span className="text-xs text-ink-3">You</span>
   const db = () => supabaseBrowser()
   // Moderators can only act on ordinary members.
-  const canBlock = viewerIsAdmin || role === 'member'
+  const canBlock = (viewerIsAdmin && (role !== 'admin' || viewerIsOwner)) || role === 'member'
   return (
     <div className="flex items-center justify-end gap-1.5">
       {canBlock ? (
@@ -159,7 +162,7 @@ export function UserModButtons({
       ) : (
         <span className="text-xs text-ink-3">Staff</span>
       )}
-      {viewerIsAdmin && (
+      {viewerIsAdmin && (viewerIsOwner || role !== 'admin') && (
         <label className="relative inline-flex">
           <span className="sr-only">Role</span>
           <select

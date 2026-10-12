@@ -56,3 +56,12 @@ export async function currentProfile(): Promise<{ user: { id: string; email?: st
   const { data } = await supabase.from('profiles').select('id, display_name, role, banned_at').eq('id', user.id).maybeSingle()
   return { user, profile: (data as Profile | null) ?? null }
 }
+
+/** True only for the site owner (an admin whose sign-in email is listed in site_owners). */
+export async function currentIsOwner(): Promise<boolean> {
+  const user = await currentUser()
+  if (!user) return false
+  const supabase = await supabaseServer()
+  const { data } = await supabase.rpc('is_owner')
+  return data === true
+}
