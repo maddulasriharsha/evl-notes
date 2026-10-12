@@ -81,6 +81,31 @@ export function LoginForm({ next }: { next: string }) {
       if (/confirm/i.test(error.message)) return setError('Confirm your email first: open the link we sent when you created the account.')
       return setError('Wrong email or password. If you used to sign in with an email link, use that once and set a password on “My notes”.')
     }
+    // Create the account on the server without an email, then sign in with the same password.
+    const res = await fetch('/api/signup', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: email.trim(), password, website: '' }),
+    }).catch(() => null)
+    if (res && res.ok) {
+      const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
+      setBusy(false)
+      if (error) {
+        setMode('signin')
+        return setInfo('Account created. Now sign in with your email and password.')
+      }
+      return done('password')
+    }
+    if (res && res.status !== 501) {
+      const reason = ((await res.json().catch(() => ({}))) as { reason?: string }).reason
+      setBusy(false)
+      if (reason === 'exists') return setError('That email already has an account. Sign in instead.')
+      if (reason === 'email') return setError('That email address does not look right. Check it and try again.')
+      if (reason === 'password') return setError(`Choose a stronger password (at least ${MIN_PASSWORD} characters).`)
+      if (reason === 'busy') return setError('Too many sign-ups from this network right now. Wait a few minutes and try again.')
+      return setError('Could not create the account. Please try again.')
+    }
+    // The server route is not available: fall back to the normal email-confirmation sign-up.
     const { data, error } = await supabase.auth.signUp({ email: email.trim(), password, options: { emailRedirectTo: callback() } })
     setBusy(false)
     if (error) return setError(authMessage(error.message))

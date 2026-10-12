@@ -9,8 +9,8 @@ export function adminConfigured() {
 }
 
 /**
- * Full-access client that bypasses row-level security. Only for the backup job, which has to read
- * every file and delete originals. Never import this from code a visitor can trigger directly, and
+ * Full-access client that bypasses row-level security. Only for the backup job (reads every file and
+ * deletes originals) and /api/signup (creates a confirmed account, nothing else). Never import this from code a visitor can trigger directly, and
  * never send what it returns to the browser without checking who is asking.
  */
 export function supabaseAdmin() {
