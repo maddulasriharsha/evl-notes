@@ -266,8 +266,15 @@ export function LoginForm({ next }: { next: string }) {
               {busy ? <Loader2 className="size-4 animate-spin" /> : <>{mode === 'signin' ? 'Sign in' : 'Create account'} <ArrowRight className="size-4" /></>}
             </button>
           </form>
+          <p className="rounded-xl bg-surface-2 px-3 py-2.5 text-center text-sm text-ink-2">
+            Forgot your password? Write to{' '}
+            <a href="mailto:vnrvjiet.notes@gmail.com?subject=VJNOTES%20password%20help" className="font-semibold text-ink underline underline-offset-4">
+              vnrvjiet.notes@gmail.com
+            </a>{' '}
+            from the email you signed up with, and an admin will reset it for you.
+          </p>
           <button type="button" onClick={() => switchTo('link')} className="w-full text-sm text-ink-3 hover:text-ink">
-            Forgot password, or no password yet? Email me a sign-in link
+            Signed up with Google, or no password yet? Email me a sign-in link
           </button>
         </>
       )}

@@ -650,3 +650,41 @@ describe('moderator role', () => {
     expect((await as(null, `select id from public.collections where id = $1`, [shelf])).rows).toHaveLength(1)
   })
 })
+
+describe('reports: broken reason, automatic hiding after five people, storage figure', () => {
+  const R = (n: number) => `aaaaaaaa-0000-4000-8000-00000000000${n}`
+  const FILE = 'bbbbbbbb-0000-4000-8000-000000000001'
+  const COL = 'bbbbbbbb-0000-4000-8000-0000000000c1'
+
+  it('hides a note once five different people reported it, and not before', async () => {
+    for (let n = 1; n <= 5; n++) {
+      await db.exec(`insert into auth.users (id, email) values ('${R(n)}', 'r${n}@x.in')`)
+      await db.exec(`insert into public.profiles (id, display_name) values ('${R(n)}', 'Reporter ${n}')`)
+    }
+    await db.exec(`insert into public.collections (id, owner_id, subject_code, unit) values ('${COL}', '${A}', '25ES1IT102', 4)`)
+    await db.exec(
+      `insert into public.files (id, collection_id, owner_id, storage_path, name, mime, size_bytes)
+       values ('${FILE}', '${COL}', '${A}', '${A}/${COL}/${FILE}/notes.pdf', 'Reported note', 'application/pdf', 100)`,
+    )
+    for (let n = 1; n <= 4; n++) {
+      await as(R(n), `insert into public.reports (reporter_id, file_id, reason) values ($1, $2, 'broken')`, [R(n), FILE])
+    }
+    const before = await db.query<{ deleted_at: string | null }>(`select deleted_at from public.files where id = '${FILE}'`)
+    expect(before.rows[0]!.deleted_at).toBeNull()
+    await as(R(5), `insert into public.reports (reporter_id, file_id, reason) values ($1, $2, 'broken')`, [R(5), FILE])
+    const after = await db.query<{ deleted_at: string | null }>(`select deleted_at from public.files where id = '${FILE}'`)
+    expect(after.rows[0]!.deleted_at).not.toBeNull()
+  })
+
+  it('does not count one person reporting more than once', async () => {
+    const F2 = 'bbbbbbbb-0000-4000-8000-000000000002'
+    await db.exec(
+      `insert into public.files (id, collection_id, owner_id, storage_path, name, mime, size_bytes)
+       values ('${F2}', '${COL}', '${A}', '${A}/${COL}/${F2}/notes.pdf', 'Another note', 'application/pdf', 100)`,
+    )
+    await as(R(1), `insert into public.reports (reporter_id, file_id, reason) values ($1, $2, 'spam')`, [R(1), F2])
+    await fails(R(1), `insert into public.reports (reporter_id, file_id, reason) values ($1, $2, 'other')`, [R(1), F2])
+    const r = await db.query<{ deleted_at: string | null }>(`select deleted_at from public.files where id = '${F2}'`)
+    expect(r.rows[0]!.deleted_at).toBeNull()
+  })
+})

@@ -6,6 +6,17 @@ import { plural, timeAgo } from '@/lib/format'
 export const metadata: Metadata = { title: 'Contributors' }
 export const revalidate = 120
 
+function badgesFor(p: { files: number; chapters: number; subjects: number }) {
+  const out: { label: string; cls: string }[] = []
+  if (p.files >= 25) out.push({ label: 'Legend', cls: 'bg-gold-soft text-gold' })
+  else if (p.files >= 10) out.push({ label: 'Star', cls: 'bg-gold-soft text-gold' })
+  else if (p.files >= 3) out.push({ label: 'Regular', cls: 'bg-accent-soft text-accent' })
+  else out.push({ label: 'New', cls: 'bg-surface-2 text-ink-3' })
+  if (p.subjects >= 4) out.push({ label: 'All-rounder', cls: 'bg-ok-soft text-ok' })
+  if (p.chapters >= 8) out.push({ label: 'Wide coverage', cls: 'bg-ok-soft text-ok' })
+  return out
+}
+
 export default async function ContributorsPage() {
   const people = await contributors()
   return (
@@ -26,6 +37,13 @@ export default async function ContributorsPage() {
                   <p className="flex font-medium"><OwnerName name={p.name} admin={p.is_admin} moderator={p.is_mod} /></p>
                   <p className="text-xs text-ink-3">
                     {plural(p.chapters, 'chapter')} · {plural(p.subjects, 'subject')} · last upload {timeAgo(p.last)}
+                  </p>
+                  <p className="mt-1 flex flex-wrap gap-1.5">
+                    {badgesFor(p).map((b) => (
+                      <span key={b.label} className={`rounded-md px-1.5 py-0.5 text-[11px] font-semibold ${b.cls}`}>
+                        {b.label}
+                      </span>
+                    ))}
                   </p>
                 </div>
                 <span className="rounded-lg bg-surface-2 px-2.5 py-1 text-sm font-semibold tabular-nums">{plural(p.files, 'file')}</span>

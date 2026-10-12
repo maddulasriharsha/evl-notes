@@ -125,6 +125,7 @@ export function SaveButton({ fileId }: { fileId: string }) {
 }
 
 const REASONS: [string, string][] = [
+  ['broken', 'Broken: does not open or pages are missing'],
   ['wrong_place', 'Wrong subject or chapter'],
   ['low_quality', 'Unreadable or low quality'],
   ['duplicate', 'Duplicate of another note'],
@@ -150,7 +151,7 @@ export function ReportButton({
   const viewer = useViewer()
   const router = useRouter()
   const [open, setOpen] = useState(false)
-  const [reason, setReason] = useState('wrong_place')
+  const [reason, setReason] = useState('broken')
   const [details, setDetails] = useState('')
   const [busy, setBusy] = useState(false)
   const [done, setDone] = useState<string | null>(null)

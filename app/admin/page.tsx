@@ -86,6 +86,7 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
 
   let body: React.ReactNode = null
   const REASON_LABEL: Record<string, string> = {
+    broken: 'Broken or not opening',
     wrong_place: 'Wrong subject or chapter',
     low_quality: 'Unreadable or low quality',
     duplicate: 'Duplicate',

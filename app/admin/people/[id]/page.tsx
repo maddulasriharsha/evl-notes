@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { CommentModButtons, FileModButtons, UserModButtons } from '@/components/admin-actions'
+import { UserAccountPanel } from '@/components/user-account-panel'
 import { Container, OwnerName } from '@/components/ui'
 import { findSubject, sectionHref, sectionLabel } from '@/lib/curriculum'
 import { formatBytes, formatDate, plural, timeAgo } from '@/lib/format'
@@ -127,6 +128,10 @@ export default async function PersonPage({ params }: PageProps<'/admin/people/[i
             <p className="mt-1 text-xs text-ink-3">{t.sub}</p>
           </div>
         ))}
+      </div>
+
+      <div className="mt-8">
+        <UserAccountPanel userId={person.id} name={person.display_name} email={person.email} isAdminAccount={person.role === 'admin' && person.id !== me.user.id} />
       </div>
 
       <div className="mt-10 grid gap-8 xl:grid-cols-[1.4fr_1fr]">
