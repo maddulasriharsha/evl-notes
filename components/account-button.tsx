@@ -43,8 +43,15 @@ export function AccountButton() {
   useEffect(() => {
     if (!supabaseConfigured) return setAccount(null)
     const supabase = supabaseBrowser()
+    let loadedFor: string | null = null
     const load = async (user: { id: string; email?: string; user_metadata?: Record<string, unknown> } | null) => {
-      if (!user) return setAccount(null)
+      if (!user) {
+        loadedFor = null
+        return setAccount(null)
+      }
+      // The session is reported several times at start-up; fetch the profile only once per person.
+      if (loadedFor === user.id) return
+      loadedFor = user.id
       const { data } = await supabase.from('profiles').select('display_name, role').eq('id', user.id).maybeSingle()
       const p = data as { display_name: string; role: string } | null
       setAccount({

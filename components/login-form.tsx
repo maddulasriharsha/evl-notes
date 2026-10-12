@@ -21,6 +21,17 @@ type Mode = 'signin' | 'signup' | 'link' | 'code'
 
 const MIN_PASSWORD = 8
 
+/** Turns the raw sign-up error into something a student can act on. */
+function authMessage(raw: string): string {
+  if (/registered|exists/i.test(raw)) return 'That email already has an account. Sign in instead.'
+  if (/rate limit|too many|seconds/i.test(raw)) {
+    return 'Too many people are signing up right now, so the email could not be sent. Please use “Continue with Google”, or try again in a few minutes.'
+  }
+  if (/invalid.*email|unable to validate/i.test(raw)) return 'That email address does not look right. Check it and try again.'
+  if (/password/i.test(raw)) return `Choose a stronger password (at least ${MIN_PASSWORD} characters).`
+  return raw
+}
+
 export function LoginForm({ next }: { next: string }) {
   const router = useRouter()
   const [mode, setMode] = useState<Mode>('signin')
@@ -72,7 +83,7 @@ export function LoginForm({ next }: { next: string }) {
     }
     const { data, error } = await supabase.auth.signUp({ email: email.trim(), password, options: { emailRedirectTo: callback() } })
     setBusy(false)
-    if (error) return setError(/registered|exists/i.test(error.message) ? 'That email already has an account. Sign in instead.' : error.message)
+    if (error) return setError(authMessage(error.message))
     if (data.session) return done('password')
     setInfo('Account created. Open the confirmation link we just emailed you (only needed once), then sign in with your password.')
     setMode('signin')
@@ -87,7 +98,7 @@ export function LoginForm({ next }: { next: string }) {
       options: { emailRedirectTo: callback(), shouldCreateUser: true },
     })
     setBusy(false)
-    if (error) return setError(error.message)
+    if (error) return setError(authMessage(error.message))
     setMode('code')
   }
 

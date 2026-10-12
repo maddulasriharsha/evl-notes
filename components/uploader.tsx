@@ -107,7 +107,9 @@ export function Uploader({
   const [linkBusy, setLinkBusy] = useState(false)
   const [linkErrors, setLinkErrors] = useState<string[]>([])
   const [description, setDescription] = useState('')
-  const [combine, setCombine] = useState(true)
+  // Off by default: two photos stay two files unless the person asks for one PDF.
+  const [combine, setCombine] = useState(false)
+  const [madePdfs, setMadePdfs] = useState(0)
   const [autoName, setAutoName] = useState(true)
   const [pdfName, setPdfName] = useState('')
   const [converting, setConverting] = useState<string | null>(null)
@@ -338,6 +340,7 @@ export function Uploader({
   async function start() {
     if (!ready) return
     setRunning(true)
+    setMadePdfs(plan.filter((g) => g.photos.length > 0).length)
     const touched: { code: string; unit: number }[] = []
     try {
       for (const g of plan) {
@@ -894,7 +897,9 @@ export function Uploader({
             <div className={`mt-4 flex flex-wrap items-center gap-3 rounded-xl px-4 py-3 text-sm ${failed ? 'bg-gold-soft text-gold' : 'bg-ok-soft text-ok'}`}>
               {failed ? <TriangleAlert className="size-4" /> : <Check className="size-4" />}
               <span className="flex-1">
-                {failed ? `${plural(doneCount, 'file')} uploaded, ${failed} failed. Press upload again to retry.` : `All ${plural(doneCount, 'file')} uploaded.`}
+                {failed ? `${plural(doneCount, 'file')} uploaded, ${failed} failed. Press upload again to retry.` : madePdfs > 0
+                    ? `${plural(doneCount, 'photo')} saved as ${plural(madePdfs, 'PDF')} (one page per photo).`
+                    : `All ${plural(doneCount, 'file')} uploaded.`}
               </span>
               {finished.map((t) => (
                 <Link key={`${t.code}:${t.unit}`} href={sectionHref(t.code, t.unit)} className="font-semibold underline underline-offset-4">
