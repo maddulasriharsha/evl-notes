@@ -22,7 +22,15 @@ export function VisitBeacon() {
         localStorage.setItem(ID_KEY, id)
       }
       sessionStorage.setItem(SESSION_KEY, '1')
-      void supabaseBrowser().rpc('record_visit', { p_visitor: id })
+      // The query builder only sends its request once something awaits it, so .then() is required.
+      supabaseBrowser()
+        .rpc('record_visit', { p_visitor: id })
+        .then(
+          ({ error }) => {
+            if (error) sessionStorage.removeItem(SESSION_KEY)
+          },
+          () => sessionStorage.removeItem(SESSION_KEY),
+        )
     } catch {
       // Storage blocked (private mode): the visit simply is not counted.
     }
