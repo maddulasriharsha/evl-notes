@@ -1,11 +1,11 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { BookOpenCheck, CloudUpload, FileQuestion } from 'lucide-react'
+import { BookOpenCheck, CloudUpload, FileQuestion, ScrollText } from 'lucide-react'
 import { RequestNotesButton } from '@/components/community-buttons'
 import { QrButton } from '@/components/qr-button'
 import { ShelfCards } from '@/components/shelf-cards'
 import { ButtonLink, Container, Crumbs } from '@/components/ui'
-import { allSubjects, completeHref, findSubject, QUESTION_BANK_UNIT, subjectCrumbs, subjectHref } from '@/lib/curriculum'
+import { allSubjects, completeHref, findSubject, PAPERS_UNIT, QUESTION_BANK_UNIT, subjectCrumbs, subjectHref } from '@/lib/curriculum'
 import { collectionsFor, taggedQuestionsFor, type NoteCollection } from '@/lib/data'
 import { plural } from '@/lib/format'
 import { driveFilesFor } from '@/lib/library'
@@ -26,7 +26,8 @@ export default async function CompletePage({ params }: PageProps<'/s/[code]/comp
   if (!found) notFound()
   const { subject } = found
 
-  const [notes, bankHere, tagged] = await Promise.all([
+  const [papers, notes, bankHere, tagged] = await Promise.all([
+    collectionsFor(subject.code, PAPERS_UNIT),
     collectionsFor(subject.code, 0),
     collectionsFor(subject.code, QUESTION_BANK_UNIT),
     taggedQuestionsFor(subject.code),
@@ -48,6 +49,8 @@ export default async function CompletePage({ params }: PageProps<'/s/[code]/comp
   const bankDrive = driveFilesFor(subject.code, QUESTION_BANK_UNIT)
   const notesCount = notes.reduce((n, c) => n + c.files.length, 0) + notesDrive.length
   const bankCount = bank.reduce((n, c) => n + c.files.length, 0) + bankDrive.length
+  const papersDrive = driveFilesFor(subject.code, PAPERS_UNIT)
+  const papersCount = papers.reduce((n, c) => n + c.files.length, 0) + papersDrive.length
 
   return (
     <>
@@ -112,6 +115,26 @@ export default async function CompletePage({ params }: PageProps<'/s/[code]/comp
             emptyTitle="No question bank files yet"
             emptyHint="Have important questions or assignments?"
             anchor="q-"
+          />
+        </section>
+
+        <section id="previous-papers" className="scroll-mt-24">
+          <h2 className="mb-1 flex items-center gap-2 font-display text-xl font-semibold tracking-tight">
+            <ScrollText className="size-5 text-ink-3" /> Previous question papers
+            <span className="rounded-md bg-surface-2 px-2 py-0.5 text-xs font-medium text-ink-3">{plural(papersCount, 'file')}</span>
+          </h2>
+          <p className="mb-4 text-sm text-ink-3">Old exam papers (2022 onwards) for this subject.</p>
+          <ShelfCards
+            collections={papers}
+            drive={papersDrive}
+            subjectCode={subject.code}
+            subjectShort={subject.short}
+            unit={PAPERS_UNIT}
+            label="Question papers"
+            uploadHref={`/upload?subject=${subject.code}&unit=${PAPERS_UNIT}`}
+            emptyTitle="No question papers yet"
+            emptyHint="Have an old exam paper?"
+            anchor="p-"
           />
         </section>
       </Container>

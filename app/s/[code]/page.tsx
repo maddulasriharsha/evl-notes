@@ -5,7 +5,7 @@ import { ArrowRight, CloudUpload } from 'lucide-react'
 import { FollowButton } from '@/components/community-buttons'
 import { QrButton } from '@/components/qr-button'
 import { ButtonLink, Container, Crumbs, SectionHeading } from '@/components/ui'
-import { allSubjects, completeHref, findSubject, QUESTION_BANK_UNIT, sectionHref, sectionLabel, sectionMark, sectionsOf, sectionTitle, semesterHref, subjectCrumbs, subjectHref } from '@/lib/curriculum'
+import { allSubjects, completeHref, findSubject, PAPERS_UNIT, QUESTION_BANK_UNIT, sectionHref, sectionLabel, sectionMark, sectionsOf, sectionTitle, semesterHref, subjectCrumbs, subjectHref } from '@/lib/curriculum'
 import { countsForSubject } from '@/lib/data'
 import { driveCount } from '@/lib/library'
 import { plural } from '@/lib/format'
@@ -87,8 +87,24 @@ export default async function SubjectPage({ params }: PageProps<'/s/[code]'>) {
           </span>
           <ArrowRight className="size-4 text-ink-3 transition group-hover:translate-x-0.5 group-hover:text-ink" />
         </Link>
+        <Link
+          href={sectionHref(subject.code, PAPERS_UNIT)}
+          className="group mb-4 flex items-center gap-4 rounded-2xl border border-line-strong bg-surface px-5 py-4 shadow-card transition hover:border-accent"
+        >
+          <span className="grid size-11 shrink-0 place-items-center rounded-xl border border-line bg-bg font-display text-lg font-semibold text-ink-2">
+            {sectionMark(PAPERS_UNIT)}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-xs font-semibold tracking-widest text-ink-3 uppercase">Pinned</span>
+            <span className="block truncate font-medium">{sectionTitle(subject, PAPERS_UNIT)}</span>
+          </span>
+          <span className="hidden rounded-md bg-surface-2 px-2 py-0.5 text-xs font-medium text-ink-2 sm:block">
+            {plural((counts[PAPERS_UNIT] ?? 0) + driveCount(subject.code, PAPERS_UNIT), 'file')}
+          </span>
+          <ArrowRight className="size-4 text-ink-3 transition group-hover:translate-x-0.5 group-hover:text-ink" />
+        </Link>
         <ol className="overflow-hidden rounded-2xl border border-line bg-surface shadow-card">
-          {sections.filter((u) => u !== 0 && u !== QUESTION_BANK_UNIT).map((unit) => {
+          {sections.filter((u) => u !== 0 && u !== QUESTION_BANK_UNIT && u !== PAPERS_UNIT).map((unit) => {
             const mine = (counts[unit] ?? 0) + driveCount(subject.code, unit)
             return (
               <li key={unit} className="border-b border-line last:border-0">
