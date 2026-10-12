@@ -51,6 +51,25 @@ export default async function CompletePage({ params }: PageProps<'/s/[code]/comp
   const bankCount = bank.reduce((n, c) => n + c.files.length, 0) + bankDrive.length
   const papersDrive = driveFilesFor(subject.code, PAPERS_UNIT)
   const papersCount = papers.reduce((n, c) => n + c.files.length, 0) + papersDrive.length
+  // One partition per exam year, newest first. A paper's year comes from its title (or upload date).
+  const yearIn = (text: string, fallback: string) => text.match(/(20\d\d)/)?.[1] ?? fallback.slice(0, 4)
+  const years = new Map<string, { drive: typeof papersDrive; collections: NoteCollection[] }>()
+  const slot = (y: string) => {
+    if (!years.has(y)) years.set(y, { drive: [], collections: [] })
+    return years.get(y)!
+  }
+  for (const f of papersDrive) slot(yearIn(f.title, 'Other')).drive.push(f)
+  for (const c of papers) {
+    const byYear = new Map<string, typeof c.files>()
+    for (const f of c.files) {
+      const y = yearIn(f.name, f.created_at ?? 'Other')
+      byYear.set(y, [...(byYear.get(y) ?? []), f])
+    }
+    for (const [y, files] of byYear) slot(y).collections.push({ ...c, files })
+  }
+  const papersByYear = [...years.entries()]
+    .sort((a, b) => b[0].localeCompare(a[0]))
+    .map(([year, v]) => ({ year, ...v, count: v.drive.length + v.collections.reduce((n, c) => n + c.files.length, 0) }))
 
   return (
     <>
@@ -124,18 +143,43 @@ export default async function CompletePage({ params }: PageProps<'/s/[code]/comp
             <span className="rounded-md bg-surface-2 px-2 py-0.5 text-xs font-medium text-ink-3">{plural(papersCount, 'file')}</span>
           </h2>
           <p className="mb-4 text-sm text-ink-3">Old exam papers (2022 onwards) for this subject.</p>
-          <ShelfCards
-            collections={papers}
-            drive={papersDrive}
-            subjectCode={subject.code}
-            subjectShort={subject.short}
-            unit={PAPERS_UNIT}
-            label="Question papers"
-            uploadHref={`/upload?subject=${subject.code}&unit=${PAPERS_UNIT}`}
-            emptyTitle="No question papers yet"
-            emptyHint="Have an old exam paper?"
-            anchor="p-"
-          />
+          {papersByYear.length === 0 ? (
+            <ShelfCards
+              collections={[]}
+              drive={[]}
+              subjectCode={subject.code}
+              subjectShort={subject.short}
+              unit={PAPERS_UNIT}
+              label="Question papers"
+              uploadHref={`/upload?subject=${subject.code}&unit=${PAPERS_UNIT}`}
+              emptyTitle="No question papers yet"
+              emptyHint="Have an old exam paper?"
+              anchor="p-"
+            />
+          ) : (
+            <div className="space-y-10">
+              {papersByYear.map((g) => (
+                <div key={g.year} id={`papers-${g.year}`} className="scroll-mt-24">
+                  <h3 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold tracking-tight">
+                    {g.year}
+                    <span className="rounded-md bg-surface-2 px-2 py-0.5 text-xs font-medium text-ink-3">{plural(g.count, 'paper')}</span>
+                  </h3>
+                  <ShelfCards
+                    collections={g.collections}
+                    drive={g.drive}
+                    subjectCode={subject.code}
+                    subjectShort={subject.short}
+                    unit={PAPERS_UNIT}
+                    label={`Question papers ${g.year}`}
+                    uploadHref={`/upload?subject=${subject.code}&unit=${PAPERS_UNIT}`}
+                    emptyTitle=""
+                    emptyHint=""
+                    anchor={`p${g.year}-`}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </section>
       </Container>
     </>
