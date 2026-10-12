@@ -362,7 +362,7 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
   }
 
   if (tab === 'files') {
-    const { data } = await supabase
+    const { data, error: filesError } = await supabase
       .from('files')
       .select('id, name, mime, size_bytes, created_at, deleted_at, profiles(display_name, role), collections(subject_code, unit)')
       .order('created_at', { ascending: false })
@@ -377,7 +377,9 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
       profiles: { display_name: string; role: string } | null
       collections: { subject_code: string; unit: number } | null
     }[]
-    body = (
+    body = filesError ? (
+      <p className="rounded-xl bg-danger-soft px-4 py-3 text-danger">Could not load files: {filesError.message}</p>
+    ) : (
       <Table head={['File', 'By', 'Where', 'Added', '']}>
         {rows.map((f) => (
           <tr key={f.id} className={rowCls(!!f.deleted_at)}>
