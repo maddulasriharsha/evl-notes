@@ -134,6 +134,8 @@ export interface BackupStatus {
   waiting: number
   removed: number
   errors: number
+  /** Notes saved as Google Drive links: no file is stored on the site, so there is nothing to copy. */
+  links: number
 }
 
 /** Counts for the admin page. */
@@ -141,13 +143,15 @@ export async function backupStatus(): Promise<BackupStatus | null> {
   if (!adminConfigured()) return null
   const db = supabaseAdmin()
   const head = () => db.from('files').select('id', { count: 'exact', head: true }).is('drive_id', null).not('storage_path', 'is', null)
-  const [uploaded, backedUp, removed, errors] = await Promise.all([
+  const linkHead = db.from('files').select('id', { count: 'exact', head: true }).not('drive_id', 'is', null).is('deleted_at', null)
+  const [uploaded, backedUp, removed, errors, links] = await Promise.all([
     head(),
     head().not('backup_drive_id', 'is', null),
     head().not('original_removed_at', 'is', null),
     head().not('backup_error', 'is', null).is('original_removed_at', null),
+    linkHead,
   ])
   if (uploaded.error) return null
   const n = (r: { count: number | null }) => r.count ?? 0
-  return { uploaded: n(uploaded), backedUp: n(backedUp), waiting: n(uploaded) - n(backedUp), removed: n(removed), errors: n(errors) }
+  return { uploaded: n(uploaded), backedUp: n(backedUp), waiting: n(uploaded) - n(backedUp), removed: n(removed), errors: n(errors), links: n(links) }
 }

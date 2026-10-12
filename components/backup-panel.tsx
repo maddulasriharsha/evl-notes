@@ -9,7 +9,7 @@ export interface BackupPanelProps {
   drive: boolean
   cron: boolean
   columns: boolean
-  status: { uploaded: number; backedUp: number; waiting: number; removed: number; errors: number } | null
+  status: { uploaded: number; backedUp: number; waiting: number; removed: number; errors: number; links?: number } | null
 }
 
 interface Report {
@@ -99,6 +99,7 @@ export function BackupPanel({ service, drive, cron, columns, status }: BackupPan
             { label: 'Copied to Drive', value: status.backedUp },
             { label: 'Original removed', value: status.removed },
             { label: 'Waiting', value: status.waiting },
+            { label: 'Drive links (nothing to copy)', value: status.links ?? 0 },
           ].map((t) => (
             <div key={t.label} className="rounded-2xl border border-line bg-surface p-4 shadow-card">
               <p className="text-xs text-ink-3">{t.label}</p>
