@@ -52,7 +52,7 @@ export default async function CompletePage({ params }: PageProps<'/s/[code]/comp
   const papersDrive = driveFilesFor(subject.code, PAPERS_UNIT)
   const papersCount = papers.reduce((n, c) => n + c.files.length, 0) + papersDrive.length
   // One partition per exam year, newest first. A paper's year comes from its title (or upload date).
-  const yearIn = (text: string, fallback: string) => text.match(/(20\d\d)/)?.[1] ?? fallback.slice(0, 4)
+  const yearIn = (text: string, fallback: string) => text.match(/(20\d\d)/)?.[1] ?? (/^d{4}/.test(fallback) ? fallback.slice(0, 4) : 'Other')
   const years = new Map<string, { drive: typeof papersDrive; collections: NoteCollection[] }>()
   const slot = (y: string) => {
     if (!years.has(y)) years.set(y, { drive: [], collections: [] })
