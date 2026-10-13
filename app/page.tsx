@@ -53,7 +53,7 @@ export default async function Home() {
         className="relative z-10 -mt-[4.25rem] pt-[4.25rem] sm:-mt-[4.5rem] sm:pt-[4.5rem]"
         style={{ '--horizon-y': '610px', '--horizon-y-sm': '600px' } as React.CSSProperties}
       >
-        <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+        <div className="hero-sky pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
           <div className="horizon" />
           <div className="horizon-haze" />
           <HeroStars />

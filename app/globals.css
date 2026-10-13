@@ -154,6 +154,13 @@ body {
   pointer-events: none;
 }
 
+/* The hero's sky (planet, haze, stars) thins out at its lower edge, so the page's own background
+   takes over gradually instead of at a line. */
+.hero-sky {
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 80px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 80px), transparent);
+}
+
 /* ---------- Motion ---------- */
 @keyframes rise {
   from {
@@ -384,8 +391,8 @@ html.intro .intro-screen {
   overflow: hidden;
   background: var(--bg);
   color: var(--ink);
-  /* Melts into the page instead of being cut away. */
-  animation: intro-out 0.55s cubic-bezier(0.4, 0, 0.2, 1) 2s forwards;
+  /* The words leave first; then the dark sheet thins out over the page, so nothing ghosts on top of it. */
+  animation: intro-out 0.5s ease-out 2.1s forwards;
 }
 .intro-glow {
   position: absolute;
@@ -393,7 +400,7 @@ html.intro .intro-screen {
   background:
     radial-gradient(42% 36% at 50% 46%, rgb(139 92 246 / 0.32), transparent 70%),
     radial-gradient(60% 50% at 50% 110%, rgb(109 40 217 / 0.28), transparent 70%);
-  animation: intro-glow 2.5s ease-out both;
+  animation: intro-glow 2.6s ease-out both;
 }
 .intro-stack {
   position: relative;
@@ -405,7 +412,7 @@ html.intro .intro-screen {
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.03em;
-  animation: intro-lift 0.55s cubic-bezier(0.4, 0, 0.2, 1) 2s forwards;
+  animation: intro-lift 0.3s ease-in 1.85s forwards;
 }
 .intro-word {
   display: flex;
@@ -493,8 +500,8 @@ html.intro .intro-screen {
 }
 @keyframes intro-lift {
   to {
-    transform: scale(1.08);
-    filter: blur(8px);
+    opacity: 0;
+    transform: scale(1.04);
   }
 }
 @keyframes intro-out {
