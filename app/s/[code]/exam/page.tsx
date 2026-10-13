@@ -21,7 +21,8 @@ import { collectionsFor } from '@/lib/data'
 import { plural } from '@/lib/format'
 import { liveLibrary } from '@/lib/library-live'
 
-export const revalidate = 60
+// Rebuilt at once when notes change (see refreshChapter); this is only the fallback for votes, comments and the like.
+export const revalidate = 600
 
 export async function generateMetadata({ params }: PageProps<'/s/[code]/exam'>): Promise<Metadata> {
   const found = findSubject((await params).code)

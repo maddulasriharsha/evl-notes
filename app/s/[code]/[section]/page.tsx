@@ -31,7 +31,8 @@ import { LIBRARY_OWNER, type DriveFile } from '@/lib/library'
 import { liveLibrary } from '@/lib/library-live'
 import { formatDate, plural, timeAgo } from '@/lib/format'
 
-export const revalidate = 60
+// Rebuilt at once when notes change (see refreshChapter); this is only the fallback for votes, comments and the like.
+export const revalidate = 600
 
 export function generateStaticParams() {
   return allSubjects().flatMap(({ subject }) =>

@@ -21,7 +21,8 @@ import { fileById } from '@/lib/data'
 import { publicFileUrl } from '@/lib/env'
 import { formatBytes, formatDate } from '@/lib/format'
 
-export const revalidate = 300
+// Rebuilt at once when notes change (see refreshChapter); this is only the fallback for votes, comments and the like.
+export const revalidate = 900
 
 export async function generateMetadata({ params }: PageProps<'/view/u/[id]'>): Promise<Metadata> {
   const f = await fileById((await params).id)

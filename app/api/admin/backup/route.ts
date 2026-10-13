@@ -1,3 +1,4 @@
+import { revalidatePath } from 'next/cache'
 import { NextResponse } from 'next/server'
 import { runBackup } from '@/lib/backup-job'
 import { runDatabaseBackup } from '@/lib/db-backup'
@@ -12,5 +13,7 @@ export async function POST(request: Request) {
   if (me?.profile?.role !== 'admin' || !(await currentIsOwner())) return NextResponse.json({ error: 'Only the owner can run backups' }, { status: 403 })
   const what = new URL(request.url).searchParams.get('what')
   if (what === 'database') return NextResponse.json({ database: await runDatabaseBackup() })
-  return NextResponse.json(await runBackup(50_000))
+  const files = await runBackup(50_000)
+  if (files.removed > 0) revalidatePath('/', 'layout')
+  return NextResponse.json(files)
 }

@@ -22,7 +22,8 @@ import { thumbFor } from '@/lib/file-thumb'
 import { plural, timeAgo } from '@/lib/format'
 import { liveLibrary } from '@/lib/library-live'
 
-export const revalidate = 60
+// Rebuilt at once when notes change (see refreshChapter); this is only the fallback for votes, comments and the like.
+export const revalidate = 600
 
 const n = (x: number) => x.toLocaleString('en-IN')
 

@@ -1,3 +1,4 @@
+import { revalidatePath } from 'next/cache'
 import { NextResponse } from 'next/server'
 import { runBackup } from '@/lib/backup-job'
 import { runDatabaseBackup } from '@/lib/db-backup'
@@ -13,6 +14,8 @@ export async function GET(request: Request) {
   }
   // Files first (time-boxed), then the database export, which is quick.
   const files = await runBackup(38_000)
+  // Moved originals change the links on every page that lists them.
+  if (files.removed > 0) revalidatePath('/', 'layout')
   const database = await runDatabaseBackup()
   return NextResponse.json({ ...files, database })
 }

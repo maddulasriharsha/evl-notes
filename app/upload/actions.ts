@@ -1,7 +1,7 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
-import { findSubject, sectionHref, sectionsOf, semesterHref, subjectHref } from '@/lib/curriculum'
+import { revalidatePath, updateTag } from 'next/cache'
+import { completeHref, findSubject, sectionHref, sectionsOf, semesterHref, subjectHref } from '@/lib/curriculum'
 import { parseDriveLink, type DriveLinkKind } from '@/lib/drive-link'
 import { currentUser } from '@/lib/supabase/server'
 
@@ -10,7 +10,11 @@ export async function refreshChapter(subjectCode: string, unit: number) {
   if (!(await currentUser())) return
   const found = findSubject(subjectCode)
   if (!found || !sectionsOf(found.subject).includes(unit)) return
+  // Where admins placed Drive library files is cached separately.
+  updateTag('drive-placements')
   revalidatePath(sectionHref(found.subject.code, unit))
+  revalidatePath(completeHref(found.subject.code))
+  revalidatePath(`${subjectHref(found.subject.code)}/exam`)
   revalidatePath(subjectHref(found.subject.code))
   for (const use of found.usedIn) {
     if (use.branch) revalidatePath(semesterHref(use.branch.id, use.semester.sem))

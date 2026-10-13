@@ -13,7 +13,8 @@ const loadMoves = unstable_cache(
     return ((data ?? []) as { file_id: string; subject_code: string; unit: number }[]).map((r) => [r.file_id, { subject: r.subject_code, unit: r.unit }])
   },
   ['drive-placements'],
-  { revalidate: 30, tags: ['drive-placements'] },
+  // Moves refresh this at once (updateTag in refreshChapter); the hour is only a fallback.
+  { revalidate: 3600, tags: ['drive-placements'] },
 )
 
 /** The Drive library with the admins' moves applied. Use this on pages; the plain exports ignore moves. */

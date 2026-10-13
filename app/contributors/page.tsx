@@ -4,7 +4,8 @@ import { contributors } from '@/lib/data'
 import { plural, timeAgo } from '@/lib/format'
 
 export const metadata: Metadata = { title: 'Contributors' }
-export const revalidate = 120
+// Rebuilt at once when notes change (see refreshChapter); this is only the fallback for votes, comments and the like.
+export const revalidate = 900
 
 function badgesFor(p: { files: number; chapters: number; subjects: number }) {
   const out: { label: string; cls: string }[] = []
