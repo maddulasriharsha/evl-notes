@@ -37,8 +37,21 @@ export default async function UploadPage({ searchParams }: PageProps<'/upload'>)
       <Container className="grid min-h-[60dvh] place-items-center py-16">
         <div className="w-full max-w-md rounded-3xl border border-line bg-surface p-8 shadow-pop">
           <h1 className="font-display text-3xl font-semibold tracking-tight">One last thing</h1>
-          <p className="mt-2 mb-6 text-sm text-ink-3">Pick the name your classmates will see on your notes.</p>
+          <p className="mt-2 mb-6 text-sm text-ink-3">Pick the name your classmates will see on your notes, and your branch.</p>
           <ProfileForm userId={me.user.id} initialName={suggested} existing={false} />
+        </div>
+      </Container>
+    )
+  }
+
+  if (!me.profile.branch && !me.profile.banned_at) {
+    // Members who joined before branches were asked for: one quick question before uploading.
+    return (
+      <Container className="grid min-h-[60dvh] place-items-center py-16">
+        <div className="w-full max-w-md rounded-3xl border border-line bg-surface p-8 shadow-pop">
+          <h1 className="font-display text-3xl font-semibold tracking-tight">Which branch are you in?</h1>
+          <p className="mt-2 mb-6 text-sm text-ink-3">Asked once, so classmates see their own branch&rsquo;s notes first.</p>
+          <ProfileForm userId={me.user.id} initialName={me.profile.display_name} existing />
         </div>
       </Container>
     )

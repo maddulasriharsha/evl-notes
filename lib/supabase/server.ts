@@ -47,13 +47,15 @@ export interface Profile {
   display_name: string
   role: 'member' | 'moderator' | 'admin'
   banned_at: string | null
+  /** Branch slug (as in /b/{branch}); null until the member picks one. */
+  branch: string | null
 }
 
 export async function currentProfile(): Promise<{ user: { id: string; email?: string }; profile: Profile | null } | null> {
   const user = await currentUser()
   if (!user) return null
   const supabase = await supabaseServer()
-  const { data } = await supabase.from('profiles').select('id, display_name, role, banned_at').eq('id', user.id).maybeSingle()
+  const { data } = await supabase.from('profiles').select('id, display_name, role, banned_at, branch').eq('id', user.id).maybeSingle()
   return { user, profile: (data as Profile | null) ?? null }
 }
 

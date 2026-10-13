@@ -93,7 +93,7 @@ export default async function MePage() {
           )}
         </div>
         <aside id="profile" className="h-fit scroll-mt-24 rounded-2xl border border-line bg-surface p-5 shadow-card">
-          <ProfileForm userId={me.user.id} initialName={me.profile.display_name} existing />
+          <ProfileForm userId={me.user.id} initialName={me.profile.display_name} initialBranch={me.profile.branch} existing />
           <div className="mt-5 border-t border-line pt-5">
             <PasswordForm />
           </div>
