@@ -12,17 +12,15 @@ interface Announcement {
   link: string | null
 }
 
-const KEY = 'vj-announcement-dismissed'
+// A new key from the single-announcement days, so an old dismissal does not hide today's rotation.
+const KEY = 'vj-announcements-dismissed'
 const MAX = 5
-const EVERY_MS = 6000
+const EVERY_MS = 5000
 
-/** Ids dismissed on this device. Older versions stored a single id as plain text. */
+/** Ids dismissed on this device. */
 function dismissed(): string[] {
   try {
-    const raw = localStorage.getItem(KEY)
-    if (!raw) return []
-    if (!raw.startsWith('[')) return [raw]
-    const list: unknown = JSON.parse(raw)
+    const list: unknown = JSON.parse(localStorage.getItem(KEY) ?? '[]')
     return Array.isArray(list) ? list.filter((x): x is string => typeof x === 'string') : []
   } catch {
     return []
@@ -98,10 +96,9 @@ export function AnnouncementBar() {
   return (
     <div
       role="status"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-      onFocus={() => setPaused(true)}
-      onBlur={() => setPaused(false)}
+      // Pause only under a real mouse: a tap on a phone "enters" and never leaves.
+      onPointerEnter={(e) => e.pointerType === 'mouse' && setPaused(true)}
+      onPointerLeave={() => setPaused(false)}
       className="flex items-center justify-center gap-2 border-b border-line bg-accent-soft px-3 py-2 text-center text-sm text-ink"
     >
       {many && (
