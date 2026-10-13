@@ -78,6 +78,16 @@ export function findSubject(code: string) {
   return byCode.get(code.toUpperCase())
 }
 
+const sameName = (name: string) => name.toLowerCase().replace(/[^a-z0-9]/g, '')
+
+/** The same subject taught to other branches under a different code (matched by its full name). */
+export function siblingSubjects(code: string) {
+  const me = findSubject(code)
+  if (!me) return []
+  const key = sameName(me.subject.name)
+  return [...byCode.values()].filter((e) => e.subject.code !== me.subject.code && e.subject.kind === me.subject.kind && sameName(e.subject.name) === key)
+}
+
 /** Every distinct subject across all branches. */
 export function allSubjects() {
   return [...byCode.values()]

@@ -9,8 +9,9 @@ import { liveLibrary } from '@/lib/library-live'
 
 export const dynamicParams = false
 
+// Built on first visit (then cached), so a deployment does not carry a page per Drive file.
 export function generateStaticParams() {
-  return driveFiles.map((f) => ({ id: f.id }))
+  return []
 }
 
 export async function generateMetadata({ params }: PageProps<'/view/d/[id]'>): Promise<Metadata> {

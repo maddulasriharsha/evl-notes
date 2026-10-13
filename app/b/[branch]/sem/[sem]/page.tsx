@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { SubjectCard } from '@/components/subject-card'
+import { TemplatesRow } from '@/components/templates-row'
 import { Container, Crumbs } from '@/components/ui'
 import { branches, branchHref, findBranch, semesterHref, semesterLabel } from '@/lib/curriculum'
 import { countsBySubject } from '@/lib/data'
@@ -64,6 +65,8 @@ export default async function SemesterPage({ params }: PageProps<'/b/[branch]/se
           ))}
         </div>
       </div>
+
+      <TemplatesRow />
 
       <h2 className="mt-10 mb-4 text-sm font-semibold tracking-widest text-ink-3 uppercase">Theory</h2>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

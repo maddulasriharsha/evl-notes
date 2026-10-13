@@ -164,3 +164,50 @@ export async function listBackups(prefix: string): Promise<{ id: string; name: s
   const res = await ok(await call(`${API}/files?q=${q}&fields=files(id,name,createdTime)&orderBy=createdTime desc&pageSize=100`), 'list')
   return ((await res.json()) as { files?: { id: string; name: string; createdTime: string }[] }).files ?? []
 }
+
+/**
+ * Starts a resumable upload straight from a visitor's browser into the backup folder, so big files
+ * never pass through the site. Google fixes the size and type for the session, and the returned URL
+ * only accepts that one upload.
+ */
+export async function startResumableUpload(opts: { name: string; mime: string; size: number; origin: string }): Promise<string> {
+  const folder = await ensureFolder()
+  const res = await ok(
+    await call(`${UPLOAD}/files?uploadType=resumable&fields=id`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'X-Upload-Content-Type': opts.mime,
+        'X-Upload-Content-Length': String(opts.size),
+        Origin: opts.origin,
+      },
+      body: JSON.stringify({ name: opts.name, parents: [folder] }),
+    }),
+    'upload start',
+  )
+  const url = res.headers.get('location')
+  if (!url) throw new Error('Google Drive did not return an upload address')
+  return url
+}
+
+/** After a browser upload: checks the file is ours and as expected, then makes it readable by link. */
+export async function publishUpload(id: string, limits: { maxBytes: number; mimes: readonly string[] }): Promise<{ size: number; mime: string }> {
+  const folder = await ensureFolder()
+  const res = await ok(await call(`${API}/files/${encodeURIComponent(id)}?fields=id,size,mimeType,parents,trashed`), 'lookup')
+  const file = (await res.json()) as { size?: string; mimeType?: string; parents?: string[]; trashed?: boolean }
+  const size = Number(file.size ?? -1)
+  const bad = file.trashed || !file.parents?.includes(folder) || size <= 0 || size > limits.maxBytes || !limits.mimes.includes(file.mimeType ?? '')
+  if (bad) {
+    await deleteBackup(id).catch(() => undefined)
+    throw new Error('That upload was not accepted')
+  }
+  await ok(
+    await call(`${API}/files/${encodeURIComponent(id)}/permissions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role: 'reader', type: 'anyone' }),
+    }),
+    'sharing',
+  )
+  return { size, mime: file.mimeType ?? '' }
+}

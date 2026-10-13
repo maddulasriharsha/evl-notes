@@ -1,0 +1,26 @@
+[
+  {
+    "slug": "record-sheets",
+    "title": "Record sheets",
+    "note": "Lab record paper, ready to print",
+    "format": "PDF",
+    "driveId": "1L89jChIWeDLjZUzXzVpxMD3wszpIc2J1",
+    "kind": "file"
+  },
+  {
+    "slug": "cbp-template",
+    "title": "CBP template",
+    "note": "Course Based Project report (Word, editable)",
+    "format": "DOCX",
+    "driveId": "1Qk7x5oTaXLac-nNSvoYaMVC5CFP8g42S",
+    "kind": "file"
+  },
+  {
+    "slug": "wil-report-template",
+    "title": "WIL report template",
+    "note": "Work Integrated Learning report (editable)",
+    "format": "DOC",
+    "driveId": "1iKTON2GYZdaacWBwC_Xv9y8d9ukh7TEpsVTHEq7v0wE",
+    "kind": "document"
+  }
+]

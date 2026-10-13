@@ -5,6 +5,9 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ArrowDown, ArrowUp, Camera, Check, CloudUpload, FileStack, FileText, Link2, Loader2, Sparkles, TriangleAlert, X } from 'lucide-react'
 import { inspectDriveLink, refreshChapter } from '@/app/upload/actions'
+import { expandDriveFolder } from '@/app/upload/drive-actions'
+import { uploadToDrive } from '@/lib/upload-drive'
+import { goesToDrive, isOffice, mimeOf } from '@/lib/upload-rules'
 import { aiSortAvailable } from '@/app/upload/classify-actions'
 import { autoSort } from '@/lib/auto-sort'
 import { branches, sectionHref, sectionLabel, sectionsOf, sectionTitle, findSubject, type Semester } from '@/lib/curriculum'
@@ -62,7 +65,7 @@ interface Group {
   shelfCount: number
 }
 
-const MAX_LINKS = 30
+const MAX_LINKS = 100
 
 const stageLabel: Record<Stage, string> = {
   queued: 'Ready',
@@ -160,8 +163,8 @@ export function Uploader({
         name: file.name.replace(/\.[^.]+$/, ''),
         url: file.type.startsWith('image/') ? URL.createObjectURL(file) : null,
         stage: 'queued',
-        // No chapter chosen in Step 1: the site works out where each file belongs.
-        sorting: !defaultPlace,
+        // No chapter chosen in Step 1: the site works out where each file belongs (Office files cannot be read).
+        sorting: !defaultPlace && !isOffice(mimeOf(file)),
       })
     }
     setFinished(null)
@@ -171,7 +174,7 @@ export function Uploader({
     void checkDuplicates(kept)
     if (!defaultPlace && kept.length > 0) {
       void autoSort(
-        kept.map((i) => ({ key: i.key, file: i.file })),
+        kept.filter((i) => !isOffice(mimeOf(i.file))).map((i) => ({ key: i.key, file: i.file })),
         { prefer: preferred, branchId, ai: aiOn },
         (r) =>
           setItems((cur) =>
@@ -257,8 +260,30 @@ export function Uploader({
     const added: LinkItem[] = []
     const seen = new Set(links.filter((l) => l.stage !== 'done').map((l) => l.id))
     for (const part of parts.slice(0, MAX_LINKS)) {
-      if (!parseDriveLink(part)) {
+      const parsed = parseDriveLink(part)
+      if (!parsed) {
         errors.push(`“${part.slice(0, 60)}” is not a Google Drive link.`)
+        continue
+      }
+      if (parsed.kind === 'folder') {
+        // A folder link brings in every file inside it, each as its own note.
+        const folder = await expandDriveFolder(part)
+        if (!folder.ok) {
+          errors.push(folder.message)
+          continue
+        }
+        let skipped = 0
+        for (const f of folder.files) {
+          if (seen.has(f.id)) continue
+          seen.add(f.id)
+          if (await findDriveDuplicate(f.id, userId)) {
+            skipped++
+            continue
+          }
+          added.push({ key: crypto.randomUUID(), id: f.id, kind: f.kind, name: f.title, stage: 'queued' })
+        }
+        if (skipped) errors.push(`${skipped} file${skipped === 1 ? '' : 's'} in that folder are already on the site. Skipped.`)
+        if (folder.truncated) errors.push('That folder is large: only the first 100 files were added.')
         continue
       }
       const res = await inspectDriveLink(part)
@@ -277,7 +302,7 @@ export function Uploader({
     }
     setLinks((cur) => [...cur.filter((l) => l.stage !== 'done'), ...added].slice(0, MAX_LINKS))
     setLinkErrors(errors)
-    if (errors.length === 0) setLinkText('')
+    if (errors.length === 0 || added.length > 0) setLinkText('')
     setLinkBusy(false)
   }
 
@@ -385,7 +410,12 @@ export function Uploader({
               const position = base + offset + g.separate.indexOf(item)
               cursor++
               try {
-                await uploadOne(item.file, { userId, collectionId, position, name: names.get(item.key) ?? item.name, contentHash: item.hash }, (stage) => patch(item.key, { stage }))
+                const name = names.get(item.key) ?? item.name
+                if (goesToDrive(mimeOf(item.file), item.file.size)) {
+                  await uploadToDrive(item.file, { userId, collectionId, position, name }, (stage) => patch(item.key, { stage }))
+                } else {
+                  await uploadOne(item.file, { userId, collectionId, position, name, contentHash: item.hash }, (stage) => patch(item.key, { stage }))
+                }
               } catch (e) {
                 patch(item.key, { stage: 'error', error: e instanceof Error ? e.message : 'Upload failed' })
               }
@@ -570,7 +600,7 @@ export function Uploader({
               onChange={(e) => setLinkText(e.target.value)}
               rows={3}
               disabled={linkBusy || running}
-              placeholder="https://drive.google.com/file/d/…  (you can paste several, one per line)"
+              placeholder="https://drive.google.com/file/d/…  or a folder link  (you can paste several, one per line)"
               className="w-full rounded-xl border border-line bg-surface px-3 py-2 text-sm outline-none focus:border-accent"
             />
             <button
@@ -583,7 +613,8 @@ export function Uploader({
               {linkBusy ? 'Checking links…' : 'Add link'}
             </button>
             <p className="mt-3 text-xs leading-relaxed text-ink-3">
-              Works with files, folders, Google Docs, Sheets and Slides. The link is only saved here, so it uses none of the
+              Works with files, Google Docs, Sheets and Slides. Paste a <strong className="text-ink-2">folder link</strong> to add every file
+              inside it at once. The link is only saved here, so it uses none of the
               site&rsquo;s storage. In Drive set <strong className="text-ink-2">Share &rarr; Anyone with the link &rarr; Viewer</strong>, then
               copy the link. If you delete the file from your Drive, it disappears from here too.
             </p>
@@ -647,7 +678,7 @@ export function Uploader({
         >
           <CloudUpload className="mx-auto size-8 text-ink-3" strokeWidth={1.5} />
           <p className="mt-2 font-medium">Drop files here</p>
-          <p className="text-sm text-ink-3">High-quality originals are kept exactly as uploaded. Up to 50 MB each.</p>
+          <p className="text-sm text-ink-3">PDFs, photos, Word and PowerPoint files, up to 120 MB each. Originals are kept exactly as uploaded.</p>
           <div className="mt-4 flex flex-wrap justify-center gap-2">
             <button type="button" onClick={() => picker.current?.click()} disabled={running} className="inline-flex h-10 items-center gap-2 rounded-xl bg-ink px-4 text-sm font-medium text-bg hover:opacity-90">
               <FileText className="size-4" /> Choose files
@@ -661,7 +692,7 @@ export function Uploader({
               <Camera className="size-4" /> Take photos
             </button>
           </div>
-          <input ref={picker} type="file" multiple accept="application/pdf,image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={(e) => (add(e.target.files), (e.target.value = ''))} />
+          <input ref={picker} type="file" multiple accept="application/pdf,image/jpeg,image/png,image/webp,image/gif,.doc,.docx,.ppt,.pptx" className="hidden" onChange={(e) => (add(e.target.files), (e.target.value = ''))} />
           <input ref={camera} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => (add(e.target.files), (e.target.value = ''))} />
           {cameraOpen && <CameraCapture onShot={(file) => add([file])} onClose={() => setCameraOpen(false)} />}
         </div>

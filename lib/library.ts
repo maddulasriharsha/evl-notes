@@ -77,7 +77,10 @@ function filesIn(index: ReturnType<typeof buildIndex>, subject: string, unit?: n
         ? list.filter(isPaper)
         : unit === 7
           ? list.filter(isBank)
-          : list.filter((f) => (f.forced ? f.unit === unit : (f.unit ?? 0) === unit))
+          : unit === 0
+            ? // Question files without a chapter belong to the papers or the question bank, not to Complete notes.
+              list.filter((f) => (f.forced ? f.unit === 0 : (f.unit ?? 0) === 0 && f.kind !== 'questions'))
+            : list.filter((f) => (f.forced ? f.unit === unit : f.unit === unit))
   return [...filtered].sort(sortFiles)
 }
 

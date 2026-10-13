@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { BookOpenCheck, CloudUpload, FileQuestion, ScrollText } from 'lucide-react'
 import { RequestNotesButton } from '@/components/community-buttons'
+import { OtherBranchNotes } from '@/components/other-branch-notes'
+import { PapersSections } from '@/components/papers-sections'
 import { QrButton } from '@/components/qr-button'
 import { ShelfCards } from '@/components/shelf-cards'
 import { ButtonLink, Container, Crumbs } from '@/components/ui'
@@ -53,26 +55,6 @@ export default async function CompletePage({ params }: PageProps<'/s/[code]/comp
   const bankCount = bank.reduce((n, c) => n + c.files.length, 0) + bankDrive.length
   const papersDrive = driveFilesFor(subject.code, PAPERS_UNIT)
   const papersCount = papers.reduce((n, c) => n + c.files.length, 0) + papersDrive.length
-  // One partition per exam year, newest first. A paper's year comes from its title (or upload date).
-  const yearIn = (text: string, fallback: string) => text.match(/(20\d\d)/)?.[1] ?? (/^\d{4}/.test(fallback) ? fallback.slice(0, 4) : 'Other')
-  const years = new Map<string, { drive: typeof papersDrive; collections: NoteCollection[] }>()
-  const slot = (y: string) => {
-    if (!years.has(y)) years.set(y, { drive: [], collections: [] })
-    return years.get(y)!
-  }
-  for (const f of papersDrive) slot(yearIn(f.title, 'Other')).drive.push(f)
-  for (const c of papers) {
-    const byYear = new Map<string, typeof c.files>()
-    for (const f of c.files) {
-      const y = yearIn(f.name, f.created_at ?? 'Other')
-      byYear.set(y, [...(byYear.get(y) ?? []), f])
-    }
-    for (const [y, files] of byYear) slot(y).collections.push({ ...c, files })
-  }
-  const papersByYear = [...years.entries()]
-    .sort((a, b) => (a[0] === 'Other' ? 1 : b[0] === 'Other' ? -1 : b[0].localeCompare(a[0])))
-    .map(([year, v]) => ({ year, ...v, count: v.drive.length + v.collections.reduce((n, c) => n + c.files.length, 0) }))
-
   return (
     <>
       <section className="grain border-b border-line">
@@ -117,6 +99,7 @@ export default async function CompletePage({ params }: PageProps<'/s/[code]/comp
             emptyHint="Have the whole subject in one file?"
             anchor="n-"
           />
+          <OtherBranchNotes code={subject.code} unit={0} anchor="on" />
         </section>
 
         <section id="question-bank" className="scroll-mt-24">
@@ -137,6 +120,7 @@ export default async function CompletePage({ params }: PageProps<'/s/[code]/comp
             emptyHint="Have important questions or assignments?"
             anchor="q-"
           />
+          <OtherBranchNotes code={subject.code} unit={QUESTION_BANK_UNIT} anchor="oq" />
         </section>
 
         <section id="previous-papers" className="scroll-mt-24">
@@ -144,44 +128,9 @@ export default async function CompletePage({ params }: PageProps<'/s/[code]/comp
             <ScrollText className="size-5 text-ink-3" /> Previous question papers
             <span className="rounded-md bg-surface-2 px-2 py-0.5 text-xs font-medium text-ink-3">{plural(papersCount, 'file')}</span>
           </h2>
-          <p className="mb-4 text-sm text-ink-3">Old exam papers (2022 onwards) for this subject.</p>
-          {papersByYear.length === 0 ? (
-            <ShelfCards
-              collections={[]}
-              drive={[]}
-              subjectCode={subject.code}
-              subjectShort={subject.short}
-              unit={PAPERS_UNIT}
-              label="Question papers"
-              uploadHref={`/upload?subject=${subject.code}&unit=${PAPERS_UNIT}`}
-              emptyTitle="No question papers yet"
-              emptyHint="Have an old exam paper?"
-              anchor="p-"
-            />
-          ) : (
-            <div className="space-y-10">
-              {papersByYear.map((g) => (
-                <div key={g.year} id={`papers-${g.year}`} className="scroll-mt-24">
-                  <h3 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold tracking-tight">
-                    {g.year}
-                    <span className="rounded-md bg-surface-2 px-2 py-0.5 text-xs font-medium text-ink-3">{plural(g.count, 'paper')}</span>
-                  </h3>
-                  <ShelfCards
-                    collections={g.collections}
-                    drive={g.drive}
-                    subjectCode={subject.code}
-                    subjectShort={subject.short}
-                    unit={PAPERS_UNIT}
-                    label={`Question papers ${g.year}`}
-                    uploadHref={`/upload?subject=${subject.code}&unit=${PAPERS_UNIT}`}
-                    emptyTitle=""
-                    emptyHint=""
-                    anchor={`p${g.year}-`}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
+          <p className="mb-6 text-sm text-ink-3">Old exam papers for this subject, mid-term and semester-end.</p>
+          <PapersSections subjectCode={subject.code} subjectShort={subject.short} papers={papers} drive={papersDrive} />
+          <OtherBranchNotes code={subject.code} unit={PAPERS_UNIT} anchor="op" />
         </section>
       </Container>
     </>

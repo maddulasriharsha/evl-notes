@@ -4,6 +4,8 @@ import { notFound, redirect } from 'next/navigation'
 import { ArrowLeft, ArrowRight, CloudUpload, ThumbsUp } from 'lucide-react'
 import { RequestNotesButton } from '@/components/community-buttons'
 import { DownloadShelfButton } from '@/components/download-shelf'
+import { OtherBranchNotes } from '@/components/other-branch-notes'
+import { PapersSections } from '@/components/papers-sections'
 import { QrButton } from '@/components/qr-button'
 import { ShelfCards } from '@/components/shelf-cards'
 import { ButtonLink, Container, Crumbs, Empty, OwnerName } from '@/components/ui'
@@ -20,6 +22,7 @@ import {
   sectionSlug,
   completeHref,
   QUESTION_BANK_UNIT,
+  PAPERS_UNIT,
 } from '@/lib/curriculum'
 import { openRequestCount } from '@/lib/community'
 import { collectionsFor, type NoteCollection } from '@/lib/data'
@@ -119,18 +122,25 @@ export default async function SectionPage({ params }: PageProps<'/s/[code]/[sect
 
       <Container className="mt-10 space-y-14">
         <section>
-          <h2 className="mb-4 font-display text-xl font-semibold tracking-tight">Notes</h2>
-          <ShelfCards
-            collections={collections}
-            drive={drive}
-            subjectCode={subject.code}
-            subjectShort={subject.short}
-            unit={unit}
-            label={sectionLabel(unit)}
-            uploadHref={uploadHref}
-            emptyTitle="No notes for this chapter yet"
-            emptyHint="Took notes in class?"
-          />
+          {unit === PAPERS_UNIT ? (
+            <PapersSections subjectCode={subject.code} subjectShort={subject.short} papers={collections} drive={drive} />
+          ) : (
+            <>
+              <h2 className="mb-4 font-display text-xl font-semibold tracking-tight">Notes</h2>
+              <ShelfCards
+                collections={collections}
+                drive={drive}
+                subjectCode={subject.code}
+                subjectShort={subject.short}
+                unit={unit}
+                label={sectionLabel(unit)}
+                uploadHref={uploadHref}
+                emptyTitle="No notes for this chapter yet"
+                emptyHint="Took notes in class?"
+              />
+            </>
+          )}
+          <OtherBranchNotes code={subject.code} unit={unit} />
         </section>
 
 

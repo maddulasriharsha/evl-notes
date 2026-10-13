@@ -5,16 +5,12 @@ import { STORAGE_BUCKET } from '@/lib/env'
 import { resizedCopy } from '@/lib/images'
 import { pdfThumbnail } from '@/lib/pdf'
 import { supabaseBrowser } from '@/lib/supabase/browser'
+import { uploadProblem } from '@/lib/upload-rules'
 
-export const ACCEPTED = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/gif'] as const
-export const MAX_BYTES = 50 * 1024 * 1024
 export const MAX_FILES = 60
 
 export function checkFile(file: File): string | null {
-  if (!(ACCEPTED as readonly string[]).includes(file.type)) return 'Only PDF, JPG, PNG, WebP or GIF files'
-  if (file.size > MAX_BYTES) return 'Larger than 50 MB'
-  if (file.size === 0) return 'Empty file'
-  return null
+  return uploadProblem(file)
 }
 
 /** Storage-safe version of a file name; the real name is kept in the database. */
