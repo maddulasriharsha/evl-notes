@@ -4,10 +4,8 @@ import { Download, ExternalLink } from 'lucide-react'
 import { OwnerName } from '@/components/ui'
 import { ActionLink, ViewerShell } from '@/components/viewer-shell'
 import { findSubject, sectionHref, sectionLabel } from '@/lib/curriculum'
-import { LIBRARY_OWNER, driveDownloadUrl, driveFile, driveFiles, driveOpenUrl, drivePreviewUrl, kindLabel } from '@/lib/library'
+import { LIBRARY_OWNER, driveDownloadUrl, driveFile, driveOpenUrl, drivePreviewUrl, kindLabel } from '@/lib/library'
 import { liveLibrary } from '@/lib/library-live'
-
-export const dynamicParams = false
 
 // Built on first visit (then cached), so a deployment does not carry a page per Drive file.
 export function generateStaticParams() {
