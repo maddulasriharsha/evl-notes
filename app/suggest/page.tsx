@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
+import Link from '@/components/link'
 import { SuggestionForm, SUGGESTION_CATEGORIES } from '@/components/suggestion-form'
 import { Container, SectionHeading } from '@/components/ui'
 import { timeAgo } from '@/lib/format'

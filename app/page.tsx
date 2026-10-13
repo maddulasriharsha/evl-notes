@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import Link from '@/components/link'
 import {
   ArrowRight,
   BookOpen,
@@ -44,7 +44,7 @@ export default async function Home() {
   const strip = allSubjects()
     .filter(({ subject }) => subject.kind !== 'extra')
     .sort((x, y) => total(y.subject.code) - total(x.subject.code) || x.subject.name.localeCompare(y.subject.name))
-    .slice(0, 30)
+    .slice(0, 16)
 
   return (
     <>

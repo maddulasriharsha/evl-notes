@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import Link from 'next/link'
+import Link from '@/components/link'
 import { Loader2, MessageCircle, Send, Trash2, X } from 'lucide-react'
 import { ReportButton } from '@/components/file-actions'
 import { OwnerName } from '@/components/ui'

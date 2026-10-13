@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
+import Link from '@/components/link'
 import { notFound } from 'next/navigation'
 import { ArrowRight, BookOpenCheck, FileQuestion, ListChecks, ScrollText } from 'lucide-react'
 import { ChapterNav } from '@/components/chapter-nav'

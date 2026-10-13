@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
+import Link from '@/components/link'
 import { notFound, redirect } from 'next/navigation'
 import { CommentModButtons, FileModButtons, ReportActions, SuggestionStatusButtons, UserModButtons } from '@/components/admin-actions'
 import { AdminHideToggle } from '@/components/admin-hide-toggle'

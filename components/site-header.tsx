@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import Link from '@/components/link'
 import { Upload } from 'lucide-react'
 import { AccountButton } from '@/components/account-button'
 import { PaletteButton } from '@/components/command-palette'

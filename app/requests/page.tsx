@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
+import Link from '@/components/link'
 import { CloudUpload, HandHelping } from 'lucide-react'
 import { Container, Empty } from '@/components/ui'
 import { findSubject, sectionHref, sectionLabel, sectionTitle } from '@/lib/curriculum'

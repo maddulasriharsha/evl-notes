@@ -1,6 +1,6 @@
 import { ViewTransition } from 'react'
 import type { Metadata } from 'next'
-import Link from 'next/link'
+import Link from '@/components/link'
 import { notFound } from 'next/navigation'
 import { ArrowRight, BookOpenCheck, CloudUpload, GraduationCap, ScrollText } from 'lucide-react'
 import { ChapterNav } from '@/components/chapter-nav'

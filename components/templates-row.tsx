@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import Link from '@/components/link'
 import { ArrowRight, FileText } from 'lucide-react'
 import { templateHref, templates } from '@/lib/templates'
 

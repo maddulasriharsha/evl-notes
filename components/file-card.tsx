@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import Link from '@/components/link'
 import { Download, MessageCircle, ThumbsUp } from 'lucide-react'
 import { DriveMove } from '@/components/drive-move'
 import { FileTools } from '@/components/file-tools'

@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import Link from '@/components/link'
 import { completeHref, PAPERS_UNIT, sectionHref, sectionLabel, subjectHref, type Subject } from '@/lib/curriculum'
 
 export type ChapterNavActive = 'overview' | 'complete' | 'papers' | 'exam' | number

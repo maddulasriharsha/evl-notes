@@ -1,6 +1,6 @@
 'use client'
 
-import Link from 'next/link'
+import Link from '@/components/link'
 import { useEffect, useRef, useState } from 'react'
 import { BookOpen, FileText, Layers, Loader2, Search } from 'lucide-react'
 import type { Suggestion } from '@/app/api/suggest/route'

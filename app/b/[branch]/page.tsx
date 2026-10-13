@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
+import Link from '@/components/link'
 import { notFound } from 'next/navigation'
 import { ArrowRight } from 'lucide-react'
 import { Container, Crumbs } from '@/components/ui'

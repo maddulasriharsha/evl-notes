@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import Link from '@/components/link'
 import { Users } from 'lucide-react'
 import { ShelfCards } from '@/components/shelf-cards'
 import { sectionHref, sectionsOf, sectionTitle, siblingSubjects } from '@/lib/curriculum'

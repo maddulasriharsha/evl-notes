@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import Link from '@/components/link'
 import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
 import { ViewerStage } from '@/components/viewer-stage'
 

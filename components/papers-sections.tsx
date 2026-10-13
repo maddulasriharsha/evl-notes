@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import Link from '@/components/link'
 import { ShelfCards } from '@/components/shelf-cards'
 import { PAPERS_UNIT } from '@/lib/curriculum'
 import type { NoteCollection } from '@/lib/data'

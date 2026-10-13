@@ -1,5 +1,5 @@
 import { ViewTransition } from 'react'
-import Link from 'next/link'
+import Link from '@/components/link'
 import { ArrowUpRight, FlaskConical, BookOpen, Sparkles } from 'lucide-react'
 import { subjectHref, type Subject } from '@/lib/curriculum'
 import { plural } from '@/lib/format'

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
+import Link from '@/components/link'
 import { ChevronLeft, ChevronRight, Megaphone, X } from 'lucide-react'
 import { supabaseConfigured } from '@/lib/env'
 import { supabaseBrowser } from '@/lib/supabase/browser'
