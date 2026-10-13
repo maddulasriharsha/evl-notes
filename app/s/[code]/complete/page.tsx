@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { BookOpenCheck, CloudUpload, FileQuestion, ScrollText } from 'lucide-react'
+import { ChapterNav } from '@/components/chapter-nav'
 import { RequestNotesButton } from '@/components/community-buttons'
 import { OtherBranchNotes } from '@/components/other-branch-notes'
 import { PapersSections } from '@/components/papers-sections'
@@ -58,7 +59,7 @@ export default async function CompletePage({ params }: PageProps<'/s/[code]/comp
   const papersCount = papers.reduce((n, c) => n + c.files.length, 0) + papersDrive.length
   return (
     <>
-      <section className="grain border-b border-line">
+      <section className="grain">
         <Container className="pt-10 pb-10">
           <Crumbs items={[...subjectCrumbs(found), { href: subjectHref(subject.code), label: subject.short }, { label: 'Complete notes & Question bank' }]} />
           <div className="mt-6 flex flex-wrap items-end justify-between gap-6">
@@ -82,8 +83,10 @@ export default async function CompletePage({ params }: PageProps<'/s/[code]/comp
         </Container>
       </section>
 
+      <ChapterNav subject={subject} active="complete" />
+
       <Container className="mt-10 space-y-14">
-        <section id="complete-notes" className="scroll-mt-24">
+        <section id="complete-notes" className="scroll-mt-36">
           <h2 className="mb-4 flex items-center gap-2 font-display text-xl font-semibold tracking-tight">
             <BookOpenCheck className="size-5 text-ink-3" /> Complete notes
             <span className="rounded-md bg-surface-2 px-2 py-0.5 text-xs font-medium text-ink-3">{plural(notesCount, 'file')}</span>
@@ -103,7 +106,7 @@ export default async function CompletePage({ params }: PageProps<'/s/[code]/comp
           <OtherBranchNotes code={subject.code} unit={0} anchor="on" />
         </section>
 
-        <section id="question-bank" className="scroll-mt-24">
+        <section id="question-bank" className="scroll-mt-36">
           <h2 className="mb-1 flex items-center gap-2 font-display text-xl font-semibold tracking-tight">
             <FileQuestion className="size-5 text-ink-3" /> Question bank
             <span className="rounded-md bg-surface-2 px-2 py-0.5 text-xs font-medium text-ink-3">{plural(bankCount, 'file')}</span>
@@ -124,7 +127,7 @@ export default async function CompletePage({ params }: PageProps<'/s/[code]/comp
           <OtherBranchNotes code={subject.code} unit={QUESTION_BANK_UNIT} anchor="oq" />
         </section>
 
-        <section id="previous-papers" className="scroll-mt-24">
+        <section id="previous-papers" className="scroll-mt-36">
           <h2 className="mb-1 flex items-center gap-2 font-display text-xl font-semibold tracking-tight">
             <ScrollText className="size-5 text-ink-3" /> Previous question papers
             <span className="rounded-md bg-surface-2 px-2 py-0.5 text-xs font-medium text-ink-3">{plural(papersCount, 'file')}</span>

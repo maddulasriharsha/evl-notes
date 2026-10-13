@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import { Download, ExternalLink } from 'lucide-react'
 import { OwnerName } from '@/components/ui'
 import { ActionLink, ViewerShell } from '@/components/viewer-shell'
-import { findSubject, sectionHref, sectionLabel } from '@/lib/curriculum'
+import { findSubject, PAPERS_UNIT, QUESTION_BANK_UNIT, sectionHref, sectionLabel } from '@/lib/curriculum'
 import { LIBRARY_OWNER, driveDownloadUrl, driveFile, driveOpenUrl, drivePreviewUrl, kindLabel } from '@/lib/library'
 import { liveLibrary } from '@/lib/library-live'
 
@@ -23,7 +23,8 @@ export default async function DriveViewer({ params }: PageProps<'/view/d/[id]'>)
   const file = lib.file(id) ?? driveFile(id)
   if (!file) notFound()
   const found = findSubject(file.subject)
-  const unit = file.unit ?? 0
+  // A file is listed in its chapter, or with the papers (6) or the question bank (7): find which.
+  const unit = [file.unit ?? 0, PAPERS_UNIT, QUESTION_BANK_UNIT].find((u) => lib.filesFor(file.subject, u).some((f) => f.id === file.id)) ?? file.unit ?? 0
   const siblings = lib.filesFor(file.subject, unit)
   const i = siblings.findIndex((f) => f.id === file.id)
   const prev = siblings[i - 1]
@@ -54,7 +55,7 @@ export default async function DriveViewer({ params }: PageProps<'/view/d/[id]'>)
             </ActionLink>
             <ActionLink href={driveDownloadUrl(file.id)} primary>
               <Download className="size-4" />
-              <span className="hidden sm:inline">Download</span>
+              <span>Download</span>
             </ActionLink>
           </>
         ),

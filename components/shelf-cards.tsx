@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import { ThumbsUp } from 'lucide-react'
 import { BranchPartition, ShelfBranchPicker, type BranchShelf } from '@/components/branch-partition'
 import { DownloadShelfButton } from '@/components/download-shelf'
@@ -56,8 +55,8 @@ export function ShelfCards({
 
   if (cards.length === 0) {
     return (
-      <Empty title={emptyTitle}>
-        {emptyHint} <Link href={uploadHref} className="font-medium text-accent">Upload them</Link> and they will appear here under your name.
+      <Empty title={emptyTitle} action={{ href: uploadHref, label: 'Upload the first notes' }}>
+        {emptyHint} They appear here under your name, for the whole class.
       </Empty>
     )
   }
@@ -76,9 +75,9 @@ export function ShelfCards({
         const node = (
           <article
             id={c && !driveList.length ? `${anchor}c-${c.id}` : `${anchor}owner-notes`}
-            className="scroll-mt-24 rounded-2xl border border-line bg-surface p-4 shadow-card sm:p-5"
+            className="scroll-mt-36 rounded-2xl border border-line bg-surface p-4 shadow-card sm:p-5"
           >
-            {c && driveList.length > 0 && <span id={`${anchor}c-${c.id}`} className="block scroll-mt-24" />}
+            {c && driveList.length > 0 && <span id={`${anchor}c-${c.id}`} className="block scroll-mt-36" />}
             <header className="mb-4 flex flex-wrap items-center gap-3">
               <span className="grid size-10 place-items-center rounded-full bg-accent-soft font-semibold text-accent">{name.charAt(0).toUpperCase()}</span>
               <div className="min-w-0 flex-1">
@@ -107,7 +106,7 @@ export function ShelfCards({
               )}
             </header>
             {c?.description && <p className="mb-4 text-sm whitespace-pre-line text-ink-2">{c.description}</p>}
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
               {c?.files.map((f) => <UploadFileCard key={f.id} file={f} subject={subjectCode} unit={c.unit ?? unit} />)}
               {driveList.map((f) => (
                 <DriveFileCard key={f.id} file={f} placeUnit={unit} />

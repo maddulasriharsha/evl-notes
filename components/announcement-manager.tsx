@@ -57,7 +57,7 @@ export function AnnouncementManager({ userId, items }: { userId: string; items: 
         <h2 className="flex items-center gap-2 font-semibold">
           <Megaphone className="size-4 text-accent" /> New announcement
         </h2>
-        <p className="mt-1 text-xs text-ink-3">Shown as a bar at the top of the site. Visitors can dismiss it. Posting a new one replaces the old one.</p>
+        <p className="mt-1 text-xs text-ink-3">Shown as a bar at the top of the site. Up to five active announcements take turns in the bar, newest first; switch one off below to stop showing it. Visitors can dismiss each one.</p>
         <input
           value={message}
           onChange={(e) => setMessage(e.target.value.slice(0, 200))}

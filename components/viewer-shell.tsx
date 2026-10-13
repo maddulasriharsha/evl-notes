@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ViewerStage } from '@/components/viewer-stage'
 
 export interface ViewerNav {
   back: { href: string; label: string }
@@ -40,7 +41,9 @@ export function ViewerShell({ nav, children }: { nav: ViewerNav; children: React
           </div>
         </div>
       </div>
-      <div className="relative min-h-0 flex-1 bg-surface-2">{children}</div>
+      <ViewerStage prev={nav.prev} next={nav.next}>
+        {children}
+      </ViewerStage>
     </div>
   )
 }

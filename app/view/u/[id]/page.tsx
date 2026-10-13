@@ -98,7 +98,7 @@ export default async function UploadViewer({ params }: PageProps<'/view/u/[id]'>
             {downloadHref && (
               <ActionLink href={downloadHref} primary>
                 <Download className="size-4" />
-                <span className="hidden sm:inline">Download</span>
+                <span>Download</span>
               </ActionLink>
             )}
           </>

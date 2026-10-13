@@ -44,3 +44,18 @@ describe('upload rules', () => {
     expect(goesToDrive(mimeOf({ name: 'x.pptx', type: '' }), MB)).toBe(true)
   })
 })
+
+describe('papers table', () => {
+  it('puts each paper in its column and gives it a short label', async () => {
+    const { paperSlot, paperChip } = await import('@/lib/papers')
+    expect(paperSlot('PYQ · Mid 1 · Oct 2025 · R25 · Matrices and Calculus')).toBe('mid1')
+    expect(paperSlot('PYQ · Mid 2 · Dec 2025 · R25 · Matrices and Calculus · set 2')).toBe('mid2')
+    expect(paperSlot('DLD MID-II paper')).toBe('mid2')
+    expect(paperSlot('PYQ · Jan 2026 · R25 · Chemistry for Engineers (Regular)')).toBe('sem')
+    expect(paperSlot('PYQ · Mid 2 · Jan 2024 · R22 · I Year Sem 1, all subjects in one PDF')).toBe('combined')
+    expect(paperSlot('PYQ · Mid & Sem collection · 2023 · R22 · Signals and Systems')).toBe('combined')
+    expect(paperChip('PYQ · Mid 1 · Nov 2023 · R22 · Matrices and Calculus · page 2')).toBe('R22 · p2')
+    expect(paperChip('PYQ · Mid 2 · Dec 2025 · R25 · Matrices and Calculus · set 2')).toBe('R25 · set 2')
+    expect(paperChip('old paper')).toBe('Open')
+  })
+})

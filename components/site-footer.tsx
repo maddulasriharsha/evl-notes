@@ -5,7 +5,7 @@ import { ThemeToggle } from '@/components/theme-toggle'
 
 export function SiteFooter() {
   return (
-    <footer className="mt-28">
+    <footer className="mt-20">
       <div className="mx-auto flex max-w-5xl flex-col gap-4 border-t border-white/[0.06] px-4 py-8 text-sm text-ink-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <div className="flex items-center gap-2.5">
           <LogoMark className="size-5" />

@@ -49,11 +49,24 @@ export function SectionHeading({ title, hint, action }: { title: string; hint?: 
   )
 }
 
-export function Empty({ title, children }: { title: string; children?: React.ReactNode }) {
+/** What a place with nothing in it looks like: a small drawing, a line of help and one clear next step. */
+export function Empty({ title, children, action }: { title: string; children?: React.ReactNode; action?: { href: string; label: string } }) {
   return (
     <div className="rounded-2xl border border-dashed border-line-strong bg-surface/60 px-6 py-10 text-center">
-      <p className="font-medium">{title}</p>
-      {children && <div className="mx-auto mt-2 max-w-md text-sm text-ink-3">{children}</div>}
+      <svg viewBox="0 0 96 72" className="mx-auto h-16 w-auto" aria-hidden="true">
+        <rect x="26" y="14" width="44" height="52" rx="7" fill="var(--surface-2)" stroke="var(--line-strong)" strokeWidth="1.5" transform="rotate(-7 48 40)" />
+        <rect x="24" y="8" width="46" height="54" rx="7" fill="var(--surface)" stroke="var(--line-strong)" strokeWidth="1.5" />
+        <path d="M33 22h28M33 31h28M33 40h17" stroke="var(--ink-3)" strokeWidth="2.4" strokeLinecap="round" opacity="0.55" />
+        <circle cx="68" cy="52" r="11" fill="var(--accent-soft)" stroke="var(--accent)" strokeWidth="1.5" />
+        <path d="M68 47v10M63 52h10" stroke="var(--accent)" strokeWidth="2.2" strokeLinecap="round" />
+      </svg>
+      <p className="mt-4 font-medium">{title}</p>
+      {children && <div className="mx-auto mt-1.5 max-w-md text-sm text-ink-3">{children}</div>}
+      {action && (
+        <Link href={action.href} className="btn-primary mt-5 inline-flex h-10 items-center gap-2 rounded-xl px-4 text-sm font-semibold">
+          {action.label}
+        </Link>
+      )}
     </div>
   )
 }

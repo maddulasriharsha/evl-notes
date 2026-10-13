@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { ArrowLeft, ArrowRight, CloudUpload, ThumbsUp } from 'lucide-react'
+import { ChapterNav } from '@/components/chapter-nav'
 import { RequestNotesButton } from '@/components/community-buttons'
 import { DownloadShelfButton } from '@/components/download-shelf'
 import { OtherBranchNotes } from '@/components/other-branch-notes'
@@ -77,7 +78,7 @@ export default async function SectionPage({ params }: PageProps<'/s/[code]/[sect
 
   return (
     <>
-      <section className="grain border-b border-line">
+      <section className="grain">
         <Container className="pt-10 pb-10">
           <Crumbs
             items={[
@@ -120,6 +121,8 @@ export default async function SectionPage({ params }: PageProps<'/s/[code]/[sect
           )}
         </Container>
       </section>
+
+      <ChapterNav subject={subject} active={unit === PAPERS_UNIT ? 'papers' : unit} />
 
       <Container className="mt-10 space-y-14">
         <section>

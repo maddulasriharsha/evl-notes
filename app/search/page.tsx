@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { Search } from 'lucide-react'
+import { SearchBox } from '@/components/search-box'
 import { Container, Empty, OwnerName, SectionHeading } from '@/components/ui'
 import { allSubjects, findSubject, PAPERS_UNIT, QUESTION_BANK_UNIT, sectionHref, sectionLabel, sectionsOf, sectionTitle, semesterLabel, subjectHref } from '@/lib/curriculum'
 import { searchFiles } from '@/lib/data'
@@ -95,17 +95,9 @@ export default async function SearchPage({ searchParams }: PageProps<'/search'>)
 
   return (
     <Container className="py-10">
-      <form action="/search" className="relative max-w-2xl">
-        <Search className="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-ink-3" />
-        <input
-          name="q"
-          type="search"
-          defaultValue={q}
-          autoFocus
-          placeholder="Try “laplace”, “EDC”, “unit 2”"
-          className="h-14 w-full rounded-2xl border border-line bg-surface pr-4 pl-12 text-lg shadow-card outline-none focus:border-accent"
-        />
-      </form>
+      <div className="max-w-2xl">
+        <SearchBox key={q} initial={q} autoFocus={!q} />
+      </div>
 
       {terms.length > 0 && (
         <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">

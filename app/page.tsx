@@ -12,6 +12,7 @@ import {
   Sparkles,
   Star,
 } from 'lucide-react'
+import { SearchBox } from '@/components/search-box'
 import { ContinueStudying } from '@/components/study-history'
 import { Thumb } from '@/components/thumb'
 import { OwnerName } from '@/components/ui'
@@ -46,10 +47,15 @@ export default async function Home() {
   return (
     <>
       {/* ---------- Hero ---------- */}
-      <section className="relative -mt-[4.25rem] overflow-hidden pt-[4.25rem] sm:-mt-[4.5rem] sm:pt-[4.5rem]">
-        <div className="horizon" aria-hidden="true" />
-        <div className="horizon-haze" aria-hidden="true" />
-        <div className="relative mx-auto flex min-h-[660px] max-w-5xl flex-col items-center px-4 pt-16 text-center sm:min-h-[700px] sm:pt-24">
+      <section
+        className="relative z-10 -mt-[4.25rem] pt-[4.25rem] sm:-mt-[4.5rem] sm:pt-[4.5rem]"
+        style={{ '--horizon-y': '610px', '--horizon-y-sm': '600px' } as React.CSSProperties}
+      >
+        <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+          <div className="horizon" />
+          <div className="horizon-haze" />
+        </div>
+        <div className="relative mx-auto flex min-h-[610px] max-w-5xl flex-col items-center px-4 pt-12 text-center sm:min-h-[630px] sm:pt-20">
           <Link
             href="/#branches"
             className="rise inline-flex items-center gap-2 rounded-full border border-line bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-ink-2 backdrop-blur hover:text-ink"
@@ -62,46 +68,19 @@ export default async function Home() {
             <span className="block text-ink-3 sm:inline">For everyone.</span>
           </h1>
           <p className="rise rise-2 mx-auto mt-6 max-w-xl text-base leading-relaxed text-ink-2 sm:text-lg">
-            Every lecture, written down once and shared with the whole class. Pick your branch, then your semester,
-            subject and chapter. Free to read, no sign-in needed.
+            Notes, question papers and question banks for every branch, sorted by semester, subject and chapter.
+            Free to read, no sign-in needed.
           </p>
-          <div className="rise rise-3 mt-9 flex flex-wrap items-center justify-center gap-3">
-            <Link href="#branches" className="btn-primary inline-flex h-12 items-center gap-2 rounded-xl px-5 text-sm font-semibold">
-              <BookOpen className="size-4" /> Browse notes
+          <div className="rise rise-3 mt-8 w-full max-w-xl">
+            <SearchBox compact />
+          </div>
+          <div className="rise rise-4 mt-5 flex flex-wrap items-center justify-center gap-3">
+            <Link href="#branches" className="btn-primary inline-flex h-11 items-center gap-2 rounded-xl px-5 text-sm font-semibold">
+              <BookOpen className="size-4" /> Pick your branch
             </Link>
-            <Link href="/upload" className="btn-ghost inline-flex h-12 items-center gap-2 rounded-xl px-5 text-sm font-semibold">
+            <Link href="/upload" className="btn-ghost inline-flex h-11 items-center gap-2 rounded-xl px-5 text-sm font-semibold">
               <CloudUpload className="size-4" /> Upload yours
             </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ---------- Subject marquee ---------- */}
-      <section className="relative mt-4 sm:-mt-8">
-        <Eyebrow>Every subject · every chapter</Eyebrow>
-        <div className="marquee-wrap marquee-mask mt-6 overflow-hidden">
-          <div className="marquee gap-3 pr-3">
-            {[...strip, ...strip].map(({ subject, semester, branch }, i) => (
-              <Link
-                key={`${subject.code}-${i}`}
-                href={subjectHref(subject.code)}
-                aria-hidden={i >= strip.length}
-                tabIndex={i >= strip.length ? -1 : undefined}
-                className="w-64 shrink-0 rounded-2xl border border-line bg-surface p-4 transition hover:border-accent/40"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="grid size-8 place-items-center rounded-lg bg-white/[0.05] text-ink-2">
-                    {subject.kind === 'lab' ? <FlaskConical className="size-4" /> : <BookOpen className="size-4" />}
-                  </span>
-                  <span className="text-[11px] text-ink-3">
-                    {branch ? `${branch.short} · ` : ''}Sem {semester.sem}
-                  </span>
-                </div>
-                <p className="mt-3 text-xs font-semibold tracking-widest text-accent uppercase">{subject.short}</p>
-                <p className="mt-1 line-clamp-2 text-sm leading-snug text-ink">{subject.name}</p>
-                <p className="mt-2 text-xs text-ink-3">{plural(total(subject.code), 'file')}</p>
-              </Link>
-            ))}
           </div>
         </div>
       </section>
@@ -109,29 +88,13 @@ export default async function Home() {
       <div className="mx-auto max-w-5xl px-4 sm:px-6">
         <ContinueStudying />
 
-        {/* ---------- Numbers ---------- */}
-        <section className="mt-28 grid grid-cols-2 gap-px overflow-hidden rounded-3xl border border-line bg-white/[0.07] sm:grid-cols-4">
-          {[
-            { label: 'Total materials', value: n(totalMaterials), hint: `${n(uploads.files)} uploaded + ${n(DRIVE_LIBRARY.files)} from Drive` },
-            { label: 'Total pages', value: n(totalPages), hint: 'PDF pages, slides and photos' },
-            { label: 'Contributors', value: n(people.length), hint: 'classmates sharing notes' },
-            { label: 'Chapters', value: n(chapters), hint: `across ${allSubjects().length} subjects` },
-          ].map((s, i) => (
-            <div key={s.label} className={`bg-bg px-5 py-6 ${i === 0 ? 'bg-gradient-to-b from-accent/10 to-transparent' : ''}`}>
-              <p className="text-xs text-ink-3">{s.label}</p>
-              <p className="mt-2 font-display text-3xl font-bold tracking-tight tabular-nums sm:text-4xl">{s.value}</p>
-              <p className="mt-1 text-xs text-ink-3">{s.hint}</p>
-            </div>
-          ))}
-        </section>
-
         {/* ---------- Branches ---------- */}
-        <section id="branches" className="mt-28 scroll-mt-28">
+        <section id="branches" className="mt-14 scroll-mt-28">
           <Eyebrow>Browse</Eyebrow>
-          <h2 className="mt-3 text-center font-display text-3xl font-bold tracking-tight sm:text-5xl">
+          <h2 className="mt-3 text-center font-display text-3xl font-bold tracking-tight sm:text-4xl">
             Pick your branch. <span className="text-ink-3">Start reading.</span>
           </h2>
-          <div className="mt-12 grid gap-4 sm:grid-cols-2">
+          <div className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
             {branches.map((b) => {
               const subjects = branchSubjects(b)
               const files = subjects.reduce((sum, { subject }) => sum + total(subject.code), 0)
@@ -139,42 +102,25 @@ export default async function Home() {
                 <Link
                   key={b.id}
                   href={branchHref(b.id)}
-                  className="group relative overflow-hidden rounded-3xl border border-line bg-surface p-6 transition duration-300 hover:-translate-y-1 hover:border-accent/40 hover:shadow-[0_30px_80px_-30px_rgba(139,92,246,0.45)]"
+                  className="group relative flex flex-col overflow-hidden rounded-2xl border border-line bg-surface p-4 transition duration-300 hover:-translate-y-1 sm:p-5 hover:border-accent/40 hover:shadow-[0_30px_80px_-30px_rgba(139,92,246,0.45)]"
                 >
                   <div className="pointer-events-none absolute -top-24 -right-24 size-56 rounded-full bg-accent/10 blur-3xl transition group-hover:bg-accent/25" />
-                  <div className="relative flex items-baseline justify-between">
-                    <p className="text-[11px] font-semibold tracking-[0.2em] text-ink-3 uppercase">
-                      B.Tech{b.regulation ? ` · ${b.regulation}` : ''}
-                    </p>
-                    <p className="text-xs text-ink-3">{plural(files, 'file')}</p>
-                  </div>
-                  <h3 className="relative mt-3 font-display text-4xl font-bold tracking-tight">{b.short}</h3>
-                  <p className="relative mt-1 text-sm text-ink-2">{b.name}</p>
-                  <div className="relative mt-5 flex flex-wrap gap-1.5">
-                    {b.semesters.map((sem) => (
-                      <span key={sem.sem} className="rounded-lg border border-line bg-white/[0.03] px-2 py-1 text-xs font-medium text-ink-2">
-                        Sem {sem.sem}
-                      </span>
-                    ))}
-                  </div>
-                  <p className="relative mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-accent">
-                    Open {b.short} · {plural(subjects.length, 'subject')}{' '}
+                  <p className="relative text-[11px] text-ink-3">{plural(files, 'file')}</p>
+                  <h3 className="relative mt-2 font-display text-2xl font-bold tracking-tight sm:text-3xl">{b.short}</h3>
+                  <p className="relative mt-1 line-clamp-2 text-xs text-ink-2 sm:text-sm">{b.name}</p>
+                  <p className="relative mt-auto inline-flex items-center gap-1.5 pt-4 text-xs font-semibold text-accent sm:text-sm">
+                    {plural(subjects.length, 'subject')}{' '}
                     <ArrowRight className="size-4 transition group-hover:translate-x-1" />
                   </p>
                 </Link>
               )
             })}
-            <div className="flex flex-col justify-center rounded-3xl border border-dashed border-line p-6 text-center">
-              <Sparkles className="mx-auto size-6 text-ink-3" strokeWidth={1.5} />
-              <p className="mt-3 font-display text-lg font-bold">More branches are being added</p>
-              <p className="mt-1 text-sm text-ink-3">Don&rsquo;t see yours yet? It&rsquo;s coming. Subjects shared by several branches already share their notes.</p>
-            </div>
           </div>
         </section>
 
         {/* ---------- Recently updated ---------- */}
         {recent.length > 0 && (
-          <section className="mt-28">
+          <section className="mt-16">
             <Eyebrow>Fresh from class</Eyebrow>
             <h2 className="mt-3 text-center font-display text-3xl font-bold tracking-tight sm:text-4xl">Recently updated</h2>
             <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -208,8 +154,57 @@ export default async function Home() {
           </section>
         )}
 
+        {/* ---------- Numbers ---------- */}
+        <section className="mt-16 grid grid-cols-2 gap-px overflow-hidden rounded-3xl border border-line bg-white/[0.07] sm:grid-cols-4">
+          {[
+            { label: 'Total materials', value: n(totalMaterials), hint: `${n(uploads.files)} uploaded + ${n(DRIVE_LIBRARY.files)} from Drive` },
+            { label: 'Total pages', value: n(totalPages), hint: 'PDF pages, slides and photos' },
+            { label: 'Contributors', value: n(people.length), hint: 'classmates sharing notes' },
+            { label: 'Chapters', value: n(chapters), hint: `across ${allSubjects().length} subjects` },
+          ].map((s, i) => (
+            <div key={s.label} className={`bg-bg px-5 py-6 ${i === 0 ? 'bg-gradient-to-b from-accent/10 to-transparent' : ''}`}>
+              <p className="text-xs text-ink-3">{s.label}</p>
+              <p className="mt-2 font-display text-3xl font-bold tracking-tight tabular-nums sm:text-4xl">{s.value}</p>
+              <p className="mt-1 text-xs text-ink-3">{s.hint}</p>
+            </div>
+          ))}
+        </section>
+
+      </div>
+
+      {/* ---------- Subject marquee ---------- */}
+      <section className="relative mt-16">
+        <Eyebrow>Every subject · every chapter</Eyebrow>
+        <div className="marquee-wrap marquee-mask mt-6 overflow-hidden">
+          <div className="marquee gap-3 pr-3">
+            {[...strip, ...strip].map(({ subject, semester, branch }, i) => (
+              <Link
+                key={`${subject.code}-${i}`}
+                href={subjectHref(subject.code)}
+                aria-hidden={i >= strip.length}
+                tabIndex={i >= strip.length ? -1 : undefined}
+                className="w-64 shrink-0 rounded-2xl border border-line bg-surface p-4 transition hover:border-accent/40"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="grid size-8 place-items-center rounded-lg bg-white/[0.05] text-ink-2">
+                    {subject.kind === 'lab' ? <FlaskConical className="size-4" /> : <BookOpen className="size-4" />}
+                  </span>
+                  <span className="text-[11px] text-ink-3">
+                    {branch ? `${branch.short} · ` : ''}Sem {semester.sem}
+                  </span>
+                </div>
+                <p className="mt-3 text-xs font-semibold tracking-widest text-accent uppercase">{subject.short}</p>
+                <p className="mt-1 line-clamp-2 text-sm leading-snug text-ink">{subject.name}</p>
+                <p className="mt-2 text-xs text-ink-3">{plural(total(subject.code), 'file')}</p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <div className="mx-auto max-w-5xl px-4 sm:px-6">
         {/* ---------- Why ---------- */}
-        <section className="mt-28 grid items-center gap-12 md:grid-cols-2">
+        <section className="mt-20 grid items-center gap-12 md:grid-cols-2">
           <div>
             <h2 className="font-display text-3xl font-bold tracking-tight sm:text-5xl">
               Built for the whole class.
@@ -252,7 +247,7 @@ export default async function Home() {
             ))}
             <span className="relative grid size-20 place-items-center rounded-3xl border border-line bg-surface shadow-[0_0_80px_rgba(139,92,246,0.45)]">
               <svg viewBox="0 0 32 32" className="size-10">
-                <path d="M10 9.5h9.5M10 16h7.5M10 22.5h9.5M10 9.5v13" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" fill="none" />
+                <path d="M10 9.5h9.5M10 16h7.5M10 22.5h9.5M10 9.5v13" stroke="var(--ink)" strokeWidth="2.6" strokeLinecap="round" fill="none" />
                 <circle cx="23" cy="16" r="2.4" fill="#a78bfa" />
               </svg>
             </span>
@@ -260,7 +255,7 @@ export default async function Home() {
         </section>
 
         {/* ---------- CTA ---------- */}
-        <section className="mt-28">
+        <section className="mt-20">
           <div className="bezel">
             <div className="relative overflow-hidden rounded-[22px] border border-line bg-gradient-to-br from-surface to-bg px-6 py-12 sm:px-12 sm:py-16">
               <div className="dots absolute inset-y-0 right-0 w-full sm:w-2/3" aria-hidden="true" />

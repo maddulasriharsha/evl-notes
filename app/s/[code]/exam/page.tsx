@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowRight, BookOpenCheck, FileQuestion, ListChecks, ScrollText } from 'lucide-react'
+import { ChapterNav } from '@/components/chapter-nav'
 import { ExamChecklist } from '@/components/exam-checklist'
 import { ShelfCards } from '@/components/shelf-cards'
 import { Container, Crumbs } from '@/components/ui'
@@ -61,7 +62,7 @@ export default async function ExamPrepPage({ params }: PageProps<'/s/[code]/exam
 
   return (
     <>
-      <section className="grain border-b border-line">
+      <section className="grain">
         <Container className="pt-10 pb-10">
           <Crumbs items={[...subjectCrumbs(found), { href: subjectHref(subject.code), label: subject.short }, { label: 'Exam prep' }]} />
           <p className="mt-6 text-xs font-semibold tracking-widest text-ink-3 uppercase">{subject.short} · Exam prep</p>
@@ -73,6 +74,8 @@ export default async function ExamPrepPage({ params }: PageProps<'/s/[code]/exam
           </p>
         </Container>
       </section>
+
+      <ChapterNav subject={subject} active="exam" />
 
       <Container className="mt-10 space-y-14">
         <section>
