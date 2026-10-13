@@ -46,7 +46,7 @@ can never overwrite another.
    (`…_init.sql`, `…_comments.sql`, `…_admin_powers.sql`, `…_dashboard.sql`, `…_drive_links.sql`, `…_moderator.sql`).
 3. **Project Settings → API**: copy the *Project URL* and the *anon / publishable* key.
 4. **Authentication → URL Configuration**: set *Site URL* to your live address (for example
-   `https://vj-notes.vercel.app`) and add `https://vj-notes.vercel.app/auth/callback` and
+   `https://vj-notes.me`) and add `https://vj-notes.me/auth/callback` and
    `http://localhost:3000/auth/callback` to *Redirect URLs*.
 5. **Authentication → Providers → Google**: turn it on. Create an OAuth client in Google Cloud Console
    (APIs & Services → Credentials → OAuth client ID → Web application) with the redirect URI that Supabase

@@ -51,7 +51,7 @@ export function shareCard({ kicker, title, subtitle }: { kicker: string; title: 
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 28, color: '#a1a1aa' }}>
           <div>Free class notes, question papers and question banks</div>
-          <div style={{ color: '#ffffff', fontWeight: 700 }}>vj-notes.vercel.app</div>
+          <div style={{ color: '#ffffff', fontWeight: 700 }}>vj-notes.me</div>
         </div>
       </div>
     ),
