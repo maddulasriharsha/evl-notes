@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowRight, CloudUpload } from 'lucide-react'
+import { ArrowRight, CloudUpload, GraduationCap } from 'lucide-react'
 import { FollowButton } from '@/components/community-buttons'
 import { QrButton } from '@/components/qr-button'
 import { ButtonLink, Container, Crumbs, SectionHeading } from '@/components/ui'
@@ -85,6 +85,19 @@ export default async function SubjectPage({ params }: PageProps<'/s/[code]'>) {
           </span>
           <span className="hidden rounded-md bg-bg/70 px-2 py-0.5 text-xs font-medium text-ink-2 sm:block">
             {plural((counts[0] ?? 0) + (counts[QUESTION_BANK_UNIT] ?? 0) + driveCount(subject.code, 0) + driveCount(subject.code, QUESTION_BANK_UNIT), 'file')}
+          </span>
+          <ArrowRight className="size-4 text-ink-3 transition group-hover:translate-x-0.5 group-hover:text-ink" />
+        </Link>
+        <Link
+          href={`${subjectHref(subject.code)}/exam`}
+          className="group mb-4 flex items-center gap-4 rounded-2xl border border-line-strong bg-surface px-5 py-4 shadow-card transition hover:border-accent"
+        >
+          <span className="grid size-11 shrink-0 place-items-center rounded-xl border border-line bg-bg text-ink-2">
+            <GraduationCap className="size-5" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-xs font-semibold tracking-widest text-ink-3 uppercase">Exam coming up?</span>
+            <span className="block truncate font-medium">Exam prep: latest papers, question bank &amp; revision checklist</span>
           </span>
           <ArrowRight className="size-4 text-ink-3 transition group-hover:translate-x-0.5 group-hover:text-ink" />
         </Link>
