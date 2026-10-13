@@ -3,7 +3,7 @@
 Class notes for **B.Tech EVL (R25), VNR VJIET**: Year I and II, Semesters 1–4. Anyone can read, preview and
 download. Students sign in (Google or any email) to upload photos or PDFs to a chapter.
 
-*Created by: Sriharsha Reddy (EVL)*
+*Created by: Harsha (2nd Year)*
 
 ## How it works
 

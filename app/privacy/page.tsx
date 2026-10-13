@@ -7,7 +7,7 @@ const sections: { title: string; body: string[] }[] = [
   {
     title: 'What this site is',
     body: [
-      'VJNOTES is a free, non-commercial site where B.Tech (R25) students at VNR VJIET share class notes. It is run by a student, Sriharsha Reddy (EVL), not by the college.',
+      'VJNOTES is a free, non-commercial site where B.Tech (R25) students at VNR VJIET share class notes. It is run by a student, Harsha (2nd Year), not by the college.',
     ],
   },
   {
@@ -42,7 +42,7 @@ const sections: { title: string; body: string[] }[] = [
   },
   {
     title: 'Deleting your account',
-    body: ['To delete your account or remove your files completely, contact the site owner, Sriharsha Reddy (EVL), and it will be done.'],
+    body: ['To delete your account or remove your files completely, contact the site owner, Harsha (2nd Year), and it will be done.'],
   },
 ]
 
@@ -50,7 +50,7 @@ export default function PrivacyPage() {
   return (
     <Container className="max-w-3xl py-12">
       <h1 className="font-display text-4xl font-semibold tracking-tight">Privacy policy</h1>
-      <p className="mt-2 text-sm text-ink-3">Last updated 21 October 2026</p>
+      <p className="mt-2 text-sm text-ink-3">Last updated 13 October 2026</p>
       <div className="mt-8 space-y-8">
         {sections.map((s) => (
           <section key={s.title}>

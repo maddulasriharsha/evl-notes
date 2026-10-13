@@ -24,7 +24,7 @@ export function SiteFooter() {
           <InstallButton className="inline-flex items-center gap-1.5 font-medium text-ink-2 hover:text-ink" />
         </div>
       </div>
-      <p className="pb-8 text-center text-xs tracking-wide text-ink-3">Created by: Sriharsha Reddy (EVL)</p>
+      <p className="pb-8 text-center text-xs tracking-wide text-ink-3">Created by: Harsha (2nd Year)</p>
     </footer>
   )
 }
