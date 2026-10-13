@@ -5,6 +5,7 @@ import { AnnouncementBar } from '@/components/announcement-bar'
 import { HistoryTracker } from '@/components/study-history'
 import { CommandPalette } from '@/components/command-palette'
 import { FxLayer } from '@/components/fx-layer'
+import { Intro } from '@/components/intro'
 import { MobileNav } from '@/components/mobile-nav'
 import { SiteFooter } from '@/components/site-footer'
 import { SiteHeader } from '@/components/site-header'
@@ -34,8 +35,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${inter.variable} ${syne.variable}`} suppressHydrationWarning>
       <body className="flex min-h-dvh flex-col font-sans antialiased">
         <Script id="vj-theme" strategy="beforeInteractive">
-          {`try{var t=localStorage.getItem('vj-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}document.documentElement.classList.add('fx')`}
+          {`try{var t=localStorage.getItem('vj-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}var d=document.documentElement;d.classList.add('fx');try{if(!sessionStorage.getItem('vj-intro')&&!matchMedia('(prefers-reduced-motion: reduce)').matches){sessionStorage.setItem('vj-intro','1');d.classList.add('intro')}}catch(e){}`}
         </Script>
+        <Intro />
         <FxLayer />
         <AnnouncementBar />
         <SiteHeader />

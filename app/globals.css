@@ -371,6 +371,139 @@ html.fx .fx-reveal.in.fx-tilt {
     box-shadow 0.2s;
 }
 
+/* ---------- Intro (components/intro.tsx): once per session, about 2.5 s, CSS only ---------- */
+.intro-screen {
+  display: none;
+}
+html.intro .intro-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--ink);
+  /* Melts into the page instead of being cut away. */
+  animation: intro-out 0.55s cubic-bezier(0.4, 0, 0.2, 1) 2s forwards;
+}
+.intro-glow {
+  position: absolute;
+  inset: -20%;
+  background:
+    radial-gradient(42% 36% at 50% 46%, rgb(139 92 246 / 0.32), transparent 70%),
+    radial-gradient(60% 50% at 50% 110%, rgb(109 40 217 / 0.28), transparent 70%);
+  animation: intro-glow 2.5s ease-out both;
+}
+.intro-stack {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: var(--font-display);
+  font-size: clamp(2.6rem, 11vw, 6rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  animation: intro-lift 0.55s cubic-bezier(0.4, 0, 0.2, 1) 2s forwards;
+}
+.intro-word {
+  display: flex;
+  align-items: center;
+  animation: intro-word 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+/* The space the dash stands in: it closes, pulling "VJ" and "NOTES" together. */
+.intro-gap {
+  position: relative;
+  display: inline-block;
+  width: 0.62em;
+  height: 1em;
+  animation: intro-gap 0.45s cubic-bezier(0.65, 0, 0.35, 1) 0.8s forwards;
+}
+.intro-dash {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0.4em;
+  height: 0.11em;
+  margin: -0.055em 0 0 -0.2em;
+  border-radius: 9999px;
+  background: currentColor;
+  box-shadow: 0 0 0.35em rgb(167 139 250 / 0.9);
+  animation: intro-dash 0.7s cubic-bezier(0.5, 0, 0.2, 1) 0.7s forwards;
+}
+.intro-logo {
+  width: 1.15em;
+  height: 1.15em;
+  margin-bottom: 0.12em;
+  opacity: 0;
+  filter: drop-shadow(0 0 0.3em rgb(167 139 250 / 0.85));
+  animation: intro-logo 0.6s cubic-bezier(0.16, 1, 0.3, 1) 1.2s forwards;
+}
+
+@keyframes intro-word {
+  from {
+    opacity: 0;
+    transform: translateY(0.18em);
+    filter: blur(10px);
+  }
+}
+@keyframes intro-gap {
+  to {
+    width: 0;
+  }
+}
+/* Up and across in an arc to where the mark forms, spinning and shrinking to a spark. */
+@keyframes intro-dash {
+  40% {
+    transform: translate(0.35em, -0.75em) rotate(-150deg) scale(0.8);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(1.05em, -1.2em) rotate(-380deg) scale(0.15);
+    opacity: 0;
+  }
+}
+@keyframes intro-logo {
+  from {
+    opacity: 0;
+    transform: scale(0.15) rotate(-50deg);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.12) rotate(4deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes intro-glow {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  40% {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+@keyframes intro-lift {
+  to {
+    transform: scale(1.08);
+    filter: blur(8px);
+  }
+}
+@keyframes intro-out {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
 /* Command palette */
 @keyframes palette-fade {
   from {
@@ -416,6 +549,9 @@ html.fx .fx-reveal.in.fx-tilt {
     transform: none;
     transition: none;
     animation: none;
+  }
+  html.intro .intro-screen {
+    display: none;
   }
   .fx-tilt {
     transition: none;
