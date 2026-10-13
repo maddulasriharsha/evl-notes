@@ -31,6 +31,15 @@ function write(list: Entry[]) {
 export function HistoryTracker() {
   const pathname = usePathname()
   useEffect(() => {
+    const branch = /^\/b\/([a-z0-9-]{2,20})(\/|$)/.exec(pathname)?.[1]
+    if (branch) {
+      // The branch a student browses decides which notes of a shared subject they see first.
+      try {
+        localStorage.setItem('vj-branch', branch)
+      } catch {
+        /* storage unavailable */
+      }
+    }
     if (!/^\/(s|view)\//.test(pathname)) return
     // Wait for the page title to settle after navigation.
     const t = setTimeout(() => {

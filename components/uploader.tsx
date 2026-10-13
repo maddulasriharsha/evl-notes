@@ -7,6 +7,7 @@ import { ArrowDown, ArrowUp, Camera, Check, CloudUpload, FileStack, FileText, Li
 import { inspectDriveLink, refreshChapter } from '@/app/upload/actions'
 import { expandDriveFolder } from '@/app/upload/drive-actions'
 import { uploadToDrive } from '@/lib/upload-drive'
+import { supabaseBrowser } from '@/lib/supabase/browser'
 import { goesToDrive, isOffice, mimeOf } from '@/lib/upload-rules'
 import { aiSortAvailable } from '@/app/upload/classify-actions'
 import { autoSort } from '@/lib/auto-sort'
@@ -367,6 +368,8 @@ export function Uploader({
     setRunning(true)
     setMadePdfs(plan.filter((g) => g.photos.length > 0).length)
     const touched: { code: string; unit: number }[] = []
+    // First upload: remember the uploader's branch, so shared subjects can group notes by branch.
+    void supabaseBrowser().rpc('set_my_branch', { p_branch: branchId, p_keep: true }).then(() => undefined, () => undefined)
     try {
       for (const g of plan) {
         const isDefault = defaultPlace?.code === g.code && defaultPlace.unit === g.unit

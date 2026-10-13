@@ -824,3 +824,18 @@ describe('admins move Google Drive library files', () => {
     await fails(B, `insert into public.drive_placements (file_id, subject_code, unit) values ('abcdefghijk', '25BS1PH102', 1)`)
   })
 })
+
+describe("a member's branch", () => {
+  it('is set by the member (kept when asked), corrected by staff, and never by anyone else', async () => {
+    await fails(null, `select public.set_my_branch('ece')`)
+    await fails(A, `select public.set_my_branch('Not A Branch')`)
+    await as(A, `select public.set_my_branch('cse-aiml')`)
+    await as(A, `select public.set_my_branch('rai', true)`)
+    expect((await as(null, `select branch from public.profiles where id = $1`, [A])).rows).toEqual([{ branch: 'cse-aiml' }])
+    await fails(A, `update public.profiles set branch = 'ece' where id = $1`, [A])
+    await fails(B, `select public.staff_set_user_branch($1, 'ece')`, [A])
+    await as(ADMIN, `select public.staff_set_user_branch($1, 'rai')`, [A])
+    expect((await as(null, `select branch from public.profiles where id = $1`, [A])).rows).toEqual([{ branch: 'rai' }])
+    await as(ADMIN, `select public.staff_set_user_branch($1, null)`, [A])
+  })
+})

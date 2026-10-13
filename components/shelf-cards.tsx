@@ -1,11 +1,13 @@
 import Link from 'next/link'
 import { ThumbsUp } from 'lucide-react'
+import { BranchPartition, ShelfBranchPicker, type BranchShelf } from '@/components/branch-partition'
 import { DownloadShelfButton } from '@/components/download-shelf'
 import { DriveFileCard, UploadFileCard } from '@/components/file-card'
 import { Empty, OwnerName } from '@/components/ui'
 import type { NoteCollection } from '@/lib/data'
 import { publicFileUrl } from '@/lib/env'
 import { formatDate, plural, timeAgo } from '@/lib/format'
+import { branches, findSubject } from '@/lib/curriculum'
 import { LIBRARY_OWNER, type DriveFile } from '@/lib/library'
 
 const isLibraryOwner = (c: NoteCollection) => c.owner_is_admin && c.owner_name === LIBRARY_OWNER.name
@@ -60,16 +62,19 @@ export function ShelfCards({
     )
   }
 
-  return (
-    <div className="space-y-6">
-      {cards.map(({ key, collection: c, drive: driveList }) => {
+  const names = Object.fromEntries(branches.map((b) => [b.id, b.short]))
+  const options = branches.map((b) => ({ id: b.id, short: b.short }))
+  const taughtIn = [...new Set((findSubject(subjectCode)?.usedIn ?? []).map((u) => u.branch?.id).filter((x): x is string => !!x))]
+
+  const shelves: BranchShelf[] = cards.map(({ key, collection: c, drive: driveList }) => {
         const name = c?.owner_name ?? LIBRARY_OWNER.name
         const admin = c ? c.owner_is_admin : LIBRARY_OWNER.admin
         const mod = c ? c.owner_is_mod : false
         const count = (c?.files.length ?? 0) + driveList.length
-        return (
+        // The admin's notes are for everyone; a member's notes belong to that member's branch.
+        const branch = c && !admin && !driveList.length ? c.owner_branch : null
+        const node = (
           <article
-            key={key}
             id={c && !driveList.length ? `${anchor}c-${c.id}` : `${anchor}owner-notes`}
             className="scroll-mt-24 rounded-2xl border border-line bg-surface p-4 shadow-card sm:p-5"
           >
@@ -79,6 +84,11 @@ export function ShelfCards({
               <div className="min-w-0 flex-1">
                 <p className="flex items-center font-semibold">
                   <OwnerName name={`${name}’s notes`} admin={admin} moderator={mod} />
+                  {branch && (
+                    <span className="ml-2 rounded-md bg-surface-2 px-1.5 py-0.5 text-[10px] font-semibold tracking-wider text-ink-3 uppercase">
+                      {names[branch] ?? branch}
+                    </span>
+                  )}
                   {c && topHelpful > 0 && c.helpful === topHelpful && (
                     <span className="ml-2 inline-flex items-center gap-1 rounded-md bg-ok-soft px-1.5 py-0.5 text-[10px] font-semibold tracking-wider text-ok uppercase">
                       <ThumbsUp className="size-3" /> Most helpful
@@ -91,6 +101,7 @@ export function ShelfCards({
                   {c && ` · started ${formatDate(c.created_at)} · updated ${timeAgo(c.updated_at)}`}
                 </p>
               </div>
+              {c && !admin && taughtIn.length > 1 && <ShelfBranchPicker userId={c.owner_id} branch={c.owner_branch} options={options} />}
               {c && sourcesOf(c).length > 1 && (
                 <DownloadShelfButton sources={sourcesOf(c)} title={`${name} - ${subjectShort} ${label}`} label="Download as one PDF" />
               )}
@@ -104,7 +115,18 @@ export function ShelfCards({
             </div>
           </article>
         )
-      })}
-    </div>
-  )
+        return { key, branch, node }
+  })
+
+  // Only a subject that several branches share needs the partition.
+  if (taughtIn.length < 2 || shelves.every((x) => !x.branch)) {
+    return (
+      <div className="space-y-6">
+        {shelves.map((x) => (
+          <div key={x.key}>{x.node}</div>
+        ))}
+      </div>
+    )
+  }
+  return <BranchPartition shelves={shelves} taughtIn={taughtIn} names={names} />
 }

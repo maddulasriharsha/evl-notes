@@ -38,6 +38,8 @@ export interface NoteCollection {
   owner_name: string
   owner_is_admin: boolean
   owner_is_mod: boolean
+  /** The uploader's branch slug, when known. */
+  owner_branch: string | null
   subject_code: string
   unit: number
   description: string | null
@@ -54,7 +56,9 @@ const BASE_COLUMNS =
 // Helpful votes and the Drive-backup columns arrive with later migrations. Until they exist, read
 // without them so the site keeps working; a failed read switches the missing part off for the rest
 // of the process.
-const optional = { votes: true, backup: true, tags: true }
+const optional = { votes: true, backup: true, tags: true, branch: true }
+/** The owner columns read with a shelf; `branch` arrives with a migration. */
+const ownerColumns = () => (optional.branch ? 'profiles(display_name, role, branch)' : 'profiles(display_name, role)')
 const fileColumns = () =>
   [BASE_COLUMNS, optional.backup && 'backup_drive_id, original_removed_at', optional.tags && 'tags', optional.votes && 'file_votes(count)']
     .filter(Boolean)
@@ -69,12 +73,13 @@ async function readWithVotes<T extends { error: { message: string } | null }>(ru
     if (optional.votes && /file_votes/.test(message)) optional.votes = false
     else if (optional.backup && /backup_drive_id|original_removed_at/.test(message)) optional.backup = false
     else if (optional.tags && /\btags\b/.test(message)) optional.tags = false
+    else if (optional.branch && /branch/.test(message)) optional.branch = false
     else return res
   }
   return run(fileColumns())
 }
 
-type Owner = { display_name: string; role: string } | null
+type Owner = { display_name: string; role: string; branch?: string | null } | null
 type FileRow = Omit<NoteFile, 'comment_count' | 'helpful_count' | 'backup_drive_id' | 'original_removed_at' | 'tags'> & {
   tags?: string[] | null
   comments?: { count: number }[]
@@ -94,7 +99,7 @@ function shapeFile({ comments, file_votes, backup_drive_id, original_removed_at,
   }
 }
 
-type CollectionRow = Omit<NoteCollection, 'owner_name' | 'owner_is_admin' | 'owner_is_mod' | 'helpful' | 'files'> & {
+type CollectionRow = Omit<NoteCollection, 'owner_name' | 'owner_is_admin' | 'owner_is_mod' | 'owner_branch' | 'helpful' | 'files'> & {
   profiles: Owner
   files: FileRow[]
 }
@@ -108,6 +113,7 @@ function shape(rows: CollectionRow[]): NoteCollection[] {
         owner_name: profiles?.display_name ?? 'Unknown',
         owner_is_admin: profiles?.role === 'admin',
         owner_is_mod: profiles?.role === 'moderator',
+        owner_branch: profiles?.branch ?? null,
         helpful: shaped.reduce((n, f) => n + f.helpful_count, 0),
         files: shaped,
       }
@@ -121,7 +127,7 @@ export async function collectionsFor(subject: string, unit: number): Promise<Not
   const { data, error } = await readWithVotes((cols) =>
     supabasePublic()
       .from('collections')
-      .select(`id, owner_id, subject_code, unit, description, created_at, updated_at, profiles(display_name, role), files(${cols})`)
+      .select(`id, owner_id, subject_code, unit, description, created_at, updated_at, ${ownerColumns()}, files(${cols})`)
       .eq('subject_code', subject)
       .eq('unit', unit)
       .is('files.deleted_at', null)
@@ -144,7 +150,7 @@ export async function taggedQuestionsFor(subject: string): Promise<NoteCollectio
   const { data, error } = await readWithVotes((cols) =>
     supabasePublic()
       .from('collections')
-      .select(`id, owner_id, subject_code, unit, description, created_at, updated_at, profiles(display_name, role), files(${cols})`)
+      .select(`id, owner_id, subject_code, unit, description, created_at, updated_at, ${ownerColumns()}, files(${cols})`)
       .eq('subject_code', subject)
       .is('files.deleted_at', null)
       .contains('files.tags', ['questions'])
@@ -228,7 +234,7 @@ export async function recentlyUpdated(limit = 8): Promise<RecentCollection[]> {
   const { data, error } = await readWithVotes((cols) =>
     supabasePublic()
       .from('collections')
-      .select(`id, owner_id, subject_code, unit, description, created_at, updated_at, profiles(display_name, role), files(${cols})`)
+      .select(`id, owner_id, subject_code, unit, description, created_at, updated_at, ${ownerColumns()}, files(${cols})`)
       .is('files.deleted_at', null)
       .order('updated_at', { ascending: false })
       .limit(limit * 2),
