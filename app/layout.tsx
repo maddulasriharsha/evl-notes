@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import Script from 'next/script'
 import { Inter, Syne } from 'next/font/google'
 import { AnnouncementBar } from '@/components/announcement-bar'
+import { HistoryTracker } from '@/components/study-history'
 import { SiteFooter } from '@/components/site-footer'
 import { SiteHeader } from '@/components/site-header'
 import { VisitBeacon } from '@/components/visit-beacon'
@@ -38,6 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <SiteFooter />
         <ServiceWorkerRegister />
         <VisitBeacon />
+        <HistoryTracker />
       </body>
     </html>
   )

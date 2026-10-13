@@ -12,6 +12,7 @@ import {
   Sparkles,
   Star,
 } from 'lucide-react'
+import { ContinueStudying } from '@/components/study-history'
 import { Thumb } from '@/components/thumb'
 import { OwnerName } from '@/components/ui'
 import { allSubjects, branches, branchHref, branchSubjects, findSubject, sectionHref, sectionLabel, subjectHref } from '@/lib/curriculum'
@@ -105,6 +106,8 @@ export default async function Home() {
       </section>
 
       <div className="mx-auto max-w-5xl px-4 sm:px-6">
+        <ContinueStudying />
+
         {/* ---------- Numbers ---------- */}
         <section className="mt-28 grid grid-cols-2 gap-px overflow-hidden rounded-3xl border border-line bg-white/[0.07] sm:grid-cols-4">
           {[
