@@ -71,7 +71,7 @@ export default async function Home() {
             Notes, question papers and question banks for every branch, sorted by semester, subject and chapter.
             Free to read, no sign-in needed.
           </p>
-          <div className="rise rise-3 mt-8 w-full max-w-xl">
+          <div className="rise rise-3 relative z-20 mt-8 w-full max-w-xl">
             <SearchBox compact />
           </div>
           <div className="rise rise-4 mt-5 flex flex-wrap items-center justify-center gap-3">
