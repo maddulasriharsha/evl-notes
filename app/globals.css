@@ -81,8 +81,9 @@ html {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* The page colour is on <html>; <body> stays clear so the ambient canvas behind it shows through. */
 body {
-  background: var(--bg);
+  background: transparent;
   min-height: 100dvh;
   font-feature-settings: 'cv11', 'ss01';
   text-rendering: optimizeLegibility;
@@ -285,14 +286,144 @@ body {
   display: none;
 }
 
+/* ---------- Ambient effects (components/fx-layer.tsx) ---------- */
+/* A card whose border lights up on the side nearest the cursor. --mx / --my / --glow are set by the layer. */
+.fx-card {
+  position: relative;
+}
+.fx-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  padding: 1.5px;
+  border-radius: inherit;
+  background: radial-gradient(220px circle at var(--mx, 50%) var(--my, 50%), rgb(196 181 253 / 0.95), rgb(139 92 246 / 0.45) 40%, transparent 70%);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  opacity: var(--glow, 0);
+  pointer-events: none;
+  transition: opacity 0.25s ease-out;
+}
+:root[data-theme='light'] .fx-card::before {
+  background: radial-gradient(220px circle at var(--mx, 50%) var(--my, 50%), rgb(98 64 224 / 0.9), rgb(139 92 246 / 0.35) 40%, transparent 70%);
+}
+
+/* A card that leans towards the cursor, with a moving shine. */
+.fx-tilt {
+  transform-style: preserve-3d;
+  transition:
+    transform 0.2s ease-out,
+    border-color 0.2s,
+    box-shadow 0.2s;
+  will-change: transform;
+}
+.fx-tilt::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 50%), rgb(255 255 255 / 0.09), transparent 65%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease-out;
+}
+.fx-tilt[data-tilt]::after {
+  opacity: 1;
+}
+:root[data-theme='light'] .fx-tilt::after {
+  background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 50%), rgb(98 64 224 / 0.07), transparent 65%);
+}
+
+/* Fade up on scroll. Only hidden once the page has said it will run the effects (html.fx, set
+   before first paint); a timed fallback shows everything even if the script never arrives. */
+@keyframes fx-failsafe {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+html.fx .fx-reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: fx-failsafe 0.01s 3.5s forwards;
+}
+html.fx .fx-reveal.in {
+  opacity: 1;
+  transform: none;
+  animation: none;
+}
+/* Once shown, a tilting card must be free to transform again. */
+html.fx .fx-reveal.in.fx-tilt {
+  transition:
+    transform 0.2s ease-out,
+    opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+/* Command palette */
+@keyframes palette-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes palette-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+  }
+}
+.palette-in {
+  animation: palette-fade 0.15s ease-out both;
+}
+.palette-box {
+  animation: palette-pop 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Shared elements glide between pages (a subject's name from its card to its page). */
+::view-transition-group(*) {
+  animation-duration: 0.38s;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.22s;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .rise,
   .horizon,
   .float,
   .marquee,
   .page-in,
-  .skeleton {
+  .skeleton,
+  .palette-in,
+  .palette-box {
     animation: none;
+  }
+  html.fx .fx-reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+    animation: none;
+  }
+  .fx-tilt {
+    transition: none;
+  }
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
   }
 }
 

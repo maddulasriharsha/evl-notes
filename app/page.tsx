@@ -12,6 +12,8 @@ import {
   Sparkles,
   Star,
 } from 'lucide-react'
+import { CountUp } from '@/components/count-up'
+import { HeroStars } from '@/components/hero-stars'
 import { SearchBox } from '@/components/search-box'
 import { ContinueStudying } from '@/components/study-history'
 import { Thumb } from '@/components/thumb'
@@ -54,6 +56,7 @@ export default async function Home() {
         <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
           <div className="horizon" />
           <div className="horizon-haze" />
+          <HeroStars />
         </div>
         <div className="relative mx-auto flex min-h-[610px] max-w-5xl flex-col items-center px-4 pt-12 text-center sm:min-h-[630px] sm:pt-20">
           <Link
@@ -102,7 +105,7 @@ export default async function Home() {
                 <Link
                   key={b.id}
                   href={branchHref(b.id)}
-                  className="group relative flex flex-col overflow-hidden rounded-2xl border border-line bg-surface p-4 transition duration-300 hover:-translate-y-1 sm:p-5 hover:border-accent/40 hover:shadow-[0_30px_80px_-30px_rgba(139,92,246,0.45)]"
+                  className="fx-card fx-tilt fx-reveal group relative flex flex-col overflow-hidden rounded-2xl border border-line bg-surface p-4 sm:p-5 hover:border-accent/40 hover:shadow-[0_30px_80px_-30px_rgba(139,92,246,0.45)]"
                 >
                   <div className="pointer-events-none absolute -top-24 -right-24 size-56 rounded-full bg-accent/10 blur-3xl transition group-hover:bg-accent/25" />
                   <p className="relative text-[11px] text-ink-3">{plural(files, 'file')}</p>
@@ -131,7 +134,7 @@ export default async function Home() {
                   <Link
                     key={c.id}
                     href={`${sectionHref(c.subject_code, c.unit)}#c-${c.id}`}
-                    className="group flex overflow-hidden rounded-2xl border border-line bg-surface transition hover:border-accent/40"
+                    className="fx-card fx-reveal group flex overflow-hidden rounded-2xl border border-line bg-surface transition hover:border-accent/40"
                   >
                     <div className="w-28 shrink-0 border-r border-line">
                       <Thumb src={cover} icon={c.cover?.mime === 'application/pdf' ? 'pdf' : 'image'} label="notes" />
@@ -155,16 +158,18 @@ export default async function Home() {
         )}
 
         {/* ---------- Numbers ---------- */}
-        <section className="mt-16 grid grid-cols-2 gap-px overflow-hidden rounded-3xl border border-line bg-white/[0.07] sm:grid-cols-4">
+        <section className="fx-reveal mt-16 grid grid-cols-2 gap-px overflow-hidden rounded-3xl border border-line bg-white/[0.07] sm:grid-cols-4">
           {[
-            { label: 'Total materials', value: n(totalMaterials), hint: `${n(uploads.files)} uploaded + ${n(DRIVE_LIBRARY.files)} from Drive` },
-            { label: 'Total pages', value: n(totalPages), hint: 'PDF pages, slides and photos' },
-            { label: 'Contributors', value: n(people.length), hint: 'classmates sharing notes' },
-            { label: 'Chapters', value: n(chapters), hint: `across ${allSubjects().length} subjects` },
+            { label: 'Total materials', value: totalMaterials, hint: `${n(uploads.files)} uploaded + ${n(DRIVE_LIBRARY.files)} from Drive` },
+            { label: 'Total pages', value: totalPages, hint: 'PDF pages, slides and photos' },
+            { label: 'Contributors', value: people.length, hint: 'classmates sharing notes' },
+            { label: 'Chapters', value: chapters, hint: `across ${allSubjects().length} subjects` },
           ].map((s, i) => (
             <div key={s.label} className={`bg-bg px-5 py-6 ${i === 0 ? 'bg-gradient-to-b from-accent/10 to-transparent' : ''}`}>
               <p className="text-xs text-ink-3">{s.label}</p>
-              <p className="mt-2 font-display text-3xl font-bold tracking-tight tabular-nums sm:text-4xl">{s.value}</p>
+              <p className="mt-2 font-display text-3xl font-bold tracking-tight sm:text-4xl">
+                <CountUp value={s.value} />
+              </p>
               <p className="mt-1 text-xs text-ink-3">{s.hint}</p>
             </div>
           ))}
@@ -204,7 +209,7 @@ export default async function Home() {
 
       <div className="mx-auto max-w-5xl px-4 sm:px-6">
         {/* ---------- Why ---------- */}
-        <section className="mt-20 grid items-center gap-12 md:grid-cols-2">
+        <section className="fx-reveal mt-20 grid items-center gap-12 md:grid-cols-2">
           <div>
             <h2 className="font-display text-3xl font-bold tracking-tight sm:text-5xl">
               Built for the whole class.
@@ -255,7 +260,7 @@ export default async function Home() {
         </section>
 
         {/* ---------- CTA ---------- */}
-        <section className="mt-20">
+        <section className="fx-reveal mt-20">
           <div className="bezel">
             <div className="relative overflow-hidden rounded-[22px] border border-line bg-gradient-to-br from-surface to-bg px-6 py-12 sm:px-12 sm:py-16">
               <div className="dots absolute inset-y-0 right-0 w-full sm:w-2/3" aria-hidden="true" />

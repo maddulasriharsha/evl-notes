@@ -75,7 +75,7 @@ export function ShelfCards({
         const node = (
           <article
             id={c && !driveList.length ? `${anchor}c-${c.id}` : `${anchor}owner-notes`}
-            className="scroll-mt-36 rounded-2xl border border-line bg-surface p-4 shadow-card sm:p-5"
+            className="fx-reveal scroll-mt-36 rounded-2xl border border-line bg-surface p-4 shadow-card sm:p-5"
           >
             {c && driveList.length > 0 && <span id={`${anchor}c-${c.id}`} className="block scroll-mt-36" />}
             <header className="mb-4 flex flex-wrap items-center gap-3">

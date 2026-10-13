@@ -1,3 +1,4 @@
+import { ViewTransition } from 'react'
 import Link from 'next/link'
 import { ArrowUpRight, FlaskConical, BookOpen, Sparkles } from 'lucide-react'
 import { subjectHref, type Subject } from '@/lib/curriculum'
@@ -8,7 +9,7 @@ export function SubjectCard({ subject, count }: { subject: Subject; count: numbe
   return (
     <Link
       href={subjectHref(subject.code)}
-      className="group relative flex flex-col rounded-2xl border border-line bg-surface p-5 shadow-card transition hover:-translate-y-0.5 hover:border-line-strong hover:shadow-pop"
+      className="fx-card fx-tilt fx-reveal group relative flex flex-col rounded-2xl border border-line bg-surface p-5 shadow-card hover:border-line-strong hover:shadow-pop"
     >
       <div className="flex items-start justify-between gap-3">
         <span className="grid size-10 place-items-center rounded-xl bg-surface-2 text-ink-2">
@@ -17,7 +18,10 @@ export function SubjectCard({ subject, count }: { subject: Subject; count: numbe
         <ArrowUpRight className="size-4 text-ink-3 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-ink" />
       </div>
       <p className="mt-4 text-xs font-semibold tracking-widest text-ink-3 uppercase">{subject.short}</p>
-      <h3 className="mt-1 leading-snug font-semibold text-balance">{subject.name}</h3>
+      {/* The name glides into the subject page's heading. */}
+      <ViewTransition name={`subject-${subject.code.toLowerCase()}`}>
+        <h3 className="mt-1 leading-snug font-semibold text-balance">{subject.name}</h3>
+      </ViewTransition>
       <div className="mt-auto flex items-center gap-2 pt-4 text-xs text-ink-3">
         <span className="font-mono">{subject.code}</span>
         <span>·</span>

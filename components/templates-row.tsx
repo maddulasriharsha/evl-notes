@@ -13,7 +13,7 @@ export function TemplatesRow() {
           <Link
             key={t.slug}
             href={templateHref(t.slug)}
-            className="group flex items-center gap-3 rounded-2xl border border-line bg-surface px-4 py-3 shadow-card transition hover:border-accent"
+            className="fx-card fx-reveal group flex items-center gap-3 rounded-2xl border border-line bg-surface px-4 py-3 shadow-card transition hover:border-accent"
           >
             <span className="grid size-10 shrink-0 place-items-center rounded-xl border border-line bg-bg text-ink-2">
               <FileText className="size-5" />

@@ -12,7 +12,7 @@ import { formatBytes, plural } from '@/lib/format'
 import { driveDownloadUrl, driveThumbUrl, isImage, kindLabel, type DriveFile } from '@/lib/library'
 
 const CARD =
-  'flex w-full flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-card transition hover:-translate-y-0.5 hover:border-line-strong hover:shadow-pop'
+  'fx-card fx-tilt flex w-full flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-card hover:border-line-strong hover:shadow-pop'
 
 /** One-tap download, sitting on the card's corner (outside the card link, so it is its own target). */
 function DownloadCorner({ href, name }: { href: string; name: string }) {
@@ -44,7 +44,7 @@ export function UploadFileCard({ file, subject, unit }: { file: NoteFile; subjec
         : null
   const type = kind ? DRIVE_KIND_LABEL[kind].replace('Drive ', '').replace('Google ', '') : isPdf ? 'PDF' : 'Image'
   return (
-    <div className="group relative flex">
+    <div className="fx-reveal group relative flex">
       <FileTools id={file.id} ownerId={file.owner_id} name={file.name} subject={subject} unit={unit} variant="card" tagged={file.tags?.includes('questions')} />
       <Link href={`/view/u/${file.id}`} className={CARD}>
         <Thumb src={thumb} icon={kind ? (kind === 'presentation' ? 'slides' : 'doc') : isPdf ? 'pdf' : 'image'} label={type} badge={type} />
@@ -86,7 +86,7 @@ export function DriveFileCard({ file, placeUnit }: { file: DriveFile; placeUnit?
   const tone = file.kind === 'questions' ? 'gold' : file.kind === 'lab' ? 'ok' : 'neutral'
   const type = isImage(file.ext) ? 'Image' : file.ext.toUpperCase()
   return (
-    <div className="group relative flex">
+    <div className="fx-reveal group relative flex">
       <DriveMove id={file.id} name={file.title} subject={file.subject} unit={placeUnit ?? file.unit ?? 0} />
       <Link href={`/view/d/${file.id}`} className={CARD}>
         <Thumb src={driveThumbUrl(file.id)} icon={iconFor(file.ext)} label={file.ext} badge={type} />

@@ -1,8 +1,10 @@
+import { ViewTransition } from 'react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowRight, BookOpenCheck, CloudUpload, GraduationCap, ScrollText } from 'lucide-react'
 import { ChapterNav } from '@/components/chapter-nav'
+import { CountUp } from '@/components/count-up'
 import { FollowButton } from '@/components/community-buttons'
 import { QrButton } from '@/components/qr-button'
 import { ButtonLink, Container, Crumbs, SectionHeading } from '@/components/ui'
@@ -98,7 +100,9 @@ export default async function SubjectPage({ params }: PageProps<'/s/[code]'>) {
                 {subject.code}
                 {subject.credits > 0 && ` · ${plural(subject.credits, 'credit')}`}
               </p>
-              <h1 className="mt-2 font-display text-3xl leading-tight font-semibold tracking-tight text-balance sm:text-5xl">{subject.name}</h1>
+              <ViewTransition name={`subject-${subject.code.toLowerCase()}`}>
+                <h1 className="mt-2 font-display text-3xl leading-tight font-semibold tracking-tight text-balance sm:text-5xl">{subject.name}</h1>
+              </ViewTransition>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <FollowButton subject={subject.code} />
@@ -128,7 +132,9 @@ export default async function SubjectPage({ params }: PageProps<'/s/[code]'>) {
             {stats.map((s) => (
               <div key={s.label} className="bg-surface px-4 py-4">
                 <dt className="text-xs text-ink-3">{s.label}</dt>
-                <dd className="mt-1 font-display text-2xl font-semibold tabular-nums">{s.value.toLocaleString('en-IN')}</dd>
+                <dd className="mt-1 font-display text-2xl font-semibold">
+                  <CountUp value={s.value} ms={800} />
+                </dd>
               </div>
             ))}
           </dl>
@@ -143,7 +149,7 @@ export default async function SubjectPage({ params }: PageProps<'/s/[code]'>) {
             <Link
               key={href}
               href={href}
-              className={`group flex flex-col rounded-2xl border p-5 shadow-card transition hover:-translate-y-0.5 hover:shadow-pop ${
+              className={`fx-card fx-tilt fx-reveal group flex flex-col rounded-2xl border p-5 shadow-card hover:shadow-pop ${
                 lead ? 'border-accent bg-accent-soft' : 'border-line bg-surface hover:border-line-strong'
               }`}
             >
@@ -170,7 +176,7 @@ export default async function SubjectPage({ params }: PageProps<'/s/[code]'>) {
                   <li key={unit}>
                     <Link
                       href={sectionHref(subject.code, unit)}
-                      className="group flex h-full items-center gap-4 rounded-2xl border border-line bg-surface p-4 shadow-card transition hover:-translate-y-0.5 hover:border-line-strong hover:shadow-pop"
+                      className="fx-card fx-reveal group flex h-full items-center gap-4 rounded-2xl border border-line bg-surface p-4 shadow-card transition hover:border-line-strong hover:shadow-pop"
                     >
                       <Ring value={mine} max={fullest} mark={sectionMark(unit)} />
                       <span className="min-w-0 flex-1">

@@ -3,6 +3,8 @@ import Script from 'next/script'
 import { Inter, Syne } from 'next/font/google'
 import { AnnouncementBar } from '@/components/announcement-bar'
 import { HistoryTracker } from '@/components/study-history'
+import { CommandPalette } from '@/components/command-palette'
+import { FxLayer } from '@/components/fx-layer'
 import { MobileNav } from '@/components/mobile-nav'
 import { SiteFooter } from '@/components/site-footer'
 import { SiteHeader } from '@/components/site-header'
@@ -32,8 +34,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${inter.variable} ${syne.variable}`} suppressHydrationWarning>
       <body className="flex min-h-dvh flex-col font-sans antialiased">
         <Script id="vj-theme" strategy="beforeInteractive">
-          {`try{var t=localStorage.getItem('vj-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}`}
+          {`try{var t=localStorage.getItem('vj-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}document.documentElement.classList.add('fx')`}
         </Script>
+        <FxLayer />
         <AnnouncementBar />
         <SiteHeader />
         <main className="flex-1">{children}</main>
@@ -41,6 +44,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Room for the phone bar, so it never covers the end of a page. */}
         <div className="h-16 md:hidden print:hidden" aria-hidden="true" />
         <MobileNav />
+        <CommandPalette />
         <ServiceWorkerRegister />
         <VisitBeacon />
         <HistoryTracker />
