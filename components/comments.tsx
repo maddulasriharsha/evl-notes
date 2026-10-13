@@ -157,37 +157,64 @@ function CommentsPanel({ fileId, ownerId, onCount }: { fileId: string; ownerId: 
   )
 }
 
-/** Places the comments beside the file on wide screens and in a pull-up sheet on phones. */
+const HIDE_KEY = 'vj-comments-hidden'
+
+/**
+ * Places the comments beside the file on wide screens and in a pull-up sheet on phones. On wide
+ * screens the side panel can be closed to give the file the whole width; the choice is remembered
+ * on this device, and a button brings the comments back.
+ */
 export function ViewerWithComments({ fileId, ownerId, initialCount, children }: { fileId: string; ownerId: string; initialCount: number; children: React.ReactNode }) {
   const [count, setCount] = useState(initialCount)
   const [open, setOpen] = useState(false)
   const [wide, setWide] = useState(false)
+  const [hidden, setHidden] = useState(false)
 
   useEffect(() => {
     const mq = window.matchMedia('(min-width: 1024px)')
     const apply = () => setWide(mq.matches)
     apply()
+    try {
+      setHidden(localStorage.getItem(HIDE_KEY) === '1')
+    } catch {
+      // Storage blocked: the panel simply starts open.
+    }
     mq.addEventListener('change', apply)
     return () => mq.removeEventListener('change', apply)
   }, [])
+
+  function hide(next: boolean) {
+    setHidden(next)
+    try {
+      if (next) localStorage.setItem(HIDE_KEY, '1')
+      else localStorage.removeItem(HIDE_KEY)
+    } catch {
+      // ignore
+    }
+  }
 
   const heading = (
     <div className="flex items-center gap-2 border-b border-line px-4 py-3">
       <MessageCircle className="size-4 text-ink-3" />
       <p className="text-sm font-semibold">Comments</p>
       <span className="text-xs text-ink-3">{count}</span>
-      {!wide && (
-        <button type="button" onClick={() => setOpen(false)} aria-label="Close comments" className="ml-auto grid size-8 place-items-center rounded-lg hover:bg-surface-2">
-          <X className="size-4" />
-        </button>
-      )}
+      <button
+        type="button"
+        onClick={() => (wide ? hide(true) : setOpen(false))}
+        aria-label="Close comments"
+        title={wide ? 'Close comments (more room for the file)' : 'Close comments'}
+        className="ml-auto grid size-8 place-items-center rounded-lg hover:bg-surface-2"
+      >
+        <X className="size-4" />
+      </button>
     </div>
   )
+  const label = count > 0 ? `${count} comment${count === 1 ? '' : 's'}` : wide ? 'Comments' : 'Comment'
 
   return (
     <div className="absolute inset-0 flex">
       <div className="relative min-w-0 flex-1">{children}</div>
-      {wide ? (
+      {wide && !hidden ? (
         <aside className="flex w-96 shrink-0 flex-col border-l border-line bg-surface">
           {heading}
           <CommentsPanel fileId={fileId} ownerId={ownerId} onCount={setCount} />
@@ -196,12 +223,12 @@ export function ViewerWithComments({ fileId, ownerId, initialCount, children }: 
         <>
           <button
             type="button"
-            onClick={() => setOpen(true)}
+            onClick={() => (wide ? hide(false) : setOpen(true))}
             className="absolute right-4 bottom-20 z-10 inline-flex h-11 items-center gap-2 rounded-full bg-ink px-4 text-sm font-medium text-bg shadow-pop"
           >
-            <MessageCircle className="size-4" /> {count > 0 ? `${count} comment${count === 1 ? '' : 's'}` : 'Comment'}
+            <MessageCircle className="size-4" /> {label}
           </button>
-          {open && (
+          {!wide && open && (
             <div className="fixed inset-0 z-50 flex flex-col justify-end bg-ink/40" onClick={() => setOpen(false)}>
               <div className="flex h-[75dvh] flex-col rounded-t-3xl bg-surface shadow-pop" onClick={(e) => e.stopPropagation()}>
                 {heading}
