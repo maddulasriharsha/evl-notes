@@ -13,7 +13,7 @@ import {
   Star,
 } from 'lucide-react'
 import { CountUp } from '@/components/count-up'
-import { HeroStars } from '@/components/hero-stars'
+import { StarField } from '@/components/star-field'
 import { SearchBox } from '@/components/search-box'
 import { ContinueStudying } from '@/components/study-history'
 import { Thumb } from '@/components/thumb'
@@ -48,6 +48,7 @@ export default async function Home() {
 
   return (
     <>
+      <StarField />
       {/* ---------- Hero ---------- */}
       <section
         className="relative z-10 -mt-[4.25rem] pt-[4.25rem] sm:-mt-[4.5rem] sm:pt-[4.5rem]"
@@ -56,7 +57,6 @@ export default async function Home() {
         <div className="hero-sky pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
           <div className="horizon" />
           <div className="horizon-haze" />
-          <HeroStars />
         </div>
         <div className="relative mx-auto flex min-h-[610px] max-w-5xl flex-col items-center px-4 pt-12 text-center sm:min-h-[630px] sm:pt-20">
           <Link
