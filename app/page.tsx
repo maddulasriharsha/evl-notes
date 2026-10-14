@@ -14,7 +14,6 @@ import {
 } from 'lucide-react'
 import { CountUp } from '@/components/count-up'
 import { HeroStars } from '@/components/hero-stars'
-import { StarField } from '@/components/star-field'
 import { SearchBox } from '@/components/search-box'
 import { ContinueStudying } from '@/components/study-history'
 import { Thumb } from '@/components/thumb'
@@ -49,7 +48,6 @@ export default async function Home() {
 
   return (
     <>
-      <StarField />
       {/* ---------- Hero ---------- */}
       <section
         className="relative z-10 -mt-[4.25rem] pt-[4.25rem] sm:-mt-[4.5rem] sm:pt-[4.5rem]"

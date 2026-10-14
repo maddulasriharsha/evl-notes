@@ -6,7 +6,8 @@ import { useEffect, useRef } from 'react'
 const REACH = 120
 
 /**
- * The home page's night sky: many small white dots behind everything. Each star drifts on its own
+ * The site's night sky, on every page: many small white dots behind everything (the file viewer's
+ * stage is opaque, so none show over a PDF). Each star drifts on its own
  * slow course (near ones a little faster than far ones) and twinkles; stars the cursor comes close
  * to are nudged away, then glide back to their own pace. Paused in a background tab; a single
  * still frame for "reduce motion".
@@ -124,5 +125,5 @@ export function StarField() {
     }
   }, [])
 
-  return <canvas ref={ref} aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10 size-full" />
+  return <canvas ref={ref} aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10 size-full print:hidden" />
 }
