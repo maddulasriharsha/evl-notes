@@ -1,16 +1,11 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 
-const GAP = 30
-const REACH = 150
-const SPOT = 380
 const GLOW_REACH = 180
 
 /**
  * The page's ambient effects, all driven from one place:
- *  - a fixed canvas behind everything: a faint dot grid whose dots swell and move away from the
- *    cursor, under a soft spotlight that trails it;
  *  - cards (`.fx-card`) whose border lights up on the side nearest the cursor, and that tilt
  *    towards it (`.fx-tilt`);
  *  - elements (`.fx-reveal`) that fade up as they scroll into view, one after another.
@@ -18,8 +13,6 @@ const GLOW_REACH = 180
  * to use the site.
  */
 export function FxLayer() {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-
   // ---- scroll reveals
   useEffect(() => {
     const calm = matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -57,16 +50,12 @@ export function FxLayer() {
     }
   }, [])
 
-  // ---- cursor: grid, spotlight, card glow and tilt
+  // ---- cursor: card glow and tilt
   useEffect(() => {
-    const canvas = canvasRef.current
     const fine = matchMedia('(hover: hover) and (pointer: fine)').matches
     const calm = matchMedia('(prefers-reduced-motion: reduce)').matches
-    if (!canvas || !fine || calm) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
+    if (!fine || calm) return
 
-    let w = 0
     let h = 0
     const mouse = { x: -9999, y: -9999, on: false }
     const spot = { x: 0, y: 0, p: 0 }
@@ -76,48 +65,16 @@ export function FxLayer() {
     let cardsStale = true
 
     const size = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2)
-      w = window.innerWidth
       h = window.innerHeight
-      canvas.width = Math.round(w * dpr)
-      canvas.height = Math.round(h * dpr)
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
       kick()
     }
 
     const draw = () => {
       frame = 0
-      const light = document.documentElement.dataset.theme === 'light'
-      const rgb = light ? '98 64 224' : '167 139 250'
-      // The spotlight trails the cursor; its strength follows whether the cursor is on the page.
+      // The glow trails the cursor; its strength follows whether the cursor is on the page.
       spot.x += (mouse.x - spot.x) * 0.16
       spot.y += (mouse.y - spot.y) * 0.16
       spot.p += ((mouse.on ? 1 : 0) - spot.p) * 0.1
-
-      ctx.clearRect(0, 0, w, h)
-      if (spot.p > 0.01) {
-        const g = ctx.createRadialGradient(spot.x, spot.y, 0, spot.x, spot.y, SPOT)
-        g.addColorStop(0, `rgb(${rgb} / ${(light ? 0.1 : 0.13) * spot.p})`)
-        g.addColorStop(1, `rgb(${rgb} / 0)`)
-        ctx.fillStyle = g
-        ctx.fillRect(spot.x - SPOT, spot.y - SPOT, SPOT * 2, SPOT * 2)
-      }
-      const base = light ? 0.11 : 0.085
-      for (let y = GAP / 2; y < h; y += GAP) {
-        for (let x = GAP / 2; x < w; x += GAP) {
-          const dx = x - spot.x
-          const dy = y - spot.y
-          const d = Math.hypot(dx, dy)
-          const f = d < REACH ? (1 - d / REACH) ** 2 * spot.p : 0
-          const push = f * 9
-          const px = d > 0.001 ? x + (dx / d) * push : x
-          const py = d > 0.001 ? y + (dy / d) * push : y
-          ctx.fillStyle = `rgb(${rgb} / ${base + f * 0.6})`
-          ctx.beginPath()
-          ctx.arc(px, py, 1 + f * 1.7, 0, Math.PI * 2)
-          ctx.fill()
-        }
-      }
 
       // Cards: light the border nearest the cursor.
       if (cardsStale) {
@@ -158,7 +115,7 @@ export function FxLayer() {
     const move = (e: PointerEvent) => {
       if (e.pointerType && e.pointerType !== 'mouse') return
       if (!mouse.on) {
-        // First sight of the cursor: start the spotlight there instead of sweeping in from a corner.
+        // First sight of the cursor: start the trail there instead of sweeping in from a corner.
         spot.x = e.clientX
         spot.y = e.clientY
       }
@@ -209,5 +166,5 @@ export function FxLayer() {
     }
   }, [])
 
-  return <canvas ref={canvasRef} aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10 size-full print:hidden" />
+  return null
 }
