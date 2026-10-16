@@ -4,7 +4,9 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { HelpCircle, Loader2, Pencil, Trash2 } from 'lucide-react'
 import { refreshFile } from '@/app/upload/actions'
+import { ExamTagButton } from '@/components/exam-tag'
 import { MoveFileButton } from '@/components/move-file'
+import { PAPERS_UNIT } from '@/lib/curriculum'
 import { supabaseBrowser } from '@/lib/supabase/browser'
 
 type Viewer = { id: string; role: string } | null
@@ -91,6 +93,13 @@ export function FileTools({
     router.refresh()
   }
 
+  async function setTitle(next: string) {
+    const { error } = await supabaseBrowser().from('files').update({ name: next }).eq('id', id)
+    if (error) throw new Error(error.message)
+    await refreshFile(id, subject, unit)
+    router.refresh()
+  }
+
   async function toggleQuestionsTag() {
     setBusy('tag')
     const next = !isTagged
@@ -119,6 +128,7 @@ export function FileTools({
 
   const buttons = (
     <>
+      {unit === PAPERS_UNIT && <ExamTagButton title={name} save={setTitle} variant={variant} />}
       {isStaff && (
         <button
           type="button"

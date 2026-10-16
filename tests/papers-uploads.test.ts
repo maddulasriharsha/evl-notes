@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { siblingSubjects } from '@/lib/curriculum'
 import { driveFilesFor } from '@/lib/library'
-import { isMidPaper, paperSlot } from '@/lib/papers'
+import { examOf, isMidPaper, paperSlot, retitlePaper } from '@/lib/papers'
 import { goesToDrive, mimeOf, uploadProblem } from '@/lib/upload-rules'
 
 const isMid = (t: string) => /(^|[^a-z])mid([^a-z]|$)/i.test(t)
@@ -68,5 +68,16 @@ describe('names the uploader gives papers', () => {
     expect(paperSlot('EDC · Sem 2026')).toBe('sem')
     expect(isMidPaper('EDC · Mid 2 2025')).toBe(true)
     expect(isMidPaper('EDC · Sem 2025')).toBe(false)
+  })
+})
+
+describe('retitling a paper', () => {
+  it('swaps the exam and year and keeps the rest', () => {
+    expect(retitlePaper('EDC · Mid 1 2025', 'sem', 2025)).toBe('EDC · Sem 2025')
+    expect(retitlePaper('R25 Basic Electrical Engineering Sem 2024 page 2', 'mid2', 2026)).toBe('R25 Basic Electrical Engineering page 2 · Mid 2 2026')
+    expect(retitlePaper('Physics', 'mid1', 2026)).toBe('Physics · Mid 1 2026')
+    expect(paperSlot(retitlePaper('EDC · Sem 2025', 'mid2', 2025))).toBe('mid2')
+    expect(examOf('EDC Mid I 2024')).toBe('mid1')
+    expect(examOf('Mid papers collection')).toBeNull()
   })
 })

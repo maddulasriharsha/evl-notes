@@ -825,6 +825,21 @@ describe('admins move Google Drive library files', () => {
   })
 })
 
+describe('admins retitle Google Drive library files', () => {
+  const DRIVE_ID = '1p6KUg1olQgaUrA1b8M8KQIDulXp9X1v_'
+
+  it('lets admins set a title; everyone can read it', async () => {
+    await fails(B, `select public.staff_rename_drive_file($1, 'EDC · Mid 1 2025')`, [DRIVE_ID])
+    await fails(null, `select public.staff_rename_drive_file($1, 'EDC · Mid 1 2025')`, [DRIVE_ID])
+    await fails(ADMIN, `select public.staff_rename_drive_file($1, '   ')`, [DRIVE_ID])
+    await as(ADMIN, `select public.staff_rename_drive_file($1, 'EDC · Mid 1 2025')`, [DRIVE_ID])
+    await as(ADMIN, `select public.staff_rename_drive_file($1, 'EDC · Sem 2025')`, [DRIVE_ID])
+    const seen = await as(null, `select title from public.drive_titles where file_id = $1`, [DRIVE_ID])
+    expect(seen.rows).toEqual([{ title: 'EDC · Sem 2025' }])
+    await fails(B, `insert into public.drive_titles (file_id, title) values ('abcdefghijk', 'x')`)
+  })
+})
+
 describe("a member's branch", () => {
   it('is set by the member (kept when asked), corrected by staff, and never by anyone else', async () => {
     await fails(null, `select public.set_my_branch('ece')`)

@@ -30,10 +30,12 @@ export type Placement = { subject: string; unit: number }
 /** A file as listed: moved files are placed exactly where they were put (and count as "forced"). */
 type Entry = DriveFile & { forced?: boolean }
 
-function buildIndex(moves?: ReadonlyMap<string, Placement>) {
+function buildIndex(moves?: ReadonlyMap<string, Placement>, titles?: ReadonlyMap<string, string>) {
   const bySubject = new Map<string, Entry[]>()
   const byId = new Map<string, DriveFile>()
-  for (const f of driveFiles) {
+  for (const original of driveFiles) {
+    const retitled = titles?.get(original.id)
+    const f = retitled ? { ...original, title: retitled } : original
     const move = moves?.get(f.id)
     if (move) {
       const moved: Entry = { ...f, subject: move.subject, unit: move.unit, forced: true }
@@ -99,9 +101,9 @@ export function driveCount(subject: string, unit?: number) {
   return driveFilesFor(subject, unit).length
 }
 
-/** The same lookups with the admins' moves applied (see lib/library-live.ts). */
-export function libraryWith(moves: ReadonlyMap<string, Placement>) {
-  const index = buildIndex(moves)
+/** The same lookups with the admins' moves and new titles applied (see lib/library-live.ts). */
+export function libraryWith(moves: ReadonlyMap<string, Placement>, titles?: ReadonlyMap<string, string>) {
+  const index = buildIndex(moves, titles)
   return {
     files: driveFiles.map((f) => index.byId.get(f.id) ?? f),
     filesFor: (subject: string, unit?: number) => filesIn(index, subject, unit),
