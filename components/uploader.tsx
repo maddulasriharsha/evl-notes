@@ -11,7 +11,7 @@ import { supabaseBrowser } from '@/lib/supabase/browser'
 import { goesToDrive, isOffice, mimeOf } from '@/lib/upload-rules'
 import { aiSortAvailable } from '@/app/upload/classify-actions'
 import { autoSort } from '@/lib/auto-sort'
-import { branches, sectionHref, sectionLabel, sectionsOf, sectionTitle, findSubject, type Semester } from '@/lib/curriculum'
+import { branches, PAPERS_UNIT, sectionHref, sectionLabel, sectionsOf, sectionTitle, findSubject, type Semester } from '@/lib/curriculum'
 import { combineHashes, fileHash } from '@/lib/hash'
 import { autoFileName } from '@/lib/organise'
 import { formatBytes, plural } from '@/lib/format'
@@ -19,6 +19,9 @@ import { CameraCapture, cameraSupported } from '@/components/camera-capture'
 import { DRIVE_KIND_LABEL, parseDriveLink, type DriveLinkKind } from '@/lib/drive-link'
 import { photosToPdf } from '@/lib/photos-to-pdf'
 import { addDriveLink, checkFile, ensureCollection, findDriveDuplicate, findDuplicates, MAX_FILES, nextPosition, uploadOne, type DuplicateOf, type Stage } from '@/lib/upload'
+
+type ExamKind = 'mid1' | 'mid2' | 'sem'
+const EXAMS: Record<ExamKind, string> = { mid1: 'Mid 1', mid2: 'Mid 2', sem: 'Sem' }
 
 /** Where a file goes. `unit` is null while only the subject is known. */
 interface Place {
@@ -115,6 +118,9 @@ export function Uploader({
   const [combine, setCombine] = useState(false)
   const [madePdfs, setMadePdfs] = useState(0)
   const [autoName, setAutoName] = useState(true)
+  // For papers going to PYQs: which exam it is. The site files a paper under Mid or Sem PYQs by its name.
+  const [exam, setExam] = useState<ExamKind | undefined>(undefined)
+  const [examYear, setExamYear] = useState(new Date().getFullYear())
   const [pdfName, setPdfName] = useState('')
   const [converting, setConverting] = useState<string | null>(null)
   const [running, setRunning] = useState(false)
@@ -341,26 +347,35 @@ export function Uploader({
   const pdfNameFor = (g: Group) => {
     const found = findSubject(g.code)
     const short = found?.subject.short ?? g.code
+    if (g.unit === PAPERS_UNIT && exam) return `${short} · ${EXAMS[exam]} ${examYear}`
     return autoName ? `${short} · ${sectionLabel(g.unit)} · Notes ${g.shelfCount + 1}` : `${short} ${sectionLabel(g.unit)} notes ${today}`
   }
 
   /** The name a file will get: what the person typed, else a chapter-based name, else its file name. */
   function nameFor(item: Item) {
-    if (item.edited || !autoName) return item.name
+    if (item.edited) return item.name
     const p = placeOf(item)
     const found = p ? findSubject(p.code) : undefined
-    if (!p || !found) return item.name
-    const g = plan.find((x) => x.code === p.code && x.unit === p.unit)
+    const g = p ? plan.find((x) => x.code === p.code && x.unit === p.unit) : undefined
     const at = g ? g.separate.indexOf(item) : -1
+    // A paper is named for its exam, so Mid and Sem papers land on the right shelf.
+    if (p && found && p.unit === PAPERS_UNIT && exam && g && at >= 0) {
+      return `${found.subject.short} · ${EXAMS[exam]} ${examYear}${g.separate.length > 1 ? ` · Set ${at + 1}` : ''}`
+    }
+    if (!autoName) return item.name
+    if (!p || !found) return item.name
     if (!g || at < 0) return item.name
     return autoFileName({ short: found.subject.short, unit: p.unit, n: g.shelfCount + (g.photos.length ? 1 : 0) + at + 1, original: item.file.name })
   }
+
+  const hasPapers = plan.some((g) => g.unit === PAPERS_UNIT && g.items.length > 0)
 
   const ready =
     !running &&
     !sortingNow &&
     pending.length + pendingLinks.length > 0 &&
     unplaced.length === 0 &&
+    (!hasPapers || !!exam) &&
     (pendingLinks.length === 0 || !!defaultPlace)
 
   async function start() {
@@ -718,6 +733,41 @@ export function Uploader({
           <p className="mt-4 rounded-xl bg-gold-soft px-3 py-2 text-xs text-gold">
             Photos of handwriting can&rsquo;t be read automatically yet. Pick the chapter once for any one photo below and the rest of this set follows it.
           </p>
+        )}
+
+        {hasPapers && (
+          <div className="mt-4 rounded-xl border border-line bg-bg px-4 py-3">
+            <p className="text-sm font-medium">Which exam is this paper from?</p>
+            <p className="text-xs text-ink-3">So it is filed under Mid PYQs or Sem PYQs, in the right year.</p>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              {(Object.keys(EXAMS) as ExamKind[]).map((k) => (
+                <button
+                  key={k}
+                  type="button"
+                  disabled={running}
+                  onClick={() => setExam(k)}
+                  aria-pressed={exam === k}
+                  className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition ${exam === k ? 'border-accent bg-accent-soft text-ink' : 'border-line text-ink-2 hover:border-line-strong'}`}
+                >
+                  {EXAMS[k]}
+                </button>
+              ))}
+              <select
+                value={examYear}
+                disabled={running}
+                onChange={(e) => setExamYear(Number(e.target.value))}
+                aria-label="Exam year"
+                className="h-9 rounded-lg border border-line bg-surface px-2 text-sm"
+              >
+                {Array.from({ length: 6 }, (_, i) => new Date().getFullYear() - i).map((y) => (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {!exam && <p className="mt-2 text-xs text-gold">Pick Mid 1, Mid 2 or Sem to continue.</p>}
+          </div>
         )}
 
         {items.length > 0 && (chosen || plan.length > 0) && (

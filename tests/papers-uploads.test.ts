@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { siblingSubjects } from '@/lib/curriculum'
 import { driveFilesFor } from '@/lib/library'
+import { isMidPaper, paperSlot } from '@/lib/papers'
 import { goesToDrive, mimeOf, uploadProblem } from '@/lib/upload-rules'
 
 const isMid = (t: string) => /(^|[^a-z])mid([^a-z]|$)/i.test(t)
@@ -57,5 +58,15 @@ describe('papers table', () => {
     expect(paperChip('PYQ · Mid 1 · Nov 2023 · R22 · Matrices and Calculus · page 2')).toBe('R22 · p2')
     expect(paperChip('PYQ · Mid 2 · Dec 2025 · R25 · Matrices and Calculus · set 2')).toBe('R25 · set 2')
     expect(paperChip('old paper')).toBe('Open')
+  })
+})
+
+describe('names the uploader gives papers', () => {
+  it('are read back as the exam they were picked for', () => {
+    expect(paperSlot('EDC · Mid 1 2026')).toBe('mid1')
+    expect(paperSlot('EDC · Mid 2 2026 · Set 2')).toBe('mid2')
+    expect(paperSlot('EDC · Sem 2026')).toBe('sem')
+    expect(isMidPaper('EDC · Mid 2 2025')).toBe(true)
+    expect(isMidPaper('EDC · Sem 2025')).toBe(false)
   })
 })
