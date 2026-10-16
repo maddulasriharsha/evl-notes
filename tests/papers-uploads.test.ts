@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { siblingSubjects } from '@/lib/curriculum'
+import { sharedCodes, siblingSubjects } from '@/lib/curriculum'
 import { driveFilesFor } from '@/lib/library'
 import { examOf, isMidPaper, paperSlot, retitlePaper } from '@/lib/papers'
 import { goesToDrive, mimeOf, uploadProblem } from '@/lib/upload-rules'
@@ -26,6 +26,17 @@ describe('the same subject in other branches', () => {
     expect(siblingSubjects('25PC1IT204').map((s) => s.subject.code)).toEqual(['25PC1CB206'])
     expect(siblingSubjects('25PC1EC204')).toEqual([])
     expect(siblingSubjects('nope')).toEqual([])
+  })
+})
+
+describe('notes shared between branches', () => {
+  it('lists the same notes, each once, from either code of a shared subject', () => {
+    expect(sharedCodes('25PC1IT204').sort()).toEqual(['25PC1CB206', '25PC1IT204'])
+    expect(sharedCodes('25PC1EC204')).toEqual(['25PC1EC204'])
+    const a = driveFilesFor('25PC1IT204', 0).map((f) => f.id).sort()
+    const b = driveFilesFor('25PC1CB206', 0).map((f) => f.id).sort()
+    expect(a).toEqual(b)
+    expect(new Set(a).size).toBe(a.length)
   })
 })
 

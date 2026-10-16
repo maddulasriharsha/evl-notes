@@ -5,7 +5,6 @@ import { ArrowLeft, ArrowRight, CloudUpload, ThumbsUp } from 'lucide-react'
 import { ChapterNav } from '@/components/chapter-nav'
 import { RequestNotesButton } from '@/components/community-buttons'
 import { DownloadShelfButton } from '@/components/download-shelf'
-import { OtherBranchNotes } from '@/components/other-branch-notes'
 import { PapersSections } from '@/components/papers-sections'
 import { QrButton } from '@/components/qr-button'
 import { ShelfCards } from '@/components/shelf-cards'
@@ -144,7 +143,6 @@ export default async function SectionPage({ params }: PageProps<'/s/[code]/[sect
               />
             </>
           )}
-          <OtherBranchNotes code={subject.code} unit={unit} />
         </section>
 
 

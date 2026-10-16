@@ -88,6 +88,11 @@ export function siblingSubjects(code: string) {
   return [...byCode.values()].filter((e) => e.subject.code !== me.subject.code && e.subject.kind === me.subject.kind && sameName(e.subject.name) === key)
 }
 
+/** A subject's own code followed by the codes of the same subject taught to other branches. Their notes are shared. */
+export function sharedCodes(code: string): string[] {
+  return [code, ...siblingSubjects(code).map((s) => s.subject.code)]
+}
+
 /** Every distinct subject across all branches. */
 export function allSubjects() {
   return [...byCode.values()]

@@ -1,12 +1,12 @@
 import { ThumbsUp } from 'lucide-react'
-import { BranchPartition, ShelfBranchPicker, type BranchShelf } from '@/components/branch-partition'
+import { ShelfBranchPicker } from '@/components/shelf-branch-picker'
 import { DownloadShelfButton } from '@/components/download-shelf'
 import { DriveFileCard, UploadFileCard } from '@/components/file-card'
 import { Empty, OwnerName } from '@/components/ui'
 import type { NoteCollection } from '@/lib/data'
 import { publicFileUrl } from '@/lib/env'
 import { formatDate, plural, timeAgo } from '@/lib/format'
-import { branches, findSubject } from '@/lib/curriculum'
+import { branches, findSubject, sharedCodes } from '@/lib/curriculum'
 import { LIBRARY_OWNER, type DriveFile } from '@/lib/library'
 
 const isLibraryOwner = (c: NoteCollection) => c.owner_is_admin && c.owner_name === LIBRARY_OWNER.name
@@ -63,9 +63,22 @@ export function ShelfCards({
 
   const names = Object.fromEntries(branches.map((b) => [b.id, b.short]))
   const options = branches.map((b) => ({ id: b.id, short: b.short }))
-  const taughtIn = [...new Set((findSubject(subjectCode)?.usedIn ?? []).map((u) => u.branch?.id).filter((x): x is string => !!x))]
+  // Everyone who studies this subject shares these notes, so a branch with several codes for it still sees one list.
+  const taughtIn = [
+    ...new Set(
+      sharedCodes(subjectCode).flatMap((code) => (findSubject(code)?.usedIn ?? []).map((u) => u.branch?.id).filter((x): x is string => !!x)),
+    ),
+  ]
+  // The branches that study a given code of this subject, as a tag ("RAI, CSM").
+  const branchesOfCode = (code: string) =>
+    [...new Set((findSubject(code)?.usedIn ?? []).map((u) => u.branch?.short).filter((x): x is string => !!x))].join(', ')
+  /** The tag under a file: its uploader's branch; else, for notes written under another code of this subject, that code's branches. */
+  const tagFor = (code: string, uploaderBranch: string | null) => {
+    if (uploaderBranch) return names[uploaderBranch] ?? uploaderBranch
+    return code !== subjectCode ? branchesOfCode(code) : ''
+  }
 
-  const shelves: BranchShelf[] = cards.map(({ key, collection: c, drive: driveList }) => {
+  const shelves = cards.map(({ key, collection: c, drive: driveList }) => {
         const name = c?.owner_name ?? LIBRARY_OWNER.name
         const admin = c ? c.owner_is_admin : LIBRARY_OWNER.admin
         const mod = c ? c.owner_is_mod : false
@@ -107,25 +120,23 @@ export function ShelfCards({
             </header>
             {c?.description && <p className="mb-4 text-sm whitespace-pre-line text-ink-2">{c.description}</p>}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-              {c?.files.map((f) => <UploadFileCard key={f.id} file={f} subject={subjectCode} unit={c.unit ?? unit} />)}
+              {c?.files.map((f) => (
+                <UploadFileCard key={f.id} file={f} subject={c.subject_code} unit={c.unit ?? unit} branchTag={tagFor(c.subject_code, c.owner_branch) || undefined} />
+              ))}
               {driveList.map((f) => (
-                <DriveFileCard key={f.id} file={f} placeUnit={unit} />
+                <DriveFileCard key={f.id} file={f} placeUnit={unit} branchTag={tagFor(f.subject, null) || undefined} />
               ))}
             </div>
           </article>
         )
-        return { key, branch, node }
+        return { key, node }
   })
 
-  // Only a subject that several branches share needs the partition.
-  if (taughtIn.length < 2 || shelves.every((x) => !x.branch)) {
-    return (
-      <div className="space-y-6">
-        {shelves.map((x) => (
-          <div key={x.key}>{x.node}</div>
-        ))}
-      </div>
-    )
-  }
-  return <BranchPartition shelves={shelves} taughtIn={taughtIn} names={names} />
+  return (
+    <div className="space-y-6">
+      {shelves.map((x) => (
+        <div key={x.key}>{x.node}</div>
+      ))}
+    </div>
+  )
 }

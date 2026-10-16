@@ -1,4 +1,5 @@
 import data from '@/data/drive-library.json'
+import { sharedCodes } from '@/lib/curriculum'
 
 /**
  * The owner's Google Drive notes, sorted into subjects and chapters (docs/DRIVE_IMPORT.md).
@@ -69,7 +70,11 @@ function sortFiles(a: DriveFile, b: DriveFile) {
 }
 
 function filesIn(index: ReturnType<typeof buildIndex>, subject: string, unit?: number) {
-  const list = index.bySubject.get(subject) ?? []
+  // The same subject taught to other branches shares one set of notes (each file once).
+  const seen = new Set<string>()
+  const list = sharedCodes(subject)
+    .flatMap((code) => index.bySubject.get(code) ?? [])
+    .filter((f) => !seen.has(f.id) && !!seen.add(f.id))
   // Section 6 is "Previous question papers" (the official exam papers); section 7 is the "Question
   // bank" (important questions, assignments, question sets). Moved files go where they were put.
   const filtered =

@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath, updateTag } from 'next/cache'
-import { completeHref, findSubject, sectionHref, sectionsOf, semesterHref, subjectHref } from '@/lib/curriculum'
+import { completeHref, findSubject, sectionHref, sharedCodes, sectionsOf, semesterHref, subjectHref } from '@/lib/curriculum'
 import { parseDriveLink, type DriveLinkKind } from '@/lib/drive-link'
 import { currentUser } from '@/lib/supabase/server'
 
@@ -12,12 +12,17 @@ export async function refreshChapter(subjectCode: string, unit: number) {
   if (!found || !sectionsOf(found.subject).includes(unit)) return
   // Where admins placed Drive library files is cached separately.
   updateTag('drive-placements')
-  revalidatePath(sectionHref(found.subject.code, unit))
-  revalidatePath(completeHref(found.subject.code))
-  revalidatePath(`${subjectHref(found.subject.code)}/exam`)
-  revalidatePath(subjectHref(found.subject.code))
-  for (const use of found.usedIn) {
-    if (use.branch) revalidatePath(semesterHref(use.branch.id, use.semester.sem))
+  // A subject taught to several branches shares its notes, so every code's pages change together.
+  for (const code of sharedCodes(found.subject.code)) {
+    const one = findSubject(code)
+    if (!one) continue
+    revalidatePath(sectionHref(code, unit))
+    revalidatePath(completeHref(code))
+    revalidatePath(`${subjectHref(code)}/exam`)
+    revalidatePath(subjectHref(code))
+    for (const use of one.usedIn) {
+      if (use.branch) revalidatePath(semesterHref(use.branch.id, use.semester.sem))
+    }
   }
   revalidatePath('/')
   revalidatePath('/contributors')

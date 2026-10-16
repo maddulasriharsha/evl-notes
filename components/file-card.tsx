@@ -28,7 +28,17 @@ function DownloadCorner({ href, name }: { href: string; name: string }) {
   )
 }
 
-export function UploadFileCard({ file, subject, unit }: { file: NoteFile; subject: string; unit: number }) {
+/** Which branch(es) a file comes from, under the file, so shared subjects show who it is for. */
+function BranchTag({ tag }: { tag?: string }) {
+  if (!tag) return null
+  return (
+    <span className="rounded-md bg-accent-soft px-1.5 py-0.5 text-[10px] font-semibold tracking-wider text-accent uppercase" title={`From ${tag}`}>
+      {tag}
+    </span>
+  )
+}
+
+export function UploadFileCard({ file, subject, unit, branchTag }: { file: NoteFile; subject: string; unit: number; branchTag?: string }) {
   const isLink = isDriveMime(file.mime)
   const isPdf = file.mime === 'application/pdf'
   const thumb = thumbFor(file)
@@ -55,6 +65,7 @@ export function UploadFileCard({ file, subject, unit }: { file: NoteFile; subjec
               {file.page_count ? plural(file.page_count, 'page') : type}
               {file.size_bytes != null ? ` · ${formatBytes(file.size_bytes)}` : ''}
             </span>
+            <BranchTag tag={branchTag} />
             {file.helpful_count > 0 && (
               <span className="inline-flex items-center gap-0.5 font-medium text-ink-2">
                 <ThumbsUp className="size-3.5" /> {file.helpful_count}
@@ -82,7 +93,7 @@ function iconFor(ext: string): ThumbIcon {
 }
 
 /** A file from the owner's Google Drive notes, previewed from Drive. */
-export function DriveFileCard({ file, placeUnit }: { file: DriveFile; placeUnit?: number }) {
+export function DriveFileCard({ file, placeUnit, branchTag }: { file: DriveFile; placeUnit?: number; branchTag?: string }) {
   const tone = file.kind === 'questions' ? 'gold' : file.kind === 'lab' ? 'ok' : 'neutral'
   const type = isImage(file.ext) ? 'Image' : file.ext.toUpperCase()
   return (
@@ -95,6 +106,7 @@ export function DriveFileCard({ file, placeUnit }: { file: DriveFile; placeUnit?
           <div className="mt-auto flex flex-wrap items-center gap-1.5 pr-11">
             {file.kind !== 'notes' && <Badge tone={tone}>{kindLabel[file.kind]}</Badge>}
             {file.pages ? <span className="text-xs text-ink-3">{plural(file.pages, 'page')}</span> : null}
+            <BranchTag tag={branchTag} />
           </div>
         </div>
       </Link>

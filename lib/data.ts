@@ -1,6 +1,7 @@
 import 'server-only'
 
 import { supabaseConfigured } from '@/lib/env'
+import { allSubjects, sharedCodes } from '@/lib/curriculum'
 import { supabasePublic } from '@/lib/supabase/server'
 
 export interface NoteFile {
@@ -128,7 +129,7 @@ export async function collectionsFor(subject: string, unit: number): Promise<Not
     supabasePublic()
       .from('collections')
       .select(`id, owner_id, subject_code, unit, description, created_at, updated_at, ${ownerColumns()}, files(${cols})`)
-      .eq('subject_code', subject)
+      .in('subject_code', sharedCodes(subject))
       .eq('unit', unit)
       .is('files.deleted_at', null)
       .order('updated_at', { ascending: false }),
@@ -151,7 +152,7 @@ export async function taggedQuestionsFor(subject: string): Promise<NoteCollectio
     supabasePublic()
       .from('collections')
       .select(`id, owner_id, subject_code, unit, description, created_at, updated_at, ${ownerColumns()}, files(${cols})`)
-      .eq('subject_code', subject)
+      .in('subject_code', sharedCodes(subject))
       .is('files.deleted_at', null)
       .contains('files.tags', ['questions'])
       .order('updated_at', { ascending: false }),
@@ -169,7 +170,7 @@ export async function countsForSubject(subject: string): Promise<Record<number, 
   const { data, error } = await supabasePublic()
     .from('collections')
     .select('unit, files(id)')
-    .eq('subject_code', subject)
+    .in('subject_code', sharedCodes(subject))
     .is('files.deleted_at', null)
   if (error) return {}
   const out: Record<number, number> = {}
@@ -191,7 +192,13 @@ export async function countsBySubject(): Promise<Record<string, number>> {
   for (const row of (data ?? []) as { subject_code: string; files: { id: string }[] }[]) {
     out[row.subject_code] = (out[row.subject_code] ?? 0) + row.files.length
   }
-  return out
+  // A subject taught to several branches is one shared shelf: every code shows the combined count.
+  const combined: Record<string, number> = { ...out }
+  for (const { subject } of allSubjects()) {
+    const codes = sharedCodes(subject.code)
+    if (codes.length > 1) combined[subject.code] = codes.reduce((n, c) => n + (out[c] ?? 0), 0)
+  }
+  return combined
 }
 
 /** Live uploaded files and their pages (a photo counts as one page). */

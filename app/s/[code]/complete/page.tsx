@@ -3,7 +3,6 @@ import { notFound } from 'next/navigation'
 import { BookOpenCheck, CloudUpload, FileQuestion, ScrollText } from 'lucide-react'
 import { ChapterNav } from '@/components/chapter-nav'
 import { RequestNotesButton } from '@/components/community-buttons'
-import { OtherBranchNotes } from '@/components/other-branch-notes'
 import { PapersSections } from '@/components/papers-sections'
 import { QrButton } from '@/components/qr-button'
 import { ShelfCards } from '@/components/shelf-cards'
@@ -103,7 +102,6 @@ export default async function CompletePage({ params }: PageProps<'/s/[code]/comp
             emptyHint="Have the whole subject in one file?"
             anchor="n-"
           />
-          <OtherBranchNotes code={subject.code} unit={0} anchor="on" />
         </section>
 
         <section id="question-bank" className="scroll-mt-36">
@@ -124,7 +122,6 @@ export default async function CompletePage({ params }: PageProps<'/s/[code]/comp
             emptyHint="Have important questions or assignments?"
             anchor="q-"
           />
-          <OtherBranchNotes code={subject.code} unit={QUESTION_BANK_UNIT} anchor="oq" />
         </section>
 
         <section id="previous-papers" className="scroll-mt-36">
@@ -134,7 +131,6 @@ export default async function CompletePage({ params }: PageProps<'/s/[code]/comp
           </h2>
           <p className="mb-6 text-sm text-ink-3">Old exam papers for this subject, mid-term and semester-end.</p>
           <PapersSections subjectCode={subject.code} subjectShort={subject.short} papers={papers} drive={papersDrive} />
-          <OtherBranchNotes code={subject.code} unit={PAPERS_UNIT} anchor="op" />
         </section>
       </Container>
     </>
