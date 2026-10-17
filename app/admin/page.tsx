@@ -7,7 +7,8 @@ import { AnnouncementManager, type AnnouncementRow } from '@/components/announce
 import { BackupPanel } from '@/components/backup-panel'
 import { DailyChart } from '@/components/daily-chart'
 import { Container, OwnerName } from '@/components/ui'
-import { findSubject, sectionHref, sectionLabel } from '@/lib/curriculum'
+import { ShelfBranchPicker } from '@/components/shelf-branch-picker'
+import { branches, findSubject, sectionHref, sectionLabel } from '@/lib/curriculum'
 import { formatBytes, formatDate, plural, timeAgo } from '@/lib/format'
 import { backupStatus } from '@/lib/backup-job'
 import { driveBackupConfigured } from '@/lib/drive-backup'
@@ -50,6 +51,14 @@ function Table({ head, children }: { head: string[]; children: React.ReactNode }
 }
 
 const td = 'px-4 py-3 align-middle'
+
+const branchOptions = branches.map((b) => ({ id: b.id, short: b.short }))
+
+/** Each member's branch, read apart from the people lists (the column arrives with a migration). */
+async function branchMap(supabase: Awaited<ReturnType<typeof supabaseServer>>) {
+  const { data } = await supabase.from('profiles').select('id, branch')
+  return new Map(((data ?? []) as { id: string; branch: string | null }[]).map((r) => [r.id, r.branch]))
+}
 const n = (x: number) => x.toLocaleString('en-IN')
 
 interface PersonRow {
@@ -451,10 +460,11 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
   if (tab === 'people' && isAdmin) {
     const { data, error } = await supabase.rpc('admin_people')
     const rows = (data ?? []) as PersonRow[]
+    const branchOf = await branchMap(supabase)
     body = error ? (
       <p className="text-danger">{error.message}</p>
     ) : (
-      <Table head={['Person', 'Email', 'Contribution', 'Last sign-in', 'Joined', '']}>
+      <Table head={['Person', 'Email', 'Branch', 'Contribution', 'Last sign-in', 'Joined', '']}>
         {rows.map((u) => (
           <tr key={u.id} className={rowCls(!!u.banned_at)}>
             <td className={td}>
@@ -466,6 +476,9 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
             <td className={`${td} text-ink-2`}>
               {u.email}
               <p className="text-xs text-ink-3 capitalize">{u.provider}</p>
+            </td>
+            <td className={td}>
+              <ShelfBranchPicker userId={u.id} branch={branchOf.get(u.id) ?? null} options={branchOptions} />
             </td>
             <td className={`${td} whitespace-nowrap text-ink-3`}>
               {plural(Number(u.files), 'file')} · {plural(Number(u.comments), 'comment')}
@@ -488,15 +501,19 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
     // Moderators see names and activity only: no emails and no sign-in history.
     const { data, error } = await supabase.rpc('staff_people')
     const rows = (data ?? []) as { id: string; display_name: string; role: string; banned_at: string | null; joined: string; files: number; comments: number }[]
+    const branchOf = await branchMap(supabase)
     body = error ? (
       <p className="text-danger">{error.message}</p>
     ) : (
-      <Table head={['Person', 'Contribution', 'Joined', '']}>
+      <Table head={['Person', 'Branch', 'Contribution', 'Joined', '']}>
         {rows.map((u) => (
           <tr key={u.id} className={rowCls(!!u.banned_at)}>
             <td className={td}>
               <OwnerName name={u.display_name} admin={u.role === 'admin'} moderator={u.role === 'moderator'} className="font-medium" />
               {u.banned_at && <p className="text-xs text-danger">Blocked {timeAgo(u.banned_at)}</p>}
+            </td>
+            <td className={td}>
+              <ShelfBranchPicker userId={u.id} branch={branchOf.get(u.id) ?? null} options={branchOptions} />
             </td>
             <td className={`${td} whitespace-nowrap text-ink-3`}>
               {plural(Number(u.files), 'file')} · {plural(Number(u.comments), 'comment')}
