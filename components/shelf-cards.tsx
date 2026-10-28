@@ -1,5 +1,6 @@
 import { ThumbsUp } from 'lucide-react'
 import { ShelfBranchPicker } from '@/components/shelf-branch-picker'
+import { BulkBar, BulkProvider, BulkToggle, type BulkItem } from '@/components/bulk-select'
 import { CombinePhotosButton } from '@/components/combine-photos'
 import { DownloadShelfButton } from '@/components/download-shelf'
 import { DriveFileCard, UploadFileCard } from '@/components/file-card'
@@ -149,11 +150,21 @@ export function ShelfCards({
         return { key, node }
   })
 
+  // What staff can pick for a bulk move, hide or tag.
+  const pickable: BulkItem[] = cards.flatMap(({ collection: c, drive: driveList }) => [
+    ...(c?.files.map((f): BulkItem => ({ id: f.id, kind: 'u', name: f.name, subject: c.subject_code, unit: c.unit ?? unit })) ?? []),
+    ...driveList.map((f): BulkItem => ({ id: f.id, kind: 'd', name: f.title, subject: f.subject, unit })),
+  ])
+
   return (
-    <div className="space-y-6">
-      {shelves.map((x) => (
-        <div key={x.key}>{x.node}</div>
-      ))}
-    </div>
+    <BulkProvider all={pickable}>
+      <BulkToggle />
+      <div className="space-y-6">
+        {shelves.map((x) => (
+          <div key={x.key}>{x.node}</div>
+        ))}
+      </div>
+      <BulkBar />
+    </BulkProvider>
   )
 }

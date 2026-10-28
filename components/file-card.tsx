@@ -1,5 +1,6 @@
 import Link from '@/components/link'
 import { Download, MessageCircle, ThumbsUp } from 'lucide-react'
+import { SelectOverlay } from '@/components/bulk-select'
 import { DriveMove } from '@/components/drive-move'
 import { FileTools } from '@/components/file-tools'
 import { Thumb, type ThumbIcon } from '@/components/thumb'
@@ -55,6 +56,7 @@ export function UploadFileCard({ file, subject, unit, branchTag }: { file: NoteF
   const type = kind ? DRIVE_KIND_LABEL[kind].replace('Drive ', '').replace('Google ', '') : isPdf ? 'PDF' : 'Image'
   return (
     <div className="fx-reveal group relative flex">
+      <SelectOverlay item={{ id: file.id, kind: 'u', name: file.name, subject, unit }} />
       <FileTools id={file.id} ownerId={file.owner_id} name={file.name} subject={subject} unit={unit} variant="card" tagged={file.tags?.includes('questions')} />
       <Link href={`/view/u/${file.id}`} className={CARD}>
         <Thumb src={thumb} icon={kind ? (kind === 'presentation' ? 'slides' : 'doc') : isPdf ? 'pdf' : 'image'} label={type} badge={type} />
@@ -98,6 +100,7 @@ export function DriveFileCard({ file, placeUnit, branchTag }: { file: DriveFile;
   const type = isImage(file.ext) ? 'Image' : file.ext.toUpperCase()
   return (
     <div className="fx-reveal group relative flex">
+      <SelectOverlay item={{ id: file.id, kind: 'd', name: file.title, subject: file.subject, unit: placeUnit ?? file.unit ?? 0 }} />
       <DriveMove id={file.id} name={file.title} subject={file.subject} unit={placeUnit ?? file.unit ?? 0} />
       <Link href={`/view/d/${file.id}`} className={CARD}>
         <Thumb src={driveThumbUrl(file.id)} icon={iconFor(file.ext)} label={file.ext} badge={type} />

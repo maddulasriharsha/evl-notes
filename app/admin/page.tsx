@@ -5,6 +5,7 @@ import { CommentModButtons, FileModButtons, ReportActions, SuggestionStatusButto
 import { AdminHideToggle } from '@/components/admin-hide-toggle'
 import { AnnouncementManager, type AnnouncementRow } from '@/components/announcement-manager'
 import { BackupPanel } from '@/components/backup-panel'
+import { BulkBar, BulkProvider, BulkToggle, RowCheck, type BulkItem } from '@/components/bulk-select'
 import { DailyChart } from '@/components/daily-chart'
 import { SuggestionThread, type ThreadReply } from '@/components/suggestion-thread'
 import { Container, OwnerName } from '@/components/ui'
@@ -396,10 +397,21 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
     body = filesError ? (
       <p className="rounded-xl bg-danger-soft px-4 py-3 text-danger">Could not load files: {filesError.message}</p>
     ) : (
+      <BulkProvider
+        all={rows.filter((f) => f.collections).map((f): BulkItem => ({ id: f.id, kind: 'u', name: f.name, subject: f.collections!.subject_code, unit: f.collections!.unit, hidden: !!f.deleted_at }))}
+      >
+        <div className="mb-3">
+          <BulkToggle />
+        </div>
       <Table head={['File', 'By', 'Where', 'Added', '']}>
         {rows.map((f) => (
           <tr key={f.id} className={rowCls(!!f.deleted_at)}>
             <td className={td}>
+              {f.collections && (
+                <div className="mb-1 empty:hidden">
+                  <RowCheck item={{ id: f.id, kind: 'u', name: f.name, subject: f.collections.subject_code, unit: f.collections.unit, hidden: !!f.deleted_at }} />
+                </div>
+              )}
               <Link href={`/view/u/${f.id}`} className="font-medium hover:text-accent">{f.name}</Link>
               <p className="text-xs text-ink-3">
                 {f.mime.startsWith('application/vnd.google-apps.') ? 'Drive link' : f.mime === 'application/pdf' ? 'PDF' : 'Image'}
@@ -420,6 +432,8 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
           </tr>
         ))}
       </Table>
+      <BulkBar />
+      </BulkProvider>
     )
   }
 
