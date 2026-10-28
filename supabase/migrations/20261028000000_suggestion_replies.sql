@@ -37,6 +37,11 @@ language sql stable security definer set search_path = public as $$
   select count(*)::int from public.suggestion_replies where author_id = auth.uid() and created_at > now() - interval '1 day';
 $$;
 
+revoke execute on function public.suggestion_has_staff_reply(uuid) from anon, public;
+grant execute on function public.suggestion_has_staff_reply(uuid) to authenticated;
+revoke execute on function public.suggestion_reply_count_today() from anon, public;
+grant execute on function public.suggestion_reply_count_today() to authenticated;
+
 alter table public.suggestion_replies enable row level security;
 revoke all on public.suggestion_replies from anon, authenticated;
 grant select on public.suggestion_replies to authenticated;
