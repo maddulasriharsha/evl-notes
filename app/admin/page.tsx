@@ -6,6 +6,7 @@ import { AdminHideToggle } from '@/components/admin-hide-toggle'
 import { AnnouncementManager, type AnnouncementRow } from '@/components/announcement-manager'
 import { BackupPanel } from '@/components/backup-panel'
 import { DailyChart } from '@/components/daily-chart'
+import { SuggestionThread, type ThreadReply } from '@/components/suggestion-thread'
 import { Container, OwnerName } from '@/components/ui'
 import { ShelfBranchPicker } from '@/components/shelf-branch-picker'
 import { branches, findSubject, sectionHref, sectionLabel } from '@/lib/curriculum'
@@ -345,6 +346,10 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
       author: { display_name: string; role: string } | null
     }[]
     const label: Record<string, string> = { feature: 'Feature', bug: 'Broken', content: 'Missing notes', other: 'Other' }
+    // The private chats, read in one go (the table arrives with a migration).
+    const { data: chat } = await supabase.from('suggestion_replies').select('id, suggestion_id, from_staff, body, created_at').order('created_at')
+    const threads = new Map<string, ThreadReply[]>()
+    for (const r of (chat ?? []) as (ThreadReply & { suggestion_id: string })[]) threads.set(r.suggestion_id, [...(threads.get(r.suggestion_id) ?? []), r])
     body = error ? (
       <p className="text-danger">{error.message}. Has the question-bank / suggestions SQL been run?</p>
     ) : rows.length === 0 ? (
@@ -355,6 +360,7 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
           <tr key={r.id} className={rowCls(false)}>
             <td className={`${td} max-w-lg`}>
               <p className="break-words whitespace-pre-line">{r.body}</p>
+              <SuggestionThread suggestionId={r.id} userId={me.user.id} viewerIsStaff replies={threads.get(r.id) ?? []} />
             </td>
             <td className={`${td} whitespace-nowrap text-ink-2`}>{label[r.category] ?? r.category}</td>
             <td className={td}>

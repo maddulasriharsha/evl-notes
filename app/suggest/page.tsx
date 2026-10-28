@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from '@/components/link'
 import { SuggestionForm, SUGGESTION_CATEGORIES } from '@/components/suggestion-form'
+import { SuggestionThread, type ThreadReply } from '@/components/suggestion-thread'
 import { Container, SectionHeading } from '@/components/ui'
 import { timeAgo } from '@/lib/format'
 import { currentUser, supabaseServer } from '@/lib/supabase/server'
@@ -16,16 +17,24 @@ const STATUS: Record<string, { label: string; cls: string }> = {
 
 export default async function SuggestPage() {
   const user = await currentUser()
-  let mine: { id: string; category: string; body: string; status: string; created_at: string }[] = []
+  let mine: { id: string; category: string; body: string; status: string; created_at: string; author_seen_at?: string | null }[] = []
+  const threads = new Map<string, ThreadReply[]>()
   if (user) {
     const supabase = await supabaseServer()
-    const { data } = await supabase
-      .from('suggestions')
-      .select('id, category, body, status, created_at')
-      .eq('author_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(20)
-    mine = (data ?? []) as typeof mine
+    // author_seen_at arrives with the private-replies migration; until then read without it.
+    const read = (columns: string) =>
+      supabase.from('suggestions').select(columns).eq('author_id', user.id).order('created_at', { ascending: false }).limit(20)
+    let res = await read('id, category, body, status, created_at, author_seen_at')
+    if (res.error) res = await read('id, category, body, status, created_at')
+    mine = (res.data ?? []) as unknown as typeof mine
+    if (mine.length) {
+      const { data: chat } = await supabase
+        .from('suggestion_replies')
+        .select('id, suggestion_id, from_staff, body, created_at')
+        .in('suggestion_id', mine.map((s) => s.id))
+        .order('created_at')
+      for (const r of (chat ?? []) as (ThreadReply & { suggestion_id: string })[]) threads.set(r.suggestion_id, [...(threads.get(r.suggestion_id) ?? []), r])
+    }
   }
 
   return (
@@ -68,6 +77,7 @@ export default async function SuggestPage() {
                   <span className={`ml-auto rounded-md px-1.5 py-0.5 font-semibold ${STATUS[s.status]?.cls ?? ''}`}>{STATUS[s.status]?.label ?? s.status}</span>
                 </div>
                 <p className="mt-1 text-sm break-words whitespace-pre-line">{s.body}</p>
+                {user && <Thread suggestion={s} userId={user.id} replies={threads.get(s.id) ?? []} />}
               </li>
             ))}
           </ul>
@@ -75,4 +85,11 @@ export default async function SuggestPage() {
       )}
     </Container>
   )
+}
+
+/** The private chat under one of your suggestions; "New" until you have opened the team's latest reply. */
+function Thread({ suggestion, userId, replies }: { suggestion: { id: string; author_seen_at?: string | null }; userId: string; replies: ThreadReply[] }) {
+  const lastStaff = replies.filter((r) => r.from_staff).at(-1)
+  const unread = !!lastStaff && (!suggestion.author_seen_at || lastStaff.created_at > suggestion.author_seen_at)
+  return <SuggestionThread suggestionId={suggestion.id} userId={userId} viewerIsStaff={false} replies={replies} unread={unread} />
 }

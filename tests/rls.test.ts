@@ -565,6 +565,30 @@ describe('suggestion box', () => {
   })
 })
 
+describe('private replies on a suggestion', () => {
+  it('is a chat between the author and staff that nobody else can read or join', async () => {
+    const sug = (await as(A, `insert into public.suggestions (author_id, category, body) values ($1, 'feature', 'Please add flashcards') returning id`, [A])).rows[0] as { id: string }
+    // the author cannot start the conversation, and nobody else can write in it
+    await fails(A, `insert into public.suggestion_replies (suggestion_id, author_id, body) values ($1, $2, 'hello?')`, [sug.id, A])
+    await fails(B, `insert into public.suggestion_replies (suggestion_id, author_id, body) values ($1, $2, 'intruder')`, [sug.id, B])
+    await fails(null, `select * from public.suggestion_replies`)
+    // staff write first (and are marked as staff by the database)
+    await fails(ADMIN, `insert into public.suggestion_replies (suggestion_id, author_id, body) values ($1, $2, '   ')`, [sug.id, ADMIN])
+    await fails(ADMIN, `insert into public.suggestion_replies (suggestion_id, author_id, body) values ($1, $2, 'as someone else')`, [sug.id, A])
+    await as(ADMIN, `insert into public.suggestion_replies (suggestion_id, author_id, body) values ($1, $2, 'Good idea, working on it')`, [sug.id, ADMIN])
+    // now the author can answer
+    await as(A, `insert into public.suggestion_replies (suggestion_id, author_id, body) values ($1, $2, 'Thanks!')`, [sug.id, A])
+    expect((await as(A, `select from_staff from public.suggestion_replies where suggestion_id = $1 order by created_at`, [sug.id])).rows).toEqual([{ from_staff: true }, { from_staff: false }])
+    expect((await as(B, `select id from public.suggestion_replies`)).rows).toHaveLength(0)
+    expect((await as(ADMIN, `select id from public.suggestion_replies`)).rows).toHaveLength(2)
+    // others cannot mark it read; the author can
+    await as(B, `select public.mark_suggestion_read($1)`, [sug.id])
+    expect((await as(ADMIN, `select author_seen_at from public.suggestions where id = $1`, [sug.id])).rows).toEqual([{ author_seen_at: null }])
+    await as(A, `select public.mark_suggestion_read($1)`, [sug.id])
+    expect((await as(A, `select author_seen_at is not null as seen from public.suggestions where id = $1`, [sug.id])).rows).toEqual([{ seen: true }])
+  })
+})
+
 describe('moderator role', () => {
   const MOD = '44444444-4444-4444-8444-444444444444'
   const M1 = 'dddddddd-0000-4000-8000-000000000001'
