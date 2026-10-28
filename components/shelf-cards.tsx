@@ -1,10 +1,12 @@
 import { ThumbsUp } from 'lucide-react'
 import { ShelfBranchPicker } from '@/components/shelf-branch-picker'
+import { CombinePhotosButton } from '@/components/combine-photos'
 import { DownloadShelfButton } from '@/components/download-shelf'
 import { DriveFileCard, UploadFileCard } from '@/components/file-card'
 import { Empty, OwnerName } from '@/components/ui'
 import type { NoteCollection } from '@/lib/data'
 import { publicFileUrl } from '@/lib/env'
+import { thumbFor } from '@/lib/file-thumb'
 import { formatDate, plural, timeAgo } from '@/lib/format'
 import { branches, findSubject, sharedCodes } from '@/lib/curriculum'
 import { LIBRARY_OWNER, type DriveFile } from '@/lib/library'
@@ -51,6 +53,11 @@ export function ShelfCards({
     c.files
       .filter((f) => f.storage_path && !f.original_removed_at && (f.mime === 'application/pdf' || f.mime.startsWith('image/')))
       .map((f) => ({ name: f.name, mime: f.mime, url: publicFileUrl(f.storage_path!) }))
+  // Separate photos of a shelf that its owner can join into one PDF.
+  const photosOf = (c: NoteCollection) =>
+    c.files
+      .filter((f) => f.storage_path && !f.original_removed_at && f.mime.startsWith('image/'))
+      .map((f) => ({ id: f.id, name: f.name, thumb: thumbFor(f), url: publicFileUrl(f.storage_path!), mime: f.mime, position: f.position }))
   const topHelpful = collections.reduce((m, c) => Math.max(m, c.helpful), 0)
 
   if (cards.length === 0) {
@@ -114,6 +121,16 @@ export function ShelfCards({
                 </p>
               </div>
               {c && !admin && taughtIn.length > 1 && <ShelfBranchPicker userId={c.owner_id} branch={c.owner_branch} options={options} />}
+              {c && photosOf(c).length > 1 && (
+                <CombinePhotosButton
+                  collectionId={c.id}
+                  ownerId={c.owner_id}
+                  subject={c.subject_code}
+                  unit={c.unit ?? unit}
+                  title={`${subjectShort} · ${label} · Notes`}
+                  photos={photosOf(c)}
+                />
+              )}
               {c && sourcesOf(c).length > 1 && (
                 <DownloadShelfButton sources={sourcesOf(c)} title={`${name} - ${subjectShort} ${label}`} label="Download as one PDF" />
               )}
