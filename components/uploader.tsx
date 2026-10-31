@@ -440,7 +440,7 @@ export function Uploader({
             }
           }),
         )
-        await refreshChapter(g.code, g.unit)
+        await refreshQuietly(g.code, g.unit)
         touched.push({ code: g.code, unit: g.unit })
       }
 
@@ -457,7 +457,7 @@ export function Uploader({
             patchLink(l.key, { stage: 'error', error: e instanceof Error ? e.message : 'Could not save this link' })
           }
         }
-        await refreshChapter(defaultPlace.code, defaultPlace.unit)
+        await refreshQuietly(defaultPlace.code, defaultPlace.unit)
         if (!touched.some((t) => t.code === defaultPlace.code && t.unit === defaultPlace.unit)) touched.push(defaultPlace)
       }
       setFinished(touched)
@@ -466,6 +466,19 @@ export function Uploader({
       setRejected([e instanceof Error ? e.message : 'Something went wrong'])
     } finally {
       setRunning(false)
+    }
+  }
+
+  /**
+   * Asks the site to show the new notes sooner. Only a nicety: pages catch up on their own within
+   * minutes, so a failure here (for example this tab is older than the latest site update) must
+   * never stop the rest of the upload.
+   */
+  async function refreshQuietly(code: string, unit: number) {
+    try {
+      await refreshChapter(code, unit)
+    } catch {
+      /* the notes are saved; the page just refreshes a little later */
     }
   }
 
