@@ -3,6 +3,7 @@ import { Download, MessageCircle, ThumbsUp } from 'lucide-react'
 import { SelectOverlay } from '@/components/bulk-select'
 import { DriveMove } from '@/components/drive-move'
 import { FileTools } from '@/components/file-tools'
+import { ReadProgress } from '@/components/read-progress'
 import { Thumb, type ThumbIcon } from '@/components/thumb'
 import { Badge } from '@/components/ui'
 import type { NoteFile } from '@/lib/data'
@@ -79,6 +80,7 @@ export function UploadFileCard({ file, subject, unit, branchTag }: { file: NoteF
               </span>
             )}
           </p>
+          {isPdf && <ReadProgress fileId={file.id} />}
         </div>
       </Link>
       {download && <DownloadCorner href={download} name={file.name} />}

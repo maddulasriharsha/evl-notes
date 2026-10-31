@@ -114,7 +114,7 @@ export default async function UploadViewer({ params }: PageProps<'/view/u/[id]'>
             allow="autoplay; fullscreen"
           />
         ) : isPdf ? (
-          <PdfViewer url={original} downloadHref={download} />
+          <PdfViewer url={original} downloadHref={download} fileId={file.id} />
         ) : (
           <ImageViewer preview={file.preview_path ? publicFileUrl(file.preview_path) : original} original={original} alt={file.name} />
         )}

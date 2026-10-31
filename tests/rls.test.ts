@@ -878,3 +878,46 @@ describe("a member's branch", () => {
     await as(ADMIN, `select public.staff_set_user_branch($1, null)`, [A])
   })
 })
+
+describe('page bookmarks, page flags and reading progress', () => {
+  const PF = 'aaaaaaaa-0000-4000-8000-0000000000f1'
+  let flagId = ''
+
+  beforeAll(async () => {
+    await db.exec(
+      `insert into public.files (id, collection_id, owner_id, storage_path, name, mime, size_bytes)
+       values ('${PF}', '${colA}', '${A}', '${path(A, colA, PF)}', 'Reading test', 'application/pdf', 100)`,
+    )
+  })
+
+  it('keeps bookmarks private to their owner', async () => {
+    await as(A, `insert into public.page_marks (file_id, user_id, page, kind) values ($1, $2, 3, 'bookmark')`, [PF, A])
+    await fails(A, `insert into public.page_marks (file_id, user_id, page, kind) values ($1, $2, 3, 'bookmark')`, [PF, A])
+    await fails(B, `insert into public.page_marks (file_id, user_id, page, kind) values ($1, $2, 4, 'bookmark')`, [PF, A])
+    await fails(null, `insert into public.page_marks (file_id, user_id, page, kind) values ($1, $2, 4, 'bookmark')`, [PF, A])
+    expect((await as(B, `select id from public.page_marks where kind = 'bookmark'`)).rows).toHaveLength(0)
+    expect((await as(null, `select id from public.page_marks where kind = 'bookmark'`)).rows).toHaveLength(0)
+    expect((await as(A, `select id from public.page_marks where kind = 'bookmark'`)).rows).toHaveLength(1)
+  })
+
+  it('shows a flag to everyone, needs a note, and lets only staff or its author remove it', async () => {
+    await fails(B, `insert into public.page_marks (file_id, user_id, page, kind) values ($1, $2, 5, 'flag')`, [PF, B])
+    const r = await as(B, `insert into public.page_marks (file_id, user_id, page, kind, note) values ($1, $2, 5, 'flag', 'Formula is outdated') returning id`, [PF, B])
+    flagId = r.rows[0]!.id as string
+    expect((await as(null, `select note from public.page_marks where id = $1`, [flagId])).rows).toEqual([{ note: 'Formula is outdated' }])
+    expect((await as(A, `delete from public.page_marks where id = $1 returning id`, [flagId])).rows).toHaveLength(0)
+    await fails(A, `select public.staff_resolve_page_flag($1)`, [flagId])
+    await as(ADMIN, `select public.staff_resolve_page_flag($1)`, [flagId])
+    expect((await as(A, `select id from public.page_marks where id = $1`, [flagId])).rows).toHaveLength(0)
+    expect((await as(B, `delete from public.page_marks where id = $1 returning id`, [flagId])).rows).toHaveLength(1)
+  })
+
+  it('lets a person keep only their own reading place', async () => {
+    await as(A, `insert into public.reading_progress (user_id, file_id, page, pages) values ($1, $2, 4, 10)`, [A, PF])
+    await as(A, `update public.reading_progress set page = 6, pages = 10, updated_at = now() where user_id = $1 and file_id = $2`, [A, PF])
+    await fails(B, `insert into public.reading_progress (user_id, file_id, page, pages) values ($1, $2, 1, 10)`, [A, PF])
+    await fails(null, `select 1 from public.reading_progress`)
+    expect((await as(B, `select page from public.reading_progress`)).rows).toHaveLength(0)
+    expect((await as(A, `select page from public.reading_progress`)).rows).toEqual([{ page: 6 }])
+  })
+})
