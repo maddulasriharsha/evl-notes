@@ -4,6 +4,7 @@ import { SelectOverlay } from '@/components/bulk-select'
 import { DriveMove } from '@/components/drive-move'
 import { FileTools } from '@/components/file-tools'
 import { ReadProgress } from '@/components/read-progress'
+import { StarBadge } from '@/components/star-rating'
 import { Thumb, type ThumbIcon } from '@/components/thumb'
 import { Badge } from '@/components/ui'
 import type { NoteFile } from '@/lib/data'
@@ -63,12 +64,14 @@ export function UploadFileCard({ file, subject, unit, branchTag }: { file: NoteF
         <Thumb src={thumb} icon={kind ? (kind === 'presentation' ? 'slides' : 'doc') : isPdf ? 'pdf' : 'image'} label={type} badge={type} />
         <div className="flex flex-1 flex-col gap-2 border-t border-line p-3">
           <p className="line-clamp-3 text-sm leading-snug font-medium">{file.name}</p>
+          {file.summary && <p className="line-clamp-2 text-xs leading-snug text-ink-3">{file.summary}</p>}
           <p className={`mt-auto flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-3 ${download ? 'pr-11' : ''}`}>
             <span>
               {file.page_count ? plural(file.page_count, 'page') : type}
               {file.size_bytes != null ? ` · ${formatBytes(file.size_bytes)}` : ''}
             </span>
             <BranchTag tag={branchTag} />
+            <StarBadge avg={file.rating_avg} count={file.rating_count} />
             {file.helpful_count > 0 && (
               <span className="inline-flex items-center gap-0.5 font-medium text-ink-2">
                 <ThumbsUp className="size-3.5" /> {file.helpful_count}

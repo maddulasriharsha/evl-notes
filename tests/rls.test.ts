@@ -921,3 +921,34 @@ describe('page bookmarks, page flags and reading progress', () => {
     expect((await as(A, `select page from public.reading_progress`)).rows).toEqual([{ page: 6 }])
   })
 })
+
+describe('star ratings and summaries', () => {
+  const RF = 'aaaaaaaa-0000-4000-8000-0000000000f2'
+
+  beforeAll(async () => {
+    await db.exec(
+      `insert into public.files (id, collection_id, owner_id, storage_path, name, mime, size_bytes)
+       values ('${RF}', '${colA}', '${A}', '${path(A, colA, RF)}', 'Rating test', 'application/pdf', 100)`,
+    )
+  })
+
+  it('lets a person rate another person\'s note once, changing it later, never their own', async () => {
+    await fails(A, `insert into public.file_ratings (file_id, user_id, stars) values ($1, $2, 5)`, [RF, A])
+    await fails(B, `insert into public.file_ratings (file_id, user_id, stars) values ($1, $2, 6)`, [RF, B])
+    await fails(null, `insert into public.file_ratings (file_id, user_id, stars) values ($1, $2, 4)`, [RF, B])
+    await fails(A, `insert into public.file_ratings (file_id, user_id, stars) values ($1, $2, 4)`, [RF, B])
+    await as(B, `insert into public.file_ratings (file_id, user_id, stars) values ($1, $2, 4)`, [RF, B])
+    await fails(B, `insert into public.file_ratings (file_id, user_id, stars) values ($1, $2, 5)`, [RF, B])
+    await as(B, `update public.file_ratings set stars = 5, updated_at = now() where file_id = $1 and user_id = $2`, [RF, B])
+    expect((await as(A, `update public.file_ratings set stars = 1 where file_id = $1 returning stars`, [RF])).rows).toHaveLength(0)
+    expect((await as(null, `select stars from public.file_ratings where file_id = $1`, [RF])).rows).toEqual([{ stars: 5 }])
+  })
+
+  it('lets the owner and staff write a summary, and nobody else', async () => {
+    expect((await as(B, `update public.files set summary = 'x' where id = $1 returning id`, [RF])).rows).toHaveLength(0)
+    await as(A, `update public.files set summary = 'Unit 2 notes with solved examples' where id = $1`, [RF])
+    await as(ADMIN, `update public.files set summary = 'Unit 2 notes, solved examples' where id = $1`, [RF])
+    await fails(A, `update public.files set summary = $2 where id = $1`, [RF, 'x'.repeat(301)])
+    expect((await as(null, `select summary from public.files where id = $1`, [RF])).rows).toEqual([{ summary: 'Unit 2 notes, solved examples' }])
+  })
+})

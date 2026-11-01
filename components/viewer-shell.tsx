@@ -10,6 +10,8 @@ export interface ViewerNav {
   next?: string
   position?: string
   actions: React.ReactNode
+  /** A strip under the title, such as the note's summary. */
+  summary?: React.ReactNode
 }
 
 /** Full-height frame shared by every viewer: back link, title, prev / next, actions. */
@@ -41,6 +43,7 @@ export function ViewerShell({ nav, children }: { nav: ViewerNav; children: React
           </div>
         </div>
       </div>
+      {nav.summary}
       <ViewerStage prev={nav.prev} next={nav.next}>
         {children}
       </ViewerStage>

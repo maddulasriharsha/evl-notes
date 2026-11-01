@@ -2,10 +2,12 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { Download, ExternalLink } from 'lucide-react'
 import { HelpfulButton, RecordView, ReportButton, SaveButton } from '@/components/file-actions'
+import { FileSummary } from '@/components/file-summary'
 import { FileTools } from '@/components/file-tools'
 import { ViewerWithComments } from '@/components/comments'
 import { ImageViewer } from '@/components/image-viewer'
 import { PdfViewer } from '@/components/pdf-viewer'
+import { StarRating } from '@/components/star-rating'
 import { OwnerName } from '@/components/ui'
 import { ActionLink, ViewerShell } from '@/components/viewer-shell'
 import { findSubject, sectionHref, sectionLabel } from '@/lib/curriculum'
@@ -75,10 +77,12 @@ export default async function UploadViewer({ params }: PageProps<'/view/u/[id]'>
         prev: prev && `/view/u/${prev.id}`,
         next: next && `/view/u/${next.id}`,
         position: `${i + 1}/${file.siblings.length}`,
+        summary: <FileSummary fileId={file.id} ownerId={file.owner_id} summary={file.summary} pdfUrl={isPdf && original ? original : undefined} subject={file.subject_code} unit={file.unit} />,
         actions: (
           <>
             <RecordView id={file.id} name={file.name} subject={file.subject_code} unit={file.unit} />
             <HelpfulButton fileId={file.id} ownerId={file.owner_id} subject={file.subject_code} unit={file.unit} initialCount={file.helpful_count} />
+            <StarRating fileId={file.id} ownerId={file.owner_id} subject={file.subject_code} unit={file.unit} avg={file.rating_avg} count={file.rating_count} />
             <SaveButton fileId={file.id} />
             <ReportButton fileId={file.id} />
             <FileTools

@@ -25,6 +25,11 @@ export interface NoteFile {
   comment_count: number
   /** How many people marked this note helpful. */
   helpful_count: number
+  /** Average of the 1 to 5 star ratings, or null when nobody has rated it. */
+  rating_avg: number | null
+  rating_count: number
+  /** A short "what is inside", written by the uploader or staff. */
+  summary: string | null
   /** Google Drive copy kept as a backup of the upload. */
   backup_drive_id: string | null
   /** Set once the Storage original was removed; the note is then served from the Drive copy. */
@@ -57,17 +62,24 @@ const BASE_COLUMNS =
 // Helpful votes and the Drive-backup columns arrive with later migrations. Until they exist, read
 // without them so the site keeps working; a failed read switches the missing part off for the rest
 // of the process.
-const optional = { votes: true, backup: true, tags: true, branch: true }
+const optional = { votes: true, backup: true, tags: true, branch: true, ratings: true, summary: true }
 /** The owner columns read with a shelf; `branch` arrives with a migration. */
 const ownerColumns = () => (optional.branch ? 'profiles(display_name, role, branch)' : 'profiles(display_name, role)')
 const fileColumns = () =>
-  [BASE_COLUMNS, optional.backup && 'backup_drive_id, original_removed_at', optional.tags && 'tags', optional.votes && 'file_votes(count)']
+  [
+    BASE_COLUMNS,
+    optional.backup && 'backup_drive_id, original_removed_at',
+    optional.tags && 'tags',
+    optional.votes && 'file_votes(count)',
+    optional.ratings && 'file_ratings(stars)',
+    optional.summary && 'summary',
+  ]
     .filter(Boolean)
     .join(', ')
 
 /** Runs a read that selects file columns, retrying without any optional part that is missing. */
 async function readWithVotes<T extends { error: { message: string } | null }>(run: (columns: string) => PromiseLike<T>): Promise<T> {
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt < 6; attempt++) {
     const res = await run(fileColumns())
     const message = res.error?.message ?? ''
     if (!res.error) return res
@@ -75,26 +87,34 @@ async function readWithVotes<T extends { error: { message: string } | null }>(ru
     else if (optional.backup && /backup_drive_id|original_removed_at/.test(message)) optional.backup = false
     else if (optional.tags && /\btags\b/.test(message)) optional.tags = false
     else if (optional.branch && /branch/.test(message)) optional.branch = false
+    else if (optional.ratings && /file_ratings/.test(message)) optional.ratings = false
+    else if (optional.summary && /\bsummary\b/.test(message)) optional.summary = false
     else return res
   }
   return run(fileColumns())
 }
 
 type Owner = { display_name: string; role: string; branch?: string | null } | null
-type FileRow = Omit<NoteFile, 'comment_count' | 'helpful_count' | 'backup_drive_id' | 'original_removed_at' | 'tags'> & {
+type FileRow = Omit<NoteFile, 'comment_count' | 'helpful_count' | 'rating_avg' | 'rating_count' | 'summary' | 'backup_drive_id' | 'original_removed_at' | 'tags'> & {
   tags?: string[] | null
+  file_ratings?: { stars: number }[]
+  summary?: string | null
   comments?: { count: number }[]
   file_votes?: { count: number }[]
   backup_drive_id?: string | null
   original_removed_at?: string | null
 }
 
-function shapeFile({ comments, file_votes, backup_drive_id, original_removed_at, tags, ...f }: FileRow): NoteFile {
+function shapeFile({ comments, file_votes, file_ratings, summary, backup_drive_id, original_removed_at, tags, ...f }: FileRow): NoteFile {
+  const stars = file_ratings ?? []
   return {
     ...f,
     tags: tags ?? [],
     comment_count: comments?.[0]?.count ?? 0,
     helpful_count: file_votes?.[0]?.count ?? 0,
+    rating_count: stars.length,
+    rating_avg: stars.length ? stars.reduce((n, r) => n + r.stars, 0) / stars.length : null,
+    summary: summary ?? null,
     backup_drive_id: backup_drive_id ?? null,
     original_removed_at: original_removed_at ?? null,
   }
