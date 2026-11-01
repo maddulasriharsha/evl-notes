@@ -1,9 +1,10 @@
 import type { Metadata } from 'next'
 import Link from '@/components/link'
-import { SuggestionForm, SUGGESTION_CATEGORIES } from '@/components/suggestion-form'
+import { SuggestionForm } from '@/components/suggestion-form'
 import { SuggestionThread, type ThreadReply } from '@/components/suggestion-thread'
 import { Container, SectionHeading } from '@/components/ui'
 import { timeAgo } from '@/lib/format'
+import { SUGGESTION_CATEGORIES } from '@/lib/suggestion-categories'
 import { currentUser, supabaseServer } from '@/lib/supabase/server'
 
 export const metadata: Metadata = { title: 'Suggestion box' }

@@ -3,14 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Check, Loader2, Send } from 'lucide-react'
+import { SUGGESTION_CATEGORIES } from '@/lib/suggestion-categories'
 import { supabaseBrowser } from '@/lib/supabase/browser'
-
-export const SUGGESTION_CATEGORIES: [string, string][] = [
-  ['feature', 'A feature I want'],
-  ['bug', 'Something is broken'],
-  ['content', 'Notes or subjects missing'],
-  ['other', 'Something else'],
-]
 
 /** Writes to the suggestion box. Only the site's staff can read what is written here. */
 export function SuggestionForm({ userId }: { userId: string }) {
