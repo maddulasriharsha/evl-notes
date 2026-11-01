@@ -5,6 +5,7 @@ import { AnnouncementBar } from '@/components/announcement-bar'
 import { HistoryTracker } from '@/components/study-history'
 import { CommandPalette } from '@/components/command-palette'
 import { FxLayer } from '@/components/fx-layer'
+import { ReplyNotice } from '@/components/reply-notice'
 import { Intro } from '@/components/intro'
 import { StarField } from '@/components/star-field'
 import { MobileNav } from '@/components/mobile-nav'
@@ -43,6 +44,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* In the layout, so the sky stays put (no restart) when moving between pages. */}
         <StarField />
         <AnnouncementBar />
+        <ReplyNotice />
         <SiteHeader />
         <main className="flex-1">{children}</main>
         <SiteFooter />
