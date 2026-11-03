@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import Script from 'next/script'
 import { Inter, Syne } from 'next/font/google'
+import { Analytics } from '@vercel/analytics/next'
 import { AnnouncementBar } from '@/components/announcement-bar'
 import { HistoryTracker } from '@/components/study-history'
 import { CommandPalette } from '@/components/command-palette'
@@ -55,6 +56,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ServiceWorkerRegister />
         <VisitBeacon />
         <HistoryTracker />
+        <Analytics />
       </body>
     </html>
   )
