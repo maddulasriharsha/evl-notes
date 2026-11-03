@@ -62,9 +62,24 @@ export function FileSummary({ fileId, ownerId, summary, pdfUrl, subject, unit }:
     }
   }
 
+  // Nothing written yet: only a small button over the corner of the file, so the file keeps its room.
+  if (!saved && !editing) {
+    return (
+      <div className="relative z-20 h-0">
+        <button
+          type="button"
+          onClick={() => setEditing(true)}
+          className="absolute top-2 right-3 inline-flex h-8 items-center gap-1.5 rounded-lg border border-line bg-bg/85 px-2.5 text-xs font-medium text-ink-2 shadow-card backdrop-blur hover:text-ink"
+        >
+          <Pencil className="size-3.5" /> Add summary
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div className="border-b border-line bg-surface">
-      <div className="mx-auto max-w-7xl px-4 py-2 sm:px-6">
+      <div className="mx-auto max-w-7xl px-4 py-1 sm:px-6">
         {editing ? (
           <div>
             <textarea
@@ -94,8 +109,8 @@ export function FileSummary({ fileId, ownerId, summary, pdfUrl, subject, unit }:
             {error && <p className="mt-1 text-xs text-danger">{error}</p>}
           </div>
         ) : (
-          <div className="flex items-start gap-2 text-sm">
-            <p className={`min-w-0 flex-1 break-words ${saved ? 'text-ink-2' : 'text-ink-3'}`}>{saved ?? 'No summary yet.'}</p>
+          <div className="flex items-start justify-end gap-2 text-sm">
+            <p className={`min-w-0 flex-1 break-words ${saved ? 'line-clamp-2 py-1 text-ink-2' : 'sr-only'}`}>{saved ?? 'No summary yet.'}</p>
             {canEdit && (
               <button type="button" onClick={() => setEditing(true)} className="inline-flex h-7 shrink-0 items-center gap-1 rounded-lg px-2 text-xs font-medium text-ink-3 hover:bg-surface-2 hover:text-ink">
                 <Pencil className="size-3.5" /> {saved ? 'Edit' : 'Add summary'}

@@ -6,6 +6,7 @@ import { FileSummary } from '@/components/file-summary'
 import { FileTools } from '@/components/file-tools'
 import { ViewerWithComments } from '@/components/comments'
 import { ImageViewer } from '@/components/image-viewer'
+import { MoreMenu } from '@/components/more-menu'
 import { PdfViewer } from '@/components/pdf-viewer'
 import { StarRating } from '@/components/star-rating'
 import { OwnerName } from '@/components/ui'
@@ -84,6 +85,7 @@ export default async function UploadViewer({ params }: PageProps<'/view/u/[id]'>
             <HelpfulButton fileId={file.id} ownerId={file.owner_id} subject={file.subject_code} unit={file.unit} initialCount={file.helpful_count} />
             <StarRating fileId={file.id} ownerId={file.owner_id} subject={file.subject_code} unit={file.unit} avg={file.rating_avg} count={file.rating_count} />
             <SaveButton fileId={file.id} />
+            <MoreMenu>
             <ReportButton fileId={file.id} />
             <FileTools
               id={file.id}
@@ -97,8 +99,9 @@ export default async function UploadViewer({ params }: PageProps<'/view/u/[id]'>
             />
             <ActionLink href={openHref} newTab>
               <ExternalLink className="size-4" />
-              <span className="hidden md:inline">{link ? 'Open in Drive' : 'Open original'}</span>
+              <span>{link ? 'Open in Drive' : 'Open original'}</span>
             </ActionLink>
+            </MoreMenu>
             {downloadHref && (
               <ActionLink href={downloadHref} primary>
                 <Download className="size-4" />

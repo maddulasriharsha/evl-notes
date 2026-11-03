@@ -1,4 +1,5 @@
 import Link from '@/components/link'
+import { LogoMark } from '@/components/logo'
 import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
 import { ReaderMode } from '@/components/reader-mode'
 import { ViewerStage } from '@/components/viewer-stage'
@@ -18,18 +19,21 @@ export interface ViewerNav {
 /** Full-height frame shared by every viewer: back link, title, prev / next, actions. */
 export function ViewerShell({ nav, children }: { nav: ViewerNav; children: React.ReactNode }) {
   return (
-    <div className="mt-3 flex h-[calc(100dvh-5rem)] flex-col sm:h-[calc(100dvh-5.5rem)]">
+    <div className="flex h-dvh flex-col">
       <ReaderMode />
       <div className="border-b border-line bg-surface">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2 sm:px-6 sm:py-3">
           <Link href={nav.back.href} className="grid size-10 shrink-0 place-items-center rounded-xl border border-line hover:bg-surface-2" aria-label={`Back to ${nav.back.label}`}>
             <ArrowLeft className="size-4" />
           </Link>
+          <Link href="/" aria-label="VJNOTES home" className="hidden size-10 shrink-0 place-items-center rounded-xl hover:bg-surface-2 sm:grid">
+            <LogoMark className="size-6" />
+          </Link>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold sm:text-base">{nav.title}</p>
             <div className="flex min-w-0 items-center truncate text-xs text-ink-3">{nav.meta}</div>
           </div>
-          <div className="flex max-w-full items-center gap-2 overflow-x-auto overscroll-x-contain max-sm:w-full max-sm:pb-0.5 [&>*]:shrink-0">
+          <div className="flex max-w-full items-center gap-2 max-sm:w-full max-sm:overflow-x-auto max-sm:overscroll-x-contain max-sm:pb-0.5 [&>*]:shrink-0">
             {(nav.prev || nav.next) && (
               <div className="flex items-center rounded-xl border border-line">
                 <NavLink href={nav.prev} label="Previous file">
