@@ -16,7 +16,7 @@ import { ServiceWorkerRegister } from '@/components/sw-register'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' })
-const syne = Syne({ subsets: ['latin'], variable: '--font-syne', display: 'swap', weight: ['500', '600', '700', '800'] })
+const syne = Syne({ subsets: ['latin'], variable: '--font-syne', display: 'swap' })
 
 export const metadata: Metadata = {
   title: { default: 'VJNOTES · VNR VJIET class notes', template: '%s · VJNOTES' },
