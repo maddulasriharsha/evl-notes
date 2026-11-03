@@ -133,6 +133,11 @@ export function subjectCrumbs(entry: SubjectEntry): { href?: string; label: stri
   return [home]
 }
 
+/** The branches and semesters that teach a subject, in plain data for the breadcrumbs. */
+export function subjectUses(entry: SubjectEntry): { branchId: string; branchShort: string; sem: number }[] {
+  return entry.usedIn.flatMap((u) => (u.branch ? [{ branchId: u.branch.id, branchShort: u.branch.short, sem: u.semester.sem }] : []))
+}
+
 /** Section number of the "Previous question papers" shelf every subject has. */
 export const PAPERS_UNIT = 6
 

@@ -7,8 +7,9 @@ import { ChapterNav } from '@/components/chapter-nav'
 import { CountUp } from '@/components/count-up'
 import { FollowButton } from '@/components/community-buttons'
 import { QrButton } from '@/components/qr-button'
-import { ButtonLink, Container, Crumbs, SectionHeading } from '@/components/ui'
-import { allSubjects, completeHref, findSubject, PAPERS_UNIT, QUESTION_BANK_UNIT, sectionHref, sectionLabel, sectionMark, sectionsOf, sectionTitle, semesterHref, subjectCrumbs, subjectHref } from '@/lib/curriculum'
+import { SubjectCrumbs } from '@/components/subject-crumbs'
+import { ButtonLink, Container, SectionHeading } from '@/components/ui'
+import { allSubjects, completeHref, findSubject, PAPERS_UNIT, QUESTION_BANK_UNIT, sectionHref, sectionLabel, sectionMark, sectionsOf, sectionTitle, semesterHref, subjectCrumbs, subjectHref, subjectUses } from '@/lib/curriculum'
 import { countsForSubject } from '@/lib/data'
 import { liveLibrary } from '@/lib/library-live'
 import { plural } from '@/lib/format'
@@ -93,7 +94,7 @@ export default async function SubjectPage({ params }: PageProps<'/s/[code]'>) {
     <>
       <section className="grain">
         <Container className="pt-10 pb-8">
-          <Crumbs items={[...subjectCrumbs(found), { label: subject.short }]} />
+          <SubjectCrumbs fallback={subjectCrumbs(found)} uses={subjectUses(found)} rest={[{ label: subject.short }]} />
           <div className="mt-6 flex flex-wrap items-end justify-between gap-6">
             <div className="max-w-3xl">
               <p className="font-mono text-sm text-ink-3">

@@ -6,8 +6,9 @@ import { RequestNotesButton } from '@/components/community-buttons'
 import { PapersSections } from '@/components/papers-sections'
 import { QrButton } from '@/components/qr-button'
 import { ShelfCards } from '@/components/shelf-cards'
-import { ButtonLink, Container, Crumbs } from '@/components/ui'
-import { allSubjects, completeHref, findSubject, PAPERS_UNIT, QUESTION_BANK_UNIT, subjectCrumbs, subjectHref } from '@/lib/curriculum'
+import { SubjectCrumbs } from '@/components/subject-crumbs'
+import { ButtonLink, Container } from '@/components/ui'
+import { allSubjects, completeHref, findSubject, PAPERS_UNIT, QUESTION_BANK_UNIT, subjectCrumbs, subjectHref, subjectUses } from '@/lib/curriculum'
 import { collectionsFor, taggedQuestionsFor, type NoteCollection } from '@/lib/data'
 import { plural } from '@/lib/format'
 import { liveLibrary } from '@/lib/library-live'
@@ -60,7 +61,7 @@ export default async function CompletePage({ params }: PageProps<'/s/[code]/comp
     <>
       <section className="grain">
         <Container className="pt-10 pb-10">
-          <Crumbs items={[...subjectCrumbs(found), { href: subjectHref(subject.code), label: subject.short }, { label: 'Complete notes & Question bank' }]} />
+          <SubjectCrumbs fallback={subjectCrumbs(found)} uses={subjectUses(found)} rest={[{ href: subjectHref(subject.code), label: subject.short }, { label: 'Complete notes & Question bank' }]} />
           <div className="mt-6 flex flex-wrap items-end justify-between gap-6">
             <div className="max-w-3xl">
               <p className="text-xs font-semibold tracking-widest text-ink-3 uppercase">{subject.short} · Start here</p>

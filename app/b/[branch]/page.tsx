@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from '@/components/link'
 import { notFound } from 'next/navigation'
 import { ArrowRight } from 'lucide-react'
+import { RememberTrail } from '@/components/subject-crumbs'
 import { Container, Crumbs } from '@/components/ui'
 import { branches, findBranch, semesterHref, semesterLabel } from '@/lib/curriculum'
 import { countsBySubject } from '@/lib/data'
@@ -28,6 +29,7 @@ export default async function BranchPage({ params }: PageProps<'/b/[branch]'>) {
 
   return (
     <Container className="pt-10">
+      <RememberTrail branchId={branch.id} />
       <Crumbs items={[{ href: '/', label: 'Home' }, { label: branch.short }]} />
       <p className="mt-6 text-xs font-semibold tracking-widest text-ink-3 uppercase">
         B.Tech{branch.regulation ? ` · ${branch.regulation}` : ''}

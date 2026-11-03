@@ -8,7 +8,8 @@ import { DownloadShelfButton } from '@/components/download-shelf'
 import { PapersSections } from '@/components/papers-sections'
 import { QrButton } from '@/components/qr-button'
 import { ShelfCards } from '@/components/shelf-cards'
-import { ButtonLink, Container, Crumbs, Empty, OwnerName } from '@/components/ui'
+import { SubjectCrumbs } from '@/components/subject-crumbs'
+import { ButtonLink, Container, Empty, OwnerName } from '@/components/ui'
 import {
   findSubject,
   parseSectionSlug,
@@ -17,6 +18,7 @@ import {
   sectionsOf,
   sectionTitle,
   subjectCrumbs,
+  subjectUses,
   subjectHref,
   allSubjects,
   sectionSlug,
@@ -79,12 +81,10 @@ export default async function SectionPage({ params }: PageProps<'/s/[code]/[sect
     <>
       <section className="grain">
         <Container className="pt-10 pb-10">
-          <Crumbs
-            items={[
-              ...subjectCrumbs(r),
-              { href: subjectHref(subject.code), label: subject.short },
-              { label: sectionLabel(unit) },
-            ]}
+          <SubjectCrumbs
+            fallback={subjectCrumbs(r)}
+            uses={subjectUses(r)}
+            rest={[{ href: subjectHref(subject.code), label: subject.short }, { label: sectionLabel(unit) }]}
           />
           <div className="mt-6 flex flex-wrap items-end justify-between gap-6">
             <div className="max-w-3xl">

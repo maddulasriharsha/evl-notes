@@ -3,6 +3,7 @@ import Link from '@/components/link'
 import { notFound } from 'next/navigation'
 import { SubjectCard } from '@/components/subject-card'
 import { TemplatesRow } from '@/components/templates-row'
+import { RememberTrail } from '@/components/subject-crumbs'
 import { Container, Crumbs } from '@/components/ui'
 import { branches, branchHref, findBranch, semesterHref, semesterLabel } from '@/lib/curriculum'
 import { countsBySubject } from '@/lib/data'
@@ -39,6 +40,7 @@ export default async function SemesterPage({ params }: PageProps<'/b/[branch]/se
 
   return (
     <Container className="pt-10">
+      <RememberTrail branchId={branch.id} sem={semester.sem} />
       <Crumbs
         items={[
           { href: '/', label: 'Home' },

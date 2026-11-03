@@ -5,7 +5,8 @@ import { ArrowRight, BookOpenCheck, FileQuestion, ListChecks, ScrollText } from 
 import { ChapterNav } from '@/components/chapter-nav'
 import { ExamChecklist } from '@/components/exam-checklist'
 import { ShelfCards } from '@/components/shelf-cards'
-import { Container, Crumbs } from '@/components/ui'
+import { SubjectCrumbs } from '@/components/subject-crumbs'
+import { Container } from '@/components/ui'
 import {
   completeHref,
   findSubject,
@@ -16,6 +17,7 @@ import {
   sectionsOf,
   sectionTitle,
   subjectCrumbs,
+  subjectUses,
   subjectHref,
 } from '@/lib/curriculum'
 import { collectionsFor } from '@/lib/data'
@@ -64,7 +66,7 @@ export default async function ExamPrepPage({ params }: PageProps<'/s/[code]/exam
     <>
       <section className="grain">
         <Container className="pt-10 pb-10">
-          <Crumbs items={[...subjectCrumbs(found), { href: subjectHref(subject.code), label: subject.short }, { label: 'Exam prep' }]} />
+          <SubjectCrumbs fallback={subjectCrumbs(found)} uses={subjectUses(found)} rest={[{ href: subjectHref(subject.code), label: subject.short }, { label: 'Exam prep' }]} />
           <p className="mt-6 text-xs font-semibold tracking-widest text-ink-3 uppercase">{subject.short} · Exam prep</p>
           <h1 className="mt-2 font-display text-3xl leading-tight font-semibold tracking-tight text-balance sm:text-5xl">
             Exam prep: {subject.name}
