@@ -96,6 +96,7 @@ export function AnnouncementBar() {
   return (
     <div
       role="status"
+      data-chrome
       // Pause only under a real mouse: a tap on a phone "enters" and never leaves.
       onPointerEnter={(e) => e.pointerType === 'mouse' && setPaused(true)}
       onPointerLeave={() => setPaused(false)}

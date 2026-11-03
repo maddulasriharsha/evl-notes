@@ -714,3 +714,8 @@ html.intro .intro-screen {
     background: #fff !important;
   }
 }
+
+/* A note is open: the file gets the screen. */
+html.reading [data-chrome] {
+  display: none;
+}

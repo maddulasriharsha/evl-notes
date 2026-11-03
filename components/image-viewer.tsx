@@ -51,7 +51,7 @@ export function ImageViewer({ preview, original, alt }: { preview: string; origi
 
   return (
     <div className="absolute inset-0">
-      <div ref={box} className="absolute inset-0 overflow-auto">
+      <div ref={box} className="absolute inset-0 overflow-auto overscroll-contain">
         <div className="grid min-h-full min-w-full w-max place-items-center p-4">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img

@@ -49,7 +49,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <main className="flex-1">{children}</main>
         <SiteFooter />
         {/* Room for the phone bar, so it never covers the end of a page. */}
-        <div className="h-16 md:hidden print:hidden" aria-hidden="true" />
+        <div data-chrome className="h-16 md:hidden print:hidden" aria-hidden="true" />
         <MobileNav />
         <CommandPalette />
         <ServiceWorkerRegister />

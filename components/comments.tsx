@@ -157,7 +157,7 @@ function CommentsPanel({ fileId, ownerId, onCount }: { fileId: string; ownerId: 
   )
 }
 
-const HIDE_KEY = 'vj-comments-hidden'
+const OPEN_KEY = 'vj-comments-open'
 
 /**
  * Places the comments beside the file on wide screens and in a pull-up sheet on phones. On wide
@@ -168,14 +168,15 @@ export function ViewerWithComments({ fileId, ownerId, initialCount, children }: 
   const [count, setCount] = useState(initialCount)
   const [open, setOpen] = useState(false)
   const [wide, setWide] = useState(false)
-  const [hidden, setHidden] = useState(false)
+  // Closed unless the reader has opened it before: the file gets the room.
+  const [hidden, setHidden] = useState(true)
 
   useEffect(() => {
     const mq = window.matchMedia('(min-width: 1024px)')
     const apply = () => setWide(mq.matches)
     apply()
     try {
-      setHidden(localStorage.getItem(HIDE_KEY) === '1')
+      setHidden(localStorage.getItem(OPEN_KEY) !== '1')
     } catch {
       // Storage blocked: the panel simply starts open.
     }
@@ -186,8 +187,8 @@ export function ViewerWithComments({ fileId, ownerId, initialCount, children }: 
   function hide(next: boolean) {
     setHidden(next)
     try {
-      if (next) localStorage.setItem(HIDE_KEY, '1')
-      else localStorage.removeItem(HIDE_KEY)
+      if (next) localStorage.removeItem(OPEN_KEY)
+      else localStorage.setItem(OPEN_KEY, '1')
     } catch {
       // ignore
     }

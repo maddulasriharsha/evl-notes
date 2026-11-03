@@ -59,7 +59,7 @@ export function ReplyNotice() {
   if (!latest || hidden === latest.at) return null
 
   return (
-    <div role="status" className="relative z-30 border-b border-accent/30 bg-accent-soft">
+    <div role="status" data-chrome className="relative z-30 border-b border-accent/30 bg-accent-soft">
       <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-2 text-sm sm:px-6">
         <MessageSquareReply className="size-4 shrink-0 text-accent" />
         <Link href="/suggest" className="min-w-0 flex-1 truncate font-medium hover:underline">

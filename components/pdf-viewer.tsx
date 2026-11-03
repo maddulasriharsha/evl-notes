@@ -107,7 +107,7 @@ export function PdfViewer({ url, downloadHref, fileId }: { url: string; download
   const pageWidth = Math.max(240, Math.min(width - 32, 1000) * zoom)
 
   return (
-    <div ref={box} onScroll={onScroll} className="absolute inset-0 overflow-auto">
+    <div ref={box} onScroll={onScroll} className="absolute inset-0 overflow-auto overscroll-contain">
       {error ? (
         <div className="grid h-full place-items-center p-6 text-center text-sm text-ink-2">
           <div>
