@@ -35,6 +35,11 @@ export function SubjectCrumbs({ fallback, uses, rest }: { fallback: Crumb[]; use
   useEffect(() => {
     if (fallback.length > 1) return
     try {
+      // Arriving from a branch or semester page says it outright; otherwise use what was remembered.
+      const from = /^\/b\/([^/]+)(?:\/sem\/(\d+))?\/?$/.exec(new URL(document.referrer || location.href, location.href).pathname)
+      if (from && document.referrer && new URL(document.referrer).origin === location.origin) {
+        sessionStorage.setItem(KEY, JSON.stringify({ b: from[1], s: from[2] ? Number(from[2]) : null }))
+      }
       const t = JSON.parse(sessionStorage.getItem(KEY) ?? 'null') as { b: string; s: number | null } | null
       if (!t) return
       const use = uses.find((u) => u.branchId === t.b && (t.s == null || u.sem === t.s)) ?? uses.find((u) => u.branchId === t.b)
