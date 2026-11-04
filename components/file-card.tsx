@@ -11,7 +11,7 @@ import type { NoteFile } from '@/lib/data'
 import { DRIVE_KIND_LABEL, driveDownloadLink, driveKindFromMime, isDriveMime } from '@/lib/drive-link'
 import { publicFileUrl } from '@/lib/env'
 import { thumbFor } from '@/lib/file-thumb'
-import { formatBytes, plural } from '@/lib/format'
+import { downloadName, formatBytes, plural } from '@/lib/format'
 import { driveDownloadUrl, driveThumbUrl, isImage, kindLabel, type DriveFile } from '@/lib/library'
 
 const CARD =
@@ -53,7 +53,7 @@ export function UploadFileCard({ file, subject, unit, branchTag }: { file: NoteF
     : kind && file.drive_id
       ? driveDownloadLink(kind, file.drive_id)
       : file.storage_path
-        ? publicFileUrl(file.storage_path, file.name)
+        ? publicFileUrl(file.storage_path, downloadName(file.name, file.mime, file.storage_path))
         : null
   const type = kind ? DRIVE_KIND_LABEL[kind].replace('Drive ', '').replace('Google ', '') : isPdf ? 'PDF' : 'Image'
   return (

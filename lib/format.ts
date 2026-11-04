@@ -23,3 +23,31 @@ export function formatDate(iso: string) {
 export function plural(n: number, word: string) {
   return `${n} ${word}${n === 1 ? '' : 's'}`
 }
+
+const MIME_EXT: Record<string, string> = {
+  'application/pdf': 'pdf',
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+  'image/heic': 'heic',
+  'image/gif': 'gif',
+}
+
+/**
+ * The name a downloaded file is saved under: the note's title, made safe for a file system, and ending
+ * in the file's real extension (taken from where it is stored, else from its type) so the computer
+ * knows what program opens it. A title like "DLD · General · Dld1" would otherwise save with no ending.
+ */
+export function downloadName(title: string, mime: string, storagePath?: string | null): string {
+  const fromPath = /\.([a-z0-9]{2,5})$/i.exec(storagePath ?? '')?.[1]?.toLowerCase()
+  const ext = fromPath ?? MIME_EXT[mime] ?? ''
+  const base =
+    title
+      .replace(/\.[a-z0-9]{2,5}$/i, (m) => (m.slice(1).toLowerCase() === ext ? '' : m))
+      .replace(/[\/:*?"<>|\u0000-\u001f]/g, ' ')
+      .replace(/\s*[·•]\s*/g, ' - ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 120) || 'note'
+  return ext ? `${base}.${ext}` : base
+}

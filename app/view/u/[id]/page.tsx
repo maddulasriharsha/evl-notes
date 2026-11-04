@@ -22,7 +22,7 @@ import {
 } from '@/lib/drive-link'
 import { fileById } from '@/lib/data'
 import { publicFileUrl } from '@/lib/env'
-import { formatBytes, formatDate } from '@/lib/format'
+import { downloadName, formatBytes, formatDate } from '@/lib/format'
 
 // Rebuilt at once when notes change (see refreshChapter); this is only the fallback for votes, comments and the like.
 export const revalidate = 900
@@ -48,7 +48,7 @@ export default async function UploadViewer({ params }: PageProps<'/view/u/[id]'>
       ? { id: file.backup_drive_id!, kind: 'file' as const }
       : null
   const original = file.storage_path && !backedUp ? publicFileUrl(file.storage_path) : ''
-  const download = file.storage_path && !backedUp ? publicFileUrl(file.storage_path, file.name) : ''
+  const download = file.storage_path && !backedUp ? publicFileUrl(file.storage_path, downloadName(file.name, file.mime, file.storage_path)) : ''
   const isPdf = file.mime === 'application/pdf'
   const detail = backedUp
     ? file.size_bytes != null

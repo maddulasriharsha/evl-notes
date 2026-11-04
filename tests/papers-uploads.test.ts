@@ -92,3 +92,14 @@ describe('retitling a paper', () => {
     expect(examOf('Mid papers collection')).toBeNull()
   })
 })
+
+describe('downloadName', () => {
+  it('gives every download its real ending and a safe name', async () => {
+    const { downloadName } = await import('@/lib/format')
+    expect(downloadName('DLD · General · Dld1', 'application/pdf', 'u/c/f/Dld1.pdf')).toBe('DLD - General - Dld1.pdf')
+    expect(downloadName('Unit 2 notes.pdf', 'application/pdf', 'u/c/f/x.pdf')).toBe('Unit 2 notes.pdf')
+    expect(downloadName('Photo', 'image/jpeg', null)).toBe('Photo.jpg')
+    expect(downloadName('a/b:c*', 'application/pdf')).toBe('a b c.pdf')
+    expect(downloadName('   ', 'application/pdf')).toBe('note.pdf')
+  })
+})
