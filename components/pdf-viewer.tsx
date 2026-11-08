@@ -107,6 +107,7 @@ export function PdfViewer({ url, downloadHref, fileId }: { url: string; download
   const pageWidth = Math.max(240, Math.min(width - 32, 1000) * zoom)
 
   return (
+    <div className="absolute inset-0">
     <div ref={box} onScroll={onScroll} className="absolute inset-0 overflow-auto overscroll-contain">
       {error ? (
         <div className="grid h-full place-items-center p-6 text-center text-sm text-ink-2">
@@ -126,9 +127,15 @@ export function PdfViewer({ url, downloadHref, fileId }: { url: string; download
               <PdfPage key={i} doc={doc} index={i + 1} width={pageWidth} flags={tools.marks.filter((m) => m.kind === 'flag' && m.page === i + 1)} onFlags={() => setPanel(true)} />
             ))}
           </div>
-          <div className="sticky bottom-4 flex justify-center">
-            {resumed && (
-              <div className="absolute bottom-14 flex items-center gap-2 rounded-full border border-line bg-surface/95 py-1 pr-1 pl-4 text-xs shadow-pop backdrop-blur">
+        </>
+      )}
+    </div>
+    {/* The bar and its panels sit over the reader, not inside the scrolling page, so they keep their size and place. */}
+    {doc && !error && !!width && (
+      <>
+        {resumed && (
+          <div className="pointer-events-none absolute inset-x-0 bottom-20 z-20 flex justify-center px-3">
+              <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-line bg-surface/95 py-1 pr-1 pl-4 text-xs shadow-pop backdrop-blur">
                 Continued from page {resumed}
                 <button type="button" onClick={() => { goTo(1); setResumed(null) }} className="rounded-full px-3 py-1.5 font-semibold text-accent hover:bg-surface-2">
                   Start over
@@ -137,9 +144,11 @@ export function PdfViewer({ url, downloadHref, fileId }: { url: string; download
                   ×
                 </button>
               </div>
-            )}
+          </div>
+        )}
             {panel && <MarksPanel tools={tools} onGo={(n) => goTo(n)} onClose={() => setPanel(false)} />}
-            <div className="relative flex items-center gap-1 rounded-full border border-line bg-surface/95 p-1 shadow-pop backdrop-blur">
+            <div className="pointer-events-none absolute inset-x-0 bottom-4 z-20 flex justify-center px-2">
+            <div className="pointer-events-auto relative flex items-center gap-1 rounded-full border border-line bg-surface/95 p-1 shadow-pop backdrop-blur">
               <button type="button" onClick={() => setZoom((z) => Math.max(0.5, z - 0.25))} className="grid size-9 place-items-center rounded-full hover:bg-surface-2" aria-label="Zoom out">
                 <Minus className="size-4" />
               </button>
@@ -176,9 +185,9 @@ export function PdfViewer({ url, downloadHref, fileId }: { url: string; download
                 </>
               )}
             </div>
-          </div>
-        </>
-      )}
+            </div>
+      </>
+    )}
     </div>
   )
 }
