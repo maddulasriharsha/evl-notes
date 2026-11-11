@@ -2,6 +2,7 @@
   "name": "evl-notes",
   "version": "1.0.0",
   "private": true,
+  "license": "MIT",
   "description": "Class notes for B.Tech EVL (R25), VNR VJIET",
   "packageManager": "pnpm@12.10.1",
   "engines": {
