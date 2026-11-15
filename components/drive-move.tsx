@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2, Pencil, Trash2 } from 'lucide-react'
+import { HelpCircle, Loader2, Pencil, Trash2 } from 'lucide-react'
 import { refreshChapter, refreshDriveFile } from '@/app/upload/actions'
 import { ExamTagButton } from '@/components/exam-tag'
 import { MoveFileButton } from '@/components/move-file'
@@ -31,14 +31,30 @@ export function DriveRestore({ id, subject, unit }: { id: string; subject: strin
   )
 }
 
-/** Admin-only Rename, Move and Delete for a Google Drive library file. The database re-checks the role. */
-export function DriveMove({ id, name, subject, unit }: { id: string; name: string; subject: string; unit: number }) {
+/** Admin-only Questions tag, Rename, Move and Delete for a Google Drive library file. The database re-checks the role. */
+export function DriveMove({ id, name, subject, unit, tagged = false }: { id: string; name: string; subject: string; unit: number; tagged?: boolean }) {
   const viewer = useViewer()
   const router = useRouter()
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(name)
-  const [busy, setBusy] = useState<'rename' | 'delete' | null>(null)
+  const [busy, setBusy] = useState<'rename' | 'delete' | 'tag' | null>(null)
+  const [isTagged, setIsTagged] = useState(tagged)
   if (viewer?.role !== 'admin') return null
+
+  async function toggleTag() {
+    setBusy('tag')
+    const next = !isTagged
+    const { error } = await supabaseBrowser().rpc('staff_tag_drive_file', { p_file: id, p_on: next })
+    if (error) {
+      setBusy(null)
+      return alert(error.message)
+    }
+    setIsTagged(next)
+    // The Question bank sits on the Complete notes and Exam prep pages, which refreshChapter covers.
+    await refreshDriveFile(id, subject, unit).catch(() => undefined)
+    setBusy(null)
+    router.refresh()
+  }
 
   async function remove() {
     if (!confirm(`Remove “${name}” from the site? You can put it back from Admin › Files.`)) return
@@ -79,6 +95,17 @@ export function DriveMove({ id, name, subject, unit }: { id: string; name: strin
     <>
       <div className="absolute top-2 right-2 z-10 flex gap-1 opacity-100 transition sm:opacity-0 sm:group-focus-within:opacity-100 sm:group-hover:opacity-100">
         {unit === PAPERS_UNIT && <ExamTagButton title={name} save={setTitle} variant="card" />}
+        <button
+          type="button"
+          aria-label={isTagged ? 'Remove the Questions tag' : 'Tag as Questions'}
+          aria-pressed={isTagged}
+          title={isTagged ? 'Tagged Questions: listed in the Question bank (click to remove)' : 'Tag as Questions: also list in the Question bank'}
+          disabled={busy !== null}
+          onClick={toggleTag}
+          className={`grid size-8 place-items-center rounded-lg shadow-card backdrop-blur ${isTagged ? 'bg-accent text-accent-ink' : 'bg-bg/90 text-ink-2 hover:text-ink'}`}
+        >
+          {busy === 'tag' ? <Loader2 className="size-4 animate-spin" /> : <HelpCircle className="size-4" />}
+        </button>
         <MoveFileButton id={id} name={name} subject={subject} unit={unit} compact drive />
         <button
           type="button"

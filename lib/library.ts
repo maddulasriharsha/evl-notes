@@ -22,6 +22,8 @@ export interface DriveFile {
   source: string
   /** Other subjects and chapters that show the same file (for example BEEE notes also used by BEE and EEEE). */
   also?: { subject: string; unit: number | null }[]
+  /** Tagged "questions" by an admin: also listed in the subject's Question bank. */
+  tagged?: boolean
 }
 
 export const driveFiles = data as DriveFile[]
@@ -31,14 +33,20 @@ export type Placement = { subject: string; unit: number }
 /** A file as listed: moved files are placed exactly where they were put (and count as "forced"). */
 type Entry = DriveFile & { forced?: boolean }
 
-function buildIndex(moves?: ReadonlyMap<string, Placement>, titles?: ReadonlyMap<string, string>, hidden?: ReadonlySet<string>) {
+function buildIndex(
+  moves?: ReadonlyMap<string, Placement>,
+  titles?: ReadonlyMap<string, string>,
+  hidden?: ReadonlySet<string>,
+  tagged?: ReadonlySet<string>,
+) {
   const bySubject = new Map<string, Entry[]>()
   const byId = new Map<string, DriveFile>()
   for (const original of driveFiles) {
     // Taken off the site by an admin: not listed, counted or viewable.
     if (hidden?.has(original.id)) continue
     const retitled = titles?.get(original.id)
-    const f = retitled ? { ...original, title: retitled } : original
+    const isTagged = tagged?.has(original.id)
+    const f = retitled || isTagged ? { ...original, ...(retitled ? { title: retitled } : {}), ...(isTagged ? { tagged: true } : {}) } : original
     const move = moves?.get(f.id)
     if (move) {
       const moved: Entry = { ...f, subject: move.subject, unit: move.unit, forced: true }
@@ -85,7 +93,8 @@ function filesIn(index: ReturnType<typeof buildIndex>, subject: string, unit?: n
       : unit === 6
         ? list.filter(isPaper)
         : unit === 7
-          ? list.filter(isBank)
+          ? // Tagged "questions" files join the bank from wherever they are listed.
+            list.filter((f) => isBank(f) || f.tagged)
           : unit === 0
             ? // Question files without a chapter belong to the papers or the question bank, not to Complete notes.
               list.filter((f) => (f.forced ? f.unit === 0 : (f.unit ?? 0) === 0 && f.kind !== 'questions'))
@@ -109,8 +118,13 @@ export function driveCount(subject: string, unit?: number) {
 }
 
 /** The same lookups with the admins' moves and new titles applied (see lib/library-live.ts). */
-export function libraryWith(moves: ReadonlyMap<string, Placement>, titles?: ReadonlyMap<string, string>, hidden: ReadonlySet<string> = new Set()) {
-  const index = buildIndex(moves, titles, hidden)
+export function libraryWith(
+  moves: ReadonlyMap<string, Placement>,
+  titles?: ReadonlyMap<string, string>,
+  hidden: ReadonlySet<string> = new Set(),
+  tagged?: ReadonlySet<string>,
+) {
+  const index = buildIndex(moves, titles, hidden, tagged)
   return {
     files: driveFiles.filter((f) => !hidden.has(f.id)).map((f) => index.byId.get(f.id) ?? f),
     /** Taken off the site by an admin. */

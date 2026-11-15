@@ -113,13 +113,14 @@ export function DriveFileCard({ file, placeUnit, branchTag, by }: { file: DriveF
   return (
     <div className="fx-reveal group relative flex">
       <SelectOverlay item={{ id: file.id, kind: 'd', name: file.title, subject: file.subject, unit: placeUnit ?? file.unit ?? 0 }} />
-      <DriveMove id={file.id} name={file.title} subject={file.subject} unit={placeUnit ?? file.unit ?? 0} />
+      <DriveMove id={file.id} name={file.title} subject={file.subject} unit={placeUnit ?? file.unit ?? 0} tagged={!!file.tagged} />
       <Link href={`/view/d/${file.id}`} className={CARD}>
         <Thumb src={driveThumbUrl(file.id)} icon={iconFor(file.ext)} label={file.ext} badge={type} />
         <div className="flex flex-1 flex-col gap-2 border-t border-line p-3">
           <p className="line-clamp-3 text-sm leading-snug font-medium">{file.title}</p>
           <div className="mt-auto flex flex-wrap items-center gap-1.5 pr-11">
             {file.kind !== 'notes' && <Badge tone={tone}>{kindLabel[file.kind]}</Badge>}
+            {file.tagged && file.kind !== 'questions' && <Badge tone="gold">{kindLabel.questions}</Badge>}
             {file.pages ? <span className="text-xs text-ink-3">{plural(file.pages, 'page')}</span> : null}
             <ByLine by={by} />
             <BranchTag tag={branchTag} />

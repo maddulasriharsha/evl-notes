@@ -13,4 +13,14 @@ describe('Drive library', () => {
     expect(hidden.files).toHaveLength(shown.files.length - 1)
     expect(hidden.filesFor(f.subject).some((x) => x.id === f.id)).toBe(false)
   })
+
+  it('also lists a tagged file in the Question bank, and keeps it where it was', () => {
+    // A chapter note, so it is not in the bank until tagged.
+    const f = driveFiles.find((x) => x.kind === 'notes' && x.unit && x.unit >= 1 && x.unit <= 5)!
+    const plain = libraryWith(new Map())
+    const tagged = libraryWith(new Map(), new Map(), new Set(), new Set([f.id]))
+    expect(plain.filesFor(f.subject, 7).some((x) => x.id === f.id)).toBe(false)
+    expect(tagged.filesFor(f.subject, 7).some((x) => x.id === f.id && x.tagged)).toBe(true)
+    expect(tagged.filesFor(f.subject, f.unit!).some((x) => x.id === f.id)).toBe(true)
+  })
 })
