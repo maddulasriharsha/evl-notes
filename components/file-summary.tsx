@@ -63,13 +63,14 @@ export function FileSummary({ fileId, ownerId, summary, pdfUrl, subject, unit }:
   }
 
   // Nothing written yet: only a small button over the corner of the file, so the file keeps its room.
+  // Top left: the top right belongs to the comments panel's close button, which this would cover.
   if (!saved && !editing) {
     return (
       <div className="relative z-20 h-0">
         <button
           type="button"
           onClick={() => setEditing(true)}
-          className="absolute top-2 right-3 inline-flex h-8 items-center gap-1.5 rounded-lg border border-line bg-bg/85 px-2.5 text-xs font-medium text-ink-2 shadow-card backdrop-blur hover:text-ink"
+          className="absolute top-2 left-3 inline-flex h-8 items-center gap-1.5 rounded-lg border border-line bg-bg/85 px-2.5 text-xs font-medium text-ink-2 shadow-card backdrop-blur hover:text-ink"
         >
           <Pencil className="size-3.5" /> Add summary
         </button>

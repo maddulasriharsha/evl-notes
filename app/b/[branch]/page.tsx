@@ -44,12 +44,12 @@ export default async function BranchPage({ params }: PageProps<'/b/[branch]'>) {
             <Link
               key={s.sem}
               href={semesterHref(branch.id, s.sem)}
-              className="group relative overflow-hidden rounded-3xl border border-line bg-surface p-6 transition duration-300 hover:-translate-y-1 hover:border-accent/40 hover:shadow-[0_30px_80px_-30px_rgba(139,92,246,0.45)]"
+              className="fx-card fx-reveal group relative overflow-hidden rounded-3xl border border-line bg-surface p-6 transition duration-300 hover:-translate-y-1 hover:border-accent/40 hover:shadow-[0_30px_80px_-30px_rgba(139,92,246,0.45)]"
             >
               <div className="pointer-events-none absolute -top-24 -right-24 size-56 rounded-full bg-accent/10 blur-3xl transition group-hover:bg-accent/25" />
               <div className="relative flex items-baseline justify-between">
                 <p className="text-[11px] font-semibold tracking-[0.2em] text-ink-3 uppercase">Semester {s.sem}</p>
-                <p className="text-xs text-ink-3">{plural(files, 'file')}</p>
+                <p className="tnum text-xs text-ink-3">{plural(files, 'file')}</p>
               </div>
               <h2 className="relative mt-3 font-display text-3xl font-bold tracking-tight">{semesterLabel(s)}</h2>
               <div className="relative mt-5 flex flex-wrap gap-1.5">

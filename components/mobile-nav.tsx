@@ -40,7 +40,7 @@ export function MobileNav() {
             <Link
               href={href}
               aria-current={on ? 'page' : undefined}
-              className={`flex h-14 flex-col items-center justify-center gap-0.5 text-[10.5px] font-medium ${on ? 'text-accent' : 'text-ink-3'}`}
+              className={`flex h-14 flex-col items-center justify-center gap-0.5 text-[10.5px] font-medium transition active:scale-90 ${on ? 'tab-on text-accent' : 'text-ink-3'}`}
             >
               <Icon className="size-5" strokeWidth={on ? 2.2 : 1.7} />
               {label}
