@@ -3,6 +3,7 @@ import Link from '@/components/link'
 import { notFound, redirect } from 'next/navigation'
 import { ArrowLeft, ArrowRight, CloudUpload, ThumbsUp } from 'lucide-react'
 import { ChapterNav } from '@/components/chapter-nav'
+import { ChapterKeys } from '@/components/shortcuts'
 import { RequestNotesButton } from '@/components/community-buttons'
 import { DownloadShelfButton } from '@/components/download-shelf'
 import { PapersSections } from '@/components/papers-sections'
@@ -67,6 +68,8 @@ export default async function SectionPage({ params }: PageProps<'/s/[code]/[sect
   const idx = order.indexOf(unit)
   const prev = idx > 0 ? order[idx - 1] : undefined
   const next = idx < order.length - 1 ? order[idx + 1] : undefined
+  const prevHref = prev !== undefined ? sectionHref(subject.code, prev) : undefined
+  const nextHref = next !== undefined ? sectionHref(subject.code, next) : undefined
   const drive = (await liveLibrary()).filesFor(subject.code, unit)
   // PDFs and photos that can be joined into one downloadable PDF (Drive links cannot).
   const sourcesOf = (c: NoteCollection) =>
@@ -145,26 +148,42 @@ export default async function SectionPage({ params }: PageProps<'/s/[code]/[sect
           )}
         </section>
 
-
-        <nav className="flex items-stretch justify-between gap-3 border-t border-line pt-6">
-          {prev !== undefined ? (
-            <Link href={sectionHref(subject.code, prev)} className="group flex max-w-[48%] items-center gap-3 rounded-xl p-2 hover:bg-surface-2">
-              <ArrowLeft className="size-4 shrink-0 text-ink-3" />
-              <span className="min-w-0">
-                <span className="block text-xs text-ink-3">{sectionLabel(prev)}</span>
-                <span className="block truncate text-sm font-medium">{sectionTitle(subject, prev)}</span>
+        <nav aria-label="Other chapters" className="grid gap-3 border-t border-line pt-8 sm:grid-cols-2">
+          <ChapterKeys prev={prevHref} next={nextHref} />
+          {prev !== undefined && prevHref ? (
+            <Link
+              href={prevHref}
+              className="group flex items-center gap-4 rounded-2xl border border-line bg-surface p-4 transition hover:border-line-strong hover:bg-surface-2"
+            >
+              <span className="grid size-10 shrink-0 place-items-center rounded-xl border border-line bg-bg text-ink-3 transition group-hover:-translate-x-0.5 group-hover:text-ink">
+                <ArrowLeft className="size-4" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center gap-2 text-xs text-ink-3">
+                  Previous · {sectionLabel(prev)}
+                  <kbd className="hidden rounded border border-line px-1 font-mono text-[10px] md:inline">←</kbd>
+                </span>
+                <span className="mt-0.5 block truncate font-medium">{sectionTitle(subject, prev)}</span>
               </span>
             </Link>
           ) : (
-            <span />
+            <span className="hidden sm:block" />
           )}
-          {next !== undefined && (
-            <Link href={sectionHref(subject.code, next)} className="group flex max-w-[48%] items-center gap-3 rounded-xl p-2 text-right hover:bg-surface-2">
-              <span className="min-w-0">
-                <span className="block text-xs text-ink-3">{sectionLabel(next)}</span>
-                <span className="block truncate text-sm font-medium">{sectionTitle(subject, next)}</span>
+          {next !== undefined && nextHref && (
+            <Link
+              href={nextHref}
+              className="group flex items-center gap-4 rounded-2xl border border-line bg-surface p-4 text-right transition hover:border-accent/40 hover:bg-surface-2"
+            >
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center justify-end gap-2 text-xs text-ink-3">
+                  <kbd className="hidden rounded border border-line px-1 font-mono text-[10px] md:inline">→</kbd>
+                  Next · {sectionLabel(next)}
+                </span>
+                <span className="mt-0.5 block truncate font-medium">{sectionTitle(subject, next)}</span>
               </span>
-              <ArrowRight className="size-4 shrink-0 text-ink-3" />
+              <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent transition group-hover:translate-x-0.5">
+                <ArrowRight className="size-4" />
+              </span>
             </Link>
           )}
         </nav>

@@ -198,11 +198,11 @@ export function PaletteButton() {
       type="button"
       onClick={() => window.dispatchEvent(new Event(OPEN_PALETTE))}
       aria-label="Jump to a subject, chapter or file"
-      className="btn-ghost hidden h-10 items-center gap-2 rounded-xl px-3 text-sm text-ink-2 lg:inline-flex"
+      className="btn-ghost hidden h-10 items-center gap-2 rounded-xl px-3 text-sm text-ink-2 hover:text-ink md:inline-flex"
     >
       <Search className="size-4" />
-      <span>Jump to…</span>
-      <kbd className="rounded-md border border-line px-1.5 py-0.5 text-[10px] text-ink-3">Ctrl K</kbd>
+      <span className="hidden lg:inline">Jump to…</span>
+      <kbd className="hidden rounded-md border border-line px-1.5 py-0.5 text-[10px] text-ink-3 lg:inline">Ctrl K</kbd>
     </button>
   )
 }

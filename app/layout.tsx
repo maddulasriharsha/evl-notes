@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import Script from 'next/script'
 import { Inter, Syne } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 import { AnnouncementBar } from '@/components/announcement-bar'
 import { HistoryTracker } from '@/components/study-history'
 import { CommandPalette } from '@/components/command-palette'
@@ -9,6 +10,8 @@ import { FxLayer } from '@/components/fx-layer'
 import { ReplyNotice } from '@/components/reply-notice'
 import { Intro } from '@/components/intro'
 import { StarField } from '@/components/star-field'
+import { ShortcutSheet } from '@/components/shortcuts'
+import { PageChrome } from '@/components/page-chrome'
 import { MobileNav } from '@/components/mobile-nav'
 import { SiteFooter } from '@/components/site-footer'
 import { SiteHeader } from '@/components/site-header'
@@ -35,11 +38,14 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${syne.variable}`} suppressHydrationWarning>
+    <html lang="en" data-scroll-behavior="smooth" className={`${inter.variable} ${syne.variable}`} suppressHydrationWarning>
       <body className="flex min-h-dvh flex-col font-sans antialiased">
         <Script id="vj-theme" strategy="beforeInteractive">
           {`try{var t=localStorage.getItem('vj-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}var d=document.documentElement;d.classList.add('fx');try{if(!sessionStorage.getItem('vj-intro')&&!matchMedia('(prefers-reduced-motion: reduce)').matches){sessionStorage.setItem('vj-intro','1');d.classList.add('intro')}}catch(e){}`}
         </Script>
+        <a href="#content" className="skip-link btn-primary">
+          Skip to content
+        </a>
         <Intro />
         <FxLayer />
         {/* In the layout, so the sky stays put (no restart) when moving between pages. */}
@@ -47,16 +53,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AnnouncementBar />
         <ReplyNotice />
         <SiteHeader />
-        <main className="flex-1">{children}</main>
+        <main id="content" className="flex-1">{children}</main>
         <SiteFooter />
         {/* Room for the phone bar, so it never covers the end of a page. */}
         <div data-chrome className="h-16 md:hidden print:hidden" aria-hidden="true" />
+        <PageChrome />
         <MobileNav />
         <CommandPalette />
+        <ShortcutSheet />
         <ServiceWorkerRegister />
         <VisitBeacon />
         <HistoryTracker />
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )
