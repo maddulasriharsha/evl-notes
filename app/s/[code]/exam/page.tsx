@@ -125,6 +125,7 @@ export default async function ExamPrepPage({ params }: PageProps<'/s/[code]/exam
             emptyTitle="No question bank files yet"
             emptyHint="Have important questions?"
             anchor="eq-"
+            merged
           />
         </section>
 

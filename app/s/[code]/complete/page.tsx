@@ -123,6 +123,7 @@ export default async function CompletePage({ params }: PageProps<'/s/[code]/comp
             emptyTitle="No question bank files yet"
             emptyHint="Have important questions or assignments?"
             anchor="q-"
+            merged
           />
         </section>
 

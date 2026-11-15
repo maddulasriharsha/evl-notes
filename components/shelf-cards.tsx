@@ -102,14 +102,30 @@ export function ShelfCards({
         <div className="mb-4 flex flex-wrap items-center gap-2">
           <BulkToggle />
           <span className="flex-1" />
+          {/* Each shows only to the person whose photos they are. */}
+          {collections.map(
+            (c) =>
+              photosOf(c).length > 1 && (
+                <CombinePhotosButton
+                  key={c.id}
+                  collectionId={c.id}
+                  ownerId={c.owner_id}
+                  subject={c.subject_code}
+                  unit={c.unit ?? unit}
+                  title={`${subjectShort} · ${label} · Notes`}
+                  photos={photosOf(c)}
+                />
+              ),
+          )}
           {all.length > 1 && <DownloadShelfButton sources={all} title={`${subjectShort} - ${label}`} label="Download all as one PDF" />}
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {cards.flatMap(({ key, collection: c, drive: driveList }) => {
             const by = (c?.owner_name ?? LIBRARY_OWNER.name).split(' ')[0]
             return [
-              ...(c?.files.map((f) => (
-                <div key={f.id} id={`${anchor}f-${f.id}`} className="scroll-mt-36">
+              ...(c?.files.map((f, i) => (
+                // The first file carries the uploader's old anchor, so links to "#c-…" still land on their notes.
+                <div key={f.id} id={i === 0 ? `${anchor}c-${c.id}` : undefined} className="scroll-mt-36">
                   <UploadFileCard file={f} subject={c.subject_code} unit={c.unit ?? unit} by={by} branchTag={tagFor(c.subject_code, c.owner_is_admin ? null : c.owner_branch) || undefined} />
                 </div>
               )) ?? []),

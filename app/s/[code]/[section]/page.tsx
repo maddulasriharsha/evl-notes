@@ -143,6 +143,7 @@ export default async function SectionPage({ params }: PageProps<'/s/[code]/[sect
                 uploadHref={uploadHref}
                 emptyTitle="No notes for this chapter yet"
                 emptyHint="Took notes in class?"
+                merged
               />
             </>
           )}
