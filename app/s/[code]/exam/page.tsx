@@ -107,6 +107,7 @@ export default async function ExamPrepPage({ params }: PageProps<'/s/[code]/exam
             emptyTitle="No question papers yet"
             emptyHint="Have an old exam paper?"
             anchor="ep-"
+            merged
           />
         </section>
 

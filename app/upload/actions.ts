@@ -35,6 +35,13 @@ export async function refreshFile(fileId: string, subjectCode: string, unit: num
   await refreshChapter(subjectCode, unit)
 }
 
+/** Same as refreshChapter, plus a Drive library file's own page (after it is hidden or restored). */
+export async function refreshDriveFile(fileId: string, subjectCode: string, unit: number) {
+  if (!(await currentUser())) return
+  if (/^[\w-]{10,80}$/.test(fileId)) revalidatePath(`/view/d/${fileId}`)
+  await refreshChapter(subjectCode, unit)
+}
+
 export type DriveCheck =
   | { ok: true; id: string; kind: DriveLinkKind; title: string | null }
   | { ok: false; message: string }

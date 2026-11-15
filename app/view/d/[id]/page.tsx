@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: PageProps<'/view/d/[id]'>): P
 export default async function DriveViewer({ params }: PageProps<'/view/d/[id]'>) {
   const id = (await params).id
   const lib = await liveLibrary()
-  const file = lib.file(id) ?? driveFile(id)
+  const file = lib.isHidden(id) ? undefined : (lib.file(id) ?? driveFile(id))
   if (!file) notFound()
   const found = findSubject(file.subject)
   // A file is listed in its chapter, or with the papers (6) or the question bank (7): find which.

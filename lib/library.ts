@@ -31,10 +31,12 @@ export type Placement = { subject: string; unit: number }
 /** A file as listed: moved files are placed exactly where they were put (and count as "forced"). */
 type Entry = DriveFile & { forced?: boolean }
 
-function buildIndex(moves?: ReadonlyMap<string, Placement>, titles?: ReadonlyMap<string, string>) {
+function buildIndex(moves?: ReadonlyMap<string, Placement>, titles?: ReadonlyMap<string, string>, hidden?: ReadonlySet<string>) {
   const bySubject = new Map<string, Entry[]>()
   const byId = new Map<string, DriveFile>()
   for (const original of driveFiles) {
+    // Taken off the site by an admin: not listed, counted or viewable.
+    if (hidden?.has(original.id)) continue
     const retitled = titles?.get(original.id)
     const f = retitled ? { ...original, title: retitled } : original
     const move = moves?.get(f.id)
@@ -107,10 +109,12 @@ export function driveCount(subject: string, unit?: number) {
 }
 
 /** The same lookups with the admins' moves and new titles applied (see lib/library-live.ts). */
-export function libraryWith(moves: ReadonlyMap<string, Placement>, titles?: ReadonlyMap<string, string>) {
-  const index = buildIndex(moves, titles)
+export function libraryWith(moves: ReadonlyMap<string, Placement>, titles?: ReadonlyMap<string, string>, hidden: ReadonlySet<string> = new Set()) {
+  const index = buildIndex(moves, titles, hidden)
   return {
-    files: driveFiles.map((f) => index.byId.get(f.id) ?? f),
+    files: driveFiles.filter((f) => !hidden.has(f.id)).map((f) => index.byId.get(f.id) ?? f),
+    /** Taken off the site by an admin. */
+    isHidden: (id: string) => hidden.has(id),
     filesFor: (subject: string, unit?: number) => filesIn(index, subject, unit),
     count: (subject: string, unit?: number) => filesIn(index, subject, unit).length,
     file: (id: string) => index.byId.get(id),

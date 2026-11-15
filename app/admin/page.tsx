@@ -7,6 +7,8 @@ import { AnnouncementManager, type AnnouncementRow } from '@/components/announce
 import { BackupPanel } from '@/components/backup-panel'
 import { BulkBar, BulkProvider, BulkToggle, RowCheck, type BulkItem } from '@/components/bulk-select'
 import { DailyChart } from '@/components/daily-chart'
+import { DriveRestore } from '@/components/drive-move'
+import { driveFile } from '@/lib/library'
 import { SuggestionThread, type ThreadReply } from '@/components/suggestion-thread'
 import { Container, OwnerName } from '@/components/ui'
 import { ShelfBranchPicker } from '@/components/shelf-branch-picker'
@@ -394,9 +396,43 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
       profiles: { display_name: string; role: string } | null
       collections: { subject_code: string; unit: number } | null
     }[]
+    // Google Drive library files an admin removed from the site (none until the drive_hidden SQL is run).
+    const removed = isAdmin ? ((await supabase.from('drive_hidden').select('file_id, hidden_at').order('hidden_at', { ascending: false })).data ?? []) : []
+    const placed = removed.length
+      ? (((await supabase.from('drive_placements').select('file_id, subject_code, unit').in('file_id', removed.map((r) => r.file_id))).data ?? []) as {
+          file_id: string
+          subject_code: string
+          unit: number
+        }[])
+      : []
+    const removedDrive = removed.map((r) => {
+      const f = driveFile(r.file_id)
+      const p = placed.find((x) => x.file_id === r.file_id)
+      return { id: r.file_id, title: f?.title ?? r.file_id, subject: p?.subject_code ?? f?.subject ?? '', unit: p?.unit ?? f?.unit ?? 0, at: r.hidden_at as string }
+    })
+    const removedList = removedDrive.length > 0 && (
+      <div className="mb-6 rounded-2xl border border-line bg-surface p-4">
+        <h2 className="mb-3 font-semibold">Removed Google Drive files</h2>
+        <ul className="divide-y divide-line">
+          {removedDrive.map((r) => (
+            <li key={r.id} className="flex flex-wrap items-center gap-3 py-2 text-sm">
+              <span className="min-w-0 flex-1">
+                <span className="font-medium">{r.title}</span>
+                <span className="block text-xs text-ink-3">
+                  {r.subject ? where(r.subject, r.unit) : 'Unknown place'} · removed {timeAgo(r.at)}
+                </span>
+              </span>
+              <DriveRestore id={r.id} subject={r.subject} unit={r.unit} />
+            </li>
+          ))}
+        </ul>
+      </div>
+    )
     body = filesError ? (
       <p className="rounded-xl bg-danger-soft px-4 py-3 text-danger">Could not load files: {filesError.message}</p>
     ) : (
+      <>
+      {removedList}
       <BulkProvider
         all={rows.filter((f) => f.collections).map((f): BulkItem => ({ id: f.id, kind: 'u', name: f.name, subject: f.collections!.subject_code, unit: f.collections!.unit, hidden: !!f.deleted_at }))}
       >
@@ -434,6 +470,7 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
       </Table>
       <BulkBar />
       </BulkProvider>
+      </>
     )
   }
 

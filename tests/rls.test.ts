@@ -864,6 +864,23 @@ describe('admins retitle Google Drive library files', () => {
   })
 })
 
+describe('admins remove Google Drive library files from the site', () => {
+  const DRIVE_ID = '1p6KUg1olQgaUrA1b8M8KQIDulXp9X1v_'
+
+  it('lets only admins hide and restore a library file; everyone can read what is hidden', async () => {
+    await fails(B, `select public.staff_hide_drive_file($1, true)`, [DRIVE_ID])
+    await fails(null, `select public.staff_hide_drive_file($1, true)`, [DRIVE_ID])
+    await fails(ADMIN, `select public.staff_hide_drive_file('short', true)`)
+    await as(ADMIN, `select public.staff_hide_drive_file($1, true)`, [DRIVE_ID])
+    await as(ADMIN, `select public.staff_hide_drive_file($1, true)`, [DRIVE_ID])
+    expect((await as(null, `select file_id from public.drive_hidden where file_id = $1`, [DRIVE_ID])).rows).toHaveLength(1)
+    await fails(B, `delete from public.drive_hidden where file_id = $1`, [DRIVE_ID])
+    await fails(B, `insert into public.drive_hidden (file_id) values ('abcdefghijk')`)
+    await as(ADMIN, `select public.staff_hide_drive_file($1, false)`, [DRIVE_ID])
+    expect((await as(null, `select file_id from public.drive_hidden where file_id = $1`, [DRIVE_ID])).rows).toHaveLength(0)
+  })
+})
+
 describe("a member's branch", () => {
   it('is set by the member (kept when asked), corrected by staff, and never by anyone else', async () => {
     await fails(null, `select public.set_my_branch('ece')`)

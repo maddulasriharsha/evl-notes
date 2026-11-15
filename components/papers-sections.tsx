@@ -183,6 +183,7 @@ export function PapersSections({
                         emptyTitle=""
                         emptyHint=""
                         anchor={`${part.key}${g.year}-`}
+                        merged
                       />
                     </div>
                   ))}
