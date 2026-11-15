@@ -32,6 +32,12 @@ function DownloadCorner({ href, name }: { href: string; name: string }) {
 }
 
 /** Which branch(es) a file comes from, under the file, so shared subjects show who it is for. */
+/** Who uploaded a file, on cards shown in one merged list. */
+function ByLine({ by }: { by?: string }) {
+  if (!by) return null
+  return <span className="max-w-full truncate text-xs text-ink-3">by {by}</span>
+}
+
 function BranchTag({ tag }: { tag?: string }) {
   if (!tag) return null
   return (
@@ -41,7 +47,7 @@ function BranchTag({ tag }: { tag?: string }) {
   )
 }
 
-export function UploadFileCard({ file, subject, unit, branchTag }: { file: NoteFile; subject: string; unit: number; branchTag?: string }) {
+export function UploadFileCard({ file, subject, unit, branchTag, by }: { file: NoteFile; subject: string; unit: number; branchTag?: string; by?: string }) {
   const isLink = isDriveMime(file.mime)
   const isPdf = file.mime === 'application/pdf'
   const thumb = thumbFor(file)
@@ -70,6 +76,7 @@ export function UploadFileCard({ file, subject, unit, branchTag }: { file: NoteF
               {file.page_count ? plural(file.page_count, 'page') : type}
               {file.size_bytes != null ? ` · ${formatBytes(file.size_bytes)}` : ''}
             </span>
+            <ByLine by={by} />
             <BranchTag tag={branchTag} />
             <StarBadge avg={file.rating_avg} count={file.rating_count} />
             {file.helpful_count > 0 && (
@@ -100,7 +107,7 @@ function iconFor(ext: string): ThumbIcon {
 }
 
 /** A file from the owner's Google Drive notes, previewed from Drive. */
-export function DriveFileCard({ file, placeUnit, branchTag }: { file: DriveFile; placeUnit?: number; branchTag?: string }) {
+export function DriveFileCard({ file, placeUnit, branchTag, by }: { file: DriveFile; placeUnit?: number; branchTag?: string; by?: string }) {
   const tone = file.kind === 'questions' ? 'gold' : file.kind === 'lab' ? 'ok' : 'neutral'
   const type = isImage(file.ext) ? 'Image' : file.ext.toUpperCase()
   return (
@@ -114,6 +121,7 @@ export function DriveFileCard({ file, placeUnit, branchTag }: { file: DriveFile;
           <div className="mt-auto flex flex-wrap items-center gap-1.5 pr-11">
             {file.kind !== 'notes' && <Badge tone={tone}>{kindLabel[file.kind]}</Badge>}
             {file.pages ? <span className="text-xs text-ink-3">{plural(file.pages, 'page')}</span> : null}
+            <ByLine by={by} />
             <BranchTag tag={branchTag} />
           </div>
         </div>

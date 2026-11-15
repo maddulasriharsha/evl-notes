@@ -102,6 +102,7 @@ export default async function CompletePage({ params }: PageProps<'/s/[code]/comp
             emptyTitle="No complete notes yet"
             emptyHint="Have the whole subject in one file?"
             anchor="n-"
+            merged
           />
         </section>
 

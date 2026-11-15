@@ -29,6 +29,7 @@ export function ShelfCards({
   emptyTitle,
   emptyHint,
   anchor = '',
+  merged = false,
 }: {
   collections: NoteCollection[]
   drive: DriveFile[]
@@ -43,6 +44,8 @@ export function ShelfCards({
   emptyHint: string
   /** Prefix that keeps element ids unique when two lists share one page. */
   anchor?: string
+  /** One grid of every file, each labelled with who uploaded it and their branch, instead of one card per uploader. */
+  merged?: boolean
 }) {
   const ownerShelf = collections.find(isLibraryOwner)
   const cards: { key: string; collection?: NoteCollection; drive: DriveFile[] }[] = [
@@ -84,6 +87,43 @@ export function ShelfCards({
   const tagFor = (code: string, uploaderBranch: string | null) => {
     if (uploaderBranch) return names[uploaderBranch] ?? uploaderBranch
     return code !== subjectCode ? branchesOfCode(code) : ''
+  }
+
+  // What staff can pick for a bulk move, hide or tag.
+  const pickable: BulkItem[] = cards.flatMap(({ collection: c, drive: driveList }) => [
+    ...(c?.files.map((f): BulkItem => ({ id: f.id, kind: 'u', name: f.name, subject: c.subject_code, unit: c.unit ?? unit })) ?? []),
+    ...driveList.map((f): BulkItem => ({ id: f.id, kind: 'd', name: f.title, subject: f.subject, unit })),
+  ])
+
+  if (merged) {
+    const all = collections.flatMap(sourcesOf)
+    return (
+      <BulkProvider all={pickable}>
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <BulkToggle />
+          <span className="flex-1" />
+          {all.length > 1 && <DownloadShelfButton sources={all} title={`${subjectShort} - ${label}`} label="Download all as one PDF" />}
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          {cards.flatMap(({ key, collection: c, drive: driveList }) => {
+            const by = (c?.owner_name ?? LIBRARY_OWNER.name).split(' ')[0]
+            return [
+              ...(c?.files.map((f) => (
+                <div key={f.id} id={`${anchor}f-${f.id}`} className="scroll-mt-36">
+                  <UploadFileCard file={f} subject={c.subject_code} unit={c.unit ?? unit} by={by} branchTag={tagFor(c.subject_code, c.owner_is_admin ? null : c.owner_branch) || undefined} />
+                </div>
+              )) ?? []),
+              ...driveList.map((f) => (
+                <div key={`${key}-${f.id}`}>
+                  <DriveFileCard file={f} placeUnit={unit} by={by} branchTag={tagFor(f.subject, null) || undefined} />
+                </div>
+              )),
+            ]
+          })}
+        </div>
+        <BulkBar />
+      </BulkProvider>
+    )
   }
 
   const shelves = cards.map(({ key, collection: c, drive: driveList }) => {
@@ -149,12 +189,6 @@ export function ShelfCards({
         )
         return { key, node }
   })
-
-  // What staff can pick for a bulk move, hide or tag.
-  const pickable: BulkItem[] = cards.flatMap(({ collection: c, drive: driveList }) => [
-    ...(c?.files.map((f): BulkItem => ({ id: f.id, kind: 'u', name: f.name, subject: c.subject_code, unit: c.unit ?? unit })) ?? []),
-    ...driveList.map((f): BulkItem => ({ id: f.id, kind: 'd', name: f.title, subject: f.subject, unit })),
-  ])
 
   return (
     <BulkProvider all={pickable}>
