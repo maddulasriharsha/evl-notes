@@ -55,42 +55,71 @@ export function StarField() {
       })
     }
 
+    // One round dot, drawn once per colour and stamped for every bigger star: far cheaper than a
+    // fresh arc path per star per frame.
+    const dot = document.createElement('canvas')
+    let dotColour = ''
+    const dotFor = (colour: string) => {
+      if (colour === dotColour) return dot
+      dot.width = dot.height = 16
+      const d = dot.getContext('2d')!
+      d.clearRect(0, 0, 16, 16)
+      d.fillStyle = colour
+      d.beginPath()
+      d.arc(8, 8, 8, 0, Math.PI * 2)
+      d.fill()
+      dotColour = colour
+      return dot
+    }
+
+    // The stars drift slowly, so 30 frames a second looks the same as 60 and halves the work.
+    const STEP = 1000 / 30
+    let last = 0
     const draw = (time: number) => {
       frame = 0
+      if (!calm && !document.hidden && last && time - last < STEP - 2) {
+        frame = requestAnimationFrame(draw)
+        return
+      }
+      // Movement is per 60 Hz frame, scaled by the time that really passed (capped after a pause).
+      const k = last ? Math.min((time - last) / (1000 / 60), 4) : 1
+      last = time
       const light = document.documentElement.dataset.theme === 'light'
-      const rgb = light ? '76 60 140' : '255 255 255'
+      const colour = light ? 'rgb(76 60 140)' : 'rgb(255 255 255)'
+      const dim = light ? 0.6 : 1
+      const sprite = dotFor(colour)
       const sec = time / 1000
+      const decay = 0.94 ** k
       ctx.clearRect(0, 0, w, h)
+      ctx.fillStyle = colour
       for (const s of stars) {
         if (!calm) {
           const dx = s.x - mouse.x
           const dy = s.y - mouse.y
-          const d = Math.hypot(dx, dy)
-          if (d < REACH && d > 0.001) {
-            const f = (1 - d / REACH) * 0.35
+          const d2 = dx * dx + dy * dy
+          if (d2 < REACH * REACH && d2 > 0.000001) {
+            const d = Math.sqrt(d2)
+            const f = (1 - d / REACH) * 0.35 * k
             s.kx += (dx / d) * f
             s.ky += (dy / d) * f
           }
-          s.kx *= 0.94
-          s.ky *= 0.94
-          s.x += s.vx + s.kx
-          s.y += s.vy + s.ky
+          s.kx *= decay
+          s.ky *= decay
+          s.x += (s.vx + s.kx) * k
+          s.y += (s.vy + s.ky) * k
           if (s.x < -4) s.x = w + 4
           else if (s.x > w + 4) s.x = -4
           if (s.y < -4) s.y = h + 4
           else if (s.y > h + 4) s.y = -4
         }
         const glow = calm ? 1 : 0.75 + 0.25 * Math.sin(sec * s.s + s.t)
-        ctx.fillStyle = `rgb(${rgb} / ${(s.a * glow * (light ? 0.6 : 1)).toFixed(3)})`
-        if (s.r < 0.9) {
-          ctx.fillRect(s.x, s.y, s.r * 1.6, s.r * 1.6)
-        } else {
-          ctx.beginPath()
-          ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2)
-          ctx.fill()
-        }
+        ctx.globalAlpha = s.a * glow * dim
+        if (s.r < 0.9) ctx.fillRect(s.x, s.y, s.r * 1.6, s.r * 1.6)
+        else ctx.drawImage(sprite, s.x - s.r, s.y - s.r, s.r * 2, s.r * 2)
       }
+      ctx.globalAlpha = 1
       if (!calm && !document.hidden) frame = requestAnimationFrame(draw)
+      else last = 0
     }
     const kick = () => {
       if (!frame) frame = requestAnimationFrame(draw)

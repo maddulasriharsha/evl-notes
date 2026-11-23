@@ -81,8 +81,12 @@ export function FxLayer() {
         cards = Array.from(document.querySelectorAll<HTMLElement>('.fx-card'))
         cardsStale = false
       }
-      for (const el of cards) {
-        const r = el.getBoundingClientRect()
+      // Measure every card first, then write: a measure after a write would make the browser redo
+      // the page layout once per card, every frame the cursor moves.
+      const rects = cards.map((el) => el.getBoundingClientRect())
+      for (let i = 0; i < cards.length; i++) {
+        const el = cards[i]!
+        const r = rects[i]!
         if (r.bottom < -GLOW_REACH || r.top > h + GLOW_REACH) continue
         const nx = Math.max(r.left, Math.min(mouse.x, r.right))
         const ny = Math.max(r.top, Math.min(mouse.y, r.bottom))
