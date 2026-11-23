@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import Link from '@/components/link'
 import { MessageSquareReply, X } from 'lucide-react'
 import { supabaseConfigured } from '@/lib/env'
-import { supabaseBrowser } from '@/lib/supabase/browser'
+import { hasSession, supabaseBrowser } from '@/lib/supabase/browser'
 
 const KEY = 'vj-reply-notice-dismissed'
 
@@ -28,7 +28,8 @@ export function ReplyNotice() {
   }, [])
 
   useEffect(() => {
-    if (!supabaseConfigured || pathname === '/suggest') return setLatest(null)
+    // Replies are only for signed-in people; without a session cookie there is nothing to ask.
+    if (!supabaseConfigured || pathname === '/suggest' || !hasSession()) return setLatest(null)
     let live = true
     void (async () => {
       const supabase = supabaseBrowser()

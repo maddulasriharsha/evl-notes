@@ -1,7 +1,7 @@
 'use client'
 
 import Link from '@/components/link'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import {
   Bell,
@@ -24,7 +24,7 @@ import {
 import { InstallButton } from '@/components/install-button'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { supabaseConfigured } from '@/lib/env'
-import { supabaseBrowser } from '@/lib/supabase/browser'
+import { hasSession, loadSupabase, supabaseBrowser } from '@/lib/supabase/browser'
 
 interface Account {
   id: string
@@ -40,10 +40,22 @@ export function AccountButton() {
   const [open, setOpen] = useState(false)
   const box = useRef<HTMLDivElement>(null)
 
+  const pathname = usePathname()
+  // Signed out (no session cookie): nothing to load, and the Supabase script stays undownloaded.
+  // Checked again on every page, because signing in ends with an in-app navigation.
+  const [signedIn, setSignedIn] = useState(false)
   useEffect(() => {
     if (!supabaseConfigured) return setAccount(null)
+    if (hasSession()) setSignedIn(true)
+    else if (!signedIn) setAccount(null)
+  }, [pathname, signedIn])
+
+  useEffect(() => {
+    if (!signedIn) return
     const supabase = supabaseBrowser()
     let loadedFor: string | null = null
+    let stop: (() => void) | undefined
+    let live = true
     const load = async (user: { id: string; email?: string; user_metadata?: Record<string, unknown> } | null) => {
       if (!user) {
         loadedFor = null
@@ -62,9 +74,20 @@ export function AccountButton() {
       })
     }
     supabase.auth.getSession().then(({ data }) => load(data.session?.user ?? null))
-    const { data } = supabase.auth.onAuthStateChange((_e, session) => void load(session?.user ?? null))
-    return () => data.subscription.unsubscribe()
-  }, [])
+    // A listener answers at once, so it needs the real client rather than the stand-in.
+    void loadSupabase().then((client) => {
+      if (!live) return
+      const { data } = client.auth.onAuthStateChange((_e, session) => {
+        if (!session) setSignedIn(false)
+        void load(session?.user ?? null)
+      })
+      stop = () => data.subscription.unsubscribe()
+    })
+    return () => {
+      live = false
+      stop?.()
+    }
+  }, [signedIn])
 
   useEffect(() => {
     if (!open) return

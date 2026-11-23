@@ -7,13 +7,16 @@ import { refreshFile } from '@/app/upload/actions'
 import { ExamTagButton } from '@/components/exam-tag'
 import { MoveFileButton } from '@/components/move-file'
 import { PAPERS_UNIT } from '@/lib/curriculum'
-import { supabaseBrowser } from '@/lib/supabase/browser'
+import { hasSession, supabaseBrowser } from '@/lib/supabase/browser'
 
 type Viewer = { id: string; role: string } | null
 
-// One lookup per page load, shared by every card.
+// One lookup per page load, shared by every card. Signed out (no session cookie) needs no lookup at
+// all (and caches nothing), so readers never download the Supabase script and a later sign-in is
+// looked up when it happens.
 let viewerPromise: Promise<Viewer> | null = null
 function loadViewer(): Promise<Viewer> {
+  if (!hasSession()) return Promise.resolve(null)
   if (!viewerPromise) {
     const supabase = supabaseBrowser()
     viewerPromise = supabase.auth

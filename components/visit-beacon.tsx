@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import { supabaseConfigured } from '@/lib/env'
-import { supabaseBrowser } from '@/lib/supabase/browser'
+import { publicRest } from '@/lib/supabase/browser'
 
 const ID_KEY = 'vj-visitor'
 const SESSION_KEY = 'vj-visit-counted'
@@ -22,15 +22,8 @@ export function VisitBeacon() {
         localStorage.setItem(ID_KEY, id)
       }
       sessionStorage.setItem(SESSION_KEY, '1')
-      // The query builder only sends its request once something awaits it, so .then() is required.
-      supabaseBrowser()
-        .rpc('record_visit', { p_visitor: id })
-        .then(
-          ({ error }) => {
-            if (error) sessionStorage.removeItem(SESSION_KEY)
-          },
-          () => sessionStorage.removeItem(SESSION_KEY),
-        )
+      // A plain request, so counting a visit does not download the Supabase script.
+      publicRest('rpc/record_visit', { method: 'POST', body: { p_visitor: id } }).catch(() => sessionStorage.removeItem(SESSION_KEY))
     } catch {
       // Storage blocked (private mode): the visit simply is not counted.
     }

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from '@/components/link'
 import { ChevronLeft, ChevronRight, Megaphone, X } from 'lucide-react'
 import { supabaseConfigured } from '@/lib/env'
-import { supabaseBrowser } from '@/lib/supabase/browser'
+import { publicRest } from '@/lib/supabase/browser'
 
 interface Announcement {
   id: string
@@ -40,17 +40,14 @@ export function AnnouncementBar() {
   useEffect(() => {
     if (!supabaseConfigured) return
     let live = true
-    supabaseBrowser()
-      .from('announcements')
-      .select('id, message, link')
-      .eq('active', true)
-      .order('created_at', { ascending: false })
-      .limit(MAX)
-      .then(({ data, error }) => {
-        if (!live || error || !data) return
+    // A plain request: everyone sees this bar, and it should not cost them the Supabase script.
+    publicRest<Announcement[]>(`announcements?select=id,message,link&active=eq.true&order=created_at.desc&limit=${MAX}`)
+      .then((data) => {
+        if (!live || !Array.isArray(data)) return
         const gone = new Set(dismissed())
-        setItems((data as Announcement[]).filter((a) => !gone.has(a.id)))
+        setItems(data.filter((a) => !gone.has(a.id)))
       })
+      .catch(() => undefined)
     return () => {
       live = false
     }
