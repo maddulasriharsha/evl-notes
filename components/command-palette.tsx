@@ -226,8 +226,8 @@ export function PaletteButton() {
       className="btn-ghost hidden h-10 items-center gap-2 rounded-xl px-3 text-sm text-ink-2 hover:text-ink md:inline-flex"
     >
       <Search className="size-4" />
-      <span className="hidden lg:inline">Jump to…</span>
-      <kbd className="hidden rounded-md border border-line px-1.5 py-0.5 text-[10px] text-ink-3 lg:inline">Ctrl K</kbd>
+      <span className="hidden xl:inline">Jump to…</span>
+      <kbd className="hidden rounded-md border border-line px-1.5 py-0.5 text-[10px] text-ink-3 xl:inline">Ctrl K</kbd>
     </button>
   )
 }

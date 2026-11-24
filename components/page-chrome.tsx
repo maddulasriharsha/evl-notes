@@ -61,8 +61,8 @@ export function PageChrome() {
 const NAV = [
   { href: '/#branches', label: 'Branches', on: (p: string) => p.startsWith('/b/') || p.startsWith('/s/') || p.startsWith('/sem/') },
   { href: '/textbooks', label: 'Textbooks', on: (p: string) => p.startsWith('/textbooks') },
-  { href: '/contributors', label: 'Contributors', on: (p: string) => p.startsWith('/contributors') },
-  { href: '/requests', label: 'Requests', on: (p: string) => p.startsWith('/requests') },
+  { href: '/contributors', label: 'Contributors', on: (p: string) => p.startsWith('/contributors'), wide: 'hidden lg:inline-flex' },
+  { href: '/requests', label: 'Requests', on: (p: string) => p.startsWith('/requests'), wide: 'hidden xl:inline-flex' },
 ]
 
 /** The top bar's links, with a mark under the section you are in. */
@@ -71,7 +71,7 @@ export function NavLinks() {
   return (
     <nav aria-label="Main" className="ml-2 hidden items-center gap-0.5 text-sm text-ink-2 md:flex">
       {NAV.map((n) => (
-        <Link key={n.href} href={n.href} aria-current={n.on(pathname) ? 'page' : undefined} className="nav-link">
+        <Link key={n.href} href={n.href} aria-current={n.on(pathname) ? 'page' : undefined} className={`nav-link ${'wide' in n ? n.wide : ''}`}>
           {n.label}
         </Link>
       ))}
