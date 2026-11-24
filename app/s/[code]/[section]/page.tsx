@@ -35,7 +35,7 @@ import { liveLibrary } from '@/lib/library-live'
 import { formatDate, plural, timeAgo } from '@/lib/format'
 
 // Rebuilt at once when notes change (see refreshChapter); this is only the fallback for votes, comments and the like.
-export const revalidate = 600
+export const revalidate = 86400
 
 export function generateStaticParams() {
   return allSubjects().flatMap(({ subject }) =>

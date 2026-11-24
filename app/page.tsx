@@ -25,7 +25,7 @@ import { plural, timeAgo } from '@/lib/format'
 import { liveLibrary } from '@/lib/library-live'
 
 // Rebuilt at once when notes change (see refreshChapter); this is only the fallback for votes, comments and the like.
-export const revalidate = 600
+export const revalidate = 3600
 
 const n = (x: number) => x.toLocaleString('en-IN')
 

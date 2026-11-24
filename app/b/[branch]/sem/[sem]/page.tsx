@@ -10,7 +10,7 @@ import { countsBySubject } from '@/lib/data'
 import { liveLibrary } from '@/lib/library-live'
 
 // Rebuilt at once when notes change (see refreshChapter); this is only the fallback for votes, comments and the like.
-export const revalidate = 600
+export const revalidate = 86400
 
 export function generateStaticParams() {
   return branches.flatMap((b) => b.semesters.map((s) => ({ branch: b.id, sem: String(s.sem) })))

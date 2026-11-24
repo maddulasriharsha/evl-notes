@@ -8,7 +8,7 @@ import { plural, timeAgo } from '@/lib/format'
 
 export const metadata: Metadata = { title: 'Note requests' }
 // Rebuilt at once when notes change (see refreshChapter); this is only the fallback for votes, comments and the like.
-export const revalidate = 300
+export const revalidate = 1800
 
 export default async function RequestsPage() {
   const list = await openRequests()
