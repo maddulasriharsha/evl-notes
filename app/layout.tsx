@@ -28,7 +28,15 @@ export const metadata: Metadata = {
     'Class notes for every B.Tech branch (R25) at VNR VJIET, organised by branch, semester, subject and chapter. Free to read and download, no sign-in needed.',
   applicationName: 'VJNOTES',
   appleWebApp: { capable: true, title: 'VJNOTES', statusBarStyle: 'black-translucent' },
-  icons: { apple: '/pwa/180' },
+  // The tab icon: the logo as a sharp SVG, with PNGs for browsers that do not read SVG icons.
+  icons: {
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/pwa/192', sizes: '192x192', type: 'image/png' },
+    ],
+    shortcut: '/pwa/192',
+    apple: '/pwa/180',
+  },
 }
 
 export const viewport: Viewport = {
