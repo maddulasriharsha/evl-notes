@@ -831,6 +831,61 @@ describe('question tags', () => {
     const off = await as(TMOD, `select public.staff_set_file_tag($1, 'questions', false) as t`, [TF])
     expect(off.rows[0]!.t).toEqual([])
   })
+
+  it('lets the uploader and staff set typed or handwritten, and only staff set R25 or old', async () => {
+    await fails(A, `select public.set_file_style($1, 'typed')`, [TF])
+    await fails(null, `select public.set_file_style($1, 'typed')`, [TF])
+    await fails(B, `select public.set_file_style($1, 'scribbled')`, [TF])
+    const mine = await as(B, `select public.set_file_style($1, 'typed') as t`, [TF])
+    expect(mine.rows[0]!.t).toEqual(['typed'])
+    const staff = await as(TMOD, `select public.set_file_style($1, 'handwritten') as t`, [TF])
+    expect(staff.rows[0]!.t).toEqual(['handwritten'])
+
+    await fails(B, `select public.staff_set_file_edition($1, 'r25')`, [TF])
+    await fails(TMOD, `select public.staff_set_file_edition($1, 'ancient')`, [TF])
+    const r25 = await as(TMOD, `select public.staff_set_file_edition($1, 'r25') as t`, [TF])
+    expect([...(r25.rows[0]!.t as string[])].sort()).toEqual(['handwritten', 'r25'])
+    const old = await as(TMOD, `select public.staff_set_file_edition($1, 'old') as t`, [TF])
+    expect([...(old.rows[0]!.t as string[])].sort()).toEqual(['handwritten', 'old'])
+    await as(TMOD, `select public.staff_set_file_edition($1, null)`, [TF])
+    const cleared = await as(B, `select public.set_file_style($1, null) as t`, [TF])
+    expect(cleared.rows[0]!.t).toEqual([])
+    await fails(B, `update public.files set tags = array['r25'] where id = $1`, [TF])
+  })
+})
+
+describe('admins label Google Drive library files', () => {
+  const DRIVE_ID = '1p6KUg1olQgaUrA1b8M8KQIDulXp9X1v_'
+
+  it('lets only admins set typed/handwritten and R25/old; everyone can read them', async () => {
+    await fails(B, `select public.staff_set_drive_labels($1, 'typed', 'r25')`, [DRIVE_ID])
+    await fails(null, `select public.staff_set_drive_labels($1, 'typed', 'r25')`, [DRIVE_ID])
+    await fails(ADMIN, `select public.staff_set_drive_labels($1, 'typed', 'ancient')`, [DRIVE_ID])
+    await as(ADMIN, `select public.staff_set_drive_labels($1, 'typed', 'r25')`, [DRIVE_ID])
+    await as(ADMIN, `select public.staff_set_drive_labels($1, 'handwritten', 'old')`, [DRIVE_ID])
+    const row = await as(null, `select style, edition from public.drive_labels where file_id = $1`, [DRIVE_ID])
+    expect(row.rows).toEqual([{ style: 'handwritten', edition: 'old' }])
+    await fails(B, `delete from public.drive_labels where file_id = $1`, [DRIVE_ID])
+    await as(ADMIN, `select public.staff_set_drive_labels($1, null, null)`, [DRIVE_ID])
+    expect((await as(null, `select file_id from public.drive_labels where file_id = $1`, [DRIVE_ID])).rows).toHaveLength(0)
+  })
+})
+
+describe('textbooks', () => {
+  it('lets only staff add and remove books; everyone can read them; links must be https', async () => {
+    await fails(B, `select public.staff_add_textbook('25ES1CS105', 'Book', null, null, 'textbook', null)`)
+    await fails(null, `select public.staff_add_textbook('25ES1CS105', 'Book', null, null, 'textbook', null)`)
+    await fails(ADMIN, `select public.staff_add_textbook('25ES1CS105', 'Book', null, null, 'textbook', 'http://insecure.example')`)
+    await fails(ADMIN, `select public.staff_add_textbook('25ES1CS105', 'Book', null, null, 'novel', null)`)
+    const added = await as(ADMIN, `select public.staff_add_textbook('25ES1CS105', ' Let Us C ', 'Yashavant Kanetkar', '', 'textbook', 'https://example.com/book') as id`)
+    const id = added.rows[0]!.id as string
+    const row = await as(null, `select title, authors, edition, link from public.textbooks where id = $1`, [id])
+    expect(row.rows).toEqual([{ title: 'Let Us C', authors: 'Yashavant Kanetkar', edition: null, link: 'https://example.com/book' }])
+    await fails(B, `insert into public.textbooks (subject_code, title) values ('25ES1CS105', 'Sneaky')`)
+    await fails(B, `select public.staff_remove_textbook($1)`, [id])
+    await as(ADMIN, `select public.staff_remove_textbook($1)`, [id])
+    expect((await as(null, `select id from public.textbooks where id = $1`, [id])).rows).toHaveLength(0)
+  })
 })
 
 describe('admins move Google Drive library files', () => {

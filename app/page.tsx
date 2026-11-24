@@ -10,6 +10,7 @@ import {
   Star,
   Users,
 } from 'lucide-react'
+import { BranchPrompt } from '@/components/branch-prompt'
 import { CountUp } from '@/components/count-up'
 import { HeroStars } from '@/components/hero-stars'
 import { MarkMyBranch } from '@/components/page-chrome'
@@ -93,23 +94,12 @@ export default async function Home() {
               <CloudUpload className="size-4" /> Upload yours
             </Link>
           </div>
-          <div className="rise rise-4 mt-6 flex max-w-xl flex-wrap items-center justify-center gap-x-1.5 gap-y-2 text-xs text-ink-3">
-            <span className="mr-1">Popular</span>
-            {strip.slice(0, 4).map(({ subject }) => (
-              <Link
-                key={subject.code}
-                href={subjectHref(subject.code)}
-                className="rounded-full border border-line bg-white/[0.03] px-2.5 py-1 font-medium text-ink-2 backdrop-blur transition hover:border-accent/40 hover:text-ink"
-              >
-                {subject.short}
-              </Link>
-            ))}
-          </div>
         </div>
       </section>
 
       <div className="mx-auto max-w-5xl px-4 sm:px-6">
         <ContinueStudying />
+        <BranchPrompt branches={branches.map((b) => ({ id: b.id, short: b.short, name: b.name }))} />
 
         {/* ---------- Branches ---------- */}
         <section id="branches" className="mt-14 scroll-mt-28">

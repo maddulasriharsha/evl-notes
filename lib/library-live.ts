@@ -2,20 +2,21 @@ import 'server-only'
 
 import { unstable_cache } from 'next/cache'
 import { supabaseConfigured } from '@/lib/env'
-import { libraryWith, type Placement } from '@/lib/library'
+import { libraryWith, type DriveLabel, type Placement } from '@/lib/library'
 import { supabasePublic } from '@/lib/supabase/server'
 
-type Edits = { moves: [string, Placement][]; titles: [string, string][]; hidden: string[]; tagged: string[] }
+type Edits = { moves: [string, Placement][]; titles: [string, string][]; hidden: string[]; tagged: string[]; labels: [string, DriveLabel][] }
 
 const loadEdits = unstable_cache(
   async (): Promise<Edits> => {
-    if (!supabaseConfigured) return { moves: [], titles: [], hidden: [], tagged: [] }
+    if (!supabaseConfigured) return { moves: [], titles: [], hidden: [], tagged: [], labels: [] }
     const db = supabasePublic()
-    const [placed, named, gone, marked] = await Promise.all([
+    const [placed, named, gone, marked, labelled] = await Promise.all([
       db.from('drive_placements').select('file_id, subject_code, unit'),
       db.from('drive_titles').select('file_id, title'),
       db.from('drive_hidden').select('file_id'),
       db.from('drive_question_tags').select('file_id'),
+      db.from('drive_labels').select('file_id, style, edition'),
     ])
     // The tables arrive with migrations; until then nothing is moved, retitled, hidden or tagged.
     return {
@@ -25,6 +26,9 @@ const loadEdits = unstable_cache(
       titles: named.error ? [] : ((named.data ?? []) as { file_id: string; title: string }[]).map((r) => [r.file_id, r.title]),
       hidden: gone.error ? [] : ((gone.data ?? []) as { file_id: string }[]).map((r) => r.file_id),
       tagged: marked.error ? [] : ((marked.data ?? []) as { file_id: string }[]).map((r) => r.file_id),
+      labels: labelled.error
+        ? []
+        : ((labelled.data ?? []) as { file_id: string; style: DriveLabel['style']; edition: DriveLabel['edition'] }[]).map((r) => [r.file_id, { style: r.style, edition: r.edition }]),
     }
   },
   ['drive-placements'],
@@ -34,6 +38,6 @@ const loadEdits = unstable_cache(
 
 /** The Drive library with the admins' moves, new titles and hidden files applied. Use this on pages; the plain exports ignore them. */
 export async function liveLibrary() {
-  const { moves, titles, hidden, tagged } = await loadEdits()
-  return libraryWith(new Map(moves), new Map(titles), new Set(hidden), new Set(tagged))
+  const { moves, titles, hidden, tagged, labels } = await loadEdits()
+  return libraryWith(new Map(moves), new Map(titles), new Set(hidden), new Set(tagged), new Map(labels))
 }

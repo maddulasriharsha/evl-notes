@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { HelpCircle, Loader2, Pencil, Trash2 } from 'lucide-react'
 import { refreshChapter, refreshDriveFile } from '@/app/upload/actions'
 import { ExamTagButton } from '@/components/exam-tag'
+import { LabelMenu } from '@/components/label-menu'
+import type { Edition, Style } from '@/components/label-badges'
 import { MoveFileButton } from '@/components/move-file'
 import { useViewer } from '@/components/file-tools'
 import { supabaseBrowser } from '@/lib/supabase/browser'
@@ -32,7 +34,23 @@ export function DriveRestore({ id, subject, unit }: { id: string; subject: strin
 }
 
 /** Admin-only Questions tag, Rename, Move and Delete for a Google Drive library file. The database re-checks the role. */
-export function DriveMove({ id, name, subject, unit, tagged = false }: { id: string; name: string; subject: string; unit: number; tagged?: boolean }) {
+export function DriveMove({
+  id,
+  name,
+  subject,
+  unit,
+  tagged = false,
+  style,
+  edition,
+}: {
+  id: string
+  name: string
+  subject: string
+  unit: number
+  tagged?: boolean
+  style?: Style
+  edition?: Edition
+}) {
   const viewer = useViewer()
   const router = useRouter()
   const [editing, setEditing] = useState(false)
@@ -53,6 +71,13 @@ export function DriveMove({ id, name, subject, unit, tagged = false }: { id: str
     // The Question bank sits on the Complete notes and Exam prep pages, which refreshChapter covers.
     await refreshDriveFile(id, subject, unit).catch(() => undefined)
     setBusy(null)
+    router.refresh()
+  }
+
+  async function saveLabels(nextStyle: Style | null, nextEdition: Edition | null) {
+    const { error } = await supabaseBrowser().rpc('staff_set_drive_labels', { p_file: id, p_style: nextStyle, p_edition: nextEdition })
+    if (error) throw new Error(error.message)
+    await refreshDriveFile(id, subject, unit).catch(() => undefined)
     router.refresh()
   }
 
@@ -95,6 +120,7 @@ export function DriveMove({ id, name, subject, unit, tagged = false }: { id: str
     <>
       <div className="absolute top-2 right-2 z-10 flex gap-1 opacity-100 transition sm:opacity-0 sm:group-focus-within:opacity-100 sm:group-hover:opacity-100">
         {unit === PAPERS_UNIT && <ExamTagButton title={name} save={setTitle} variant="card" />}
+        <LabelMenu style={style} edition={edition} canEdition save={saveLabels} variant="card" />
         <button
           type="button"
           aria-label={isTagged ? 'Remove the Questions tag' : 'Tag as Questions'}

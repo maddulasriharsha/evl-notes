@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { allSubjects, findSubject, PAPERS_UNIT, QUESTION_BANK_UNIT, sectionHref, sectionLabel, sectionsOf, sectionTitle, subjectHref } from '@/lib/curriculum'
+import { allSubjects, findBranch, findSubject, PAPERS_UNIT, QUESTION_BANK_UNIT, sectionHref, sectionLabel, sectionsOf, sectionTitle, subjectHref } from '@/lib/curriculum'
 import { driveFiles } from '@/lib/library'
 
 export interface Suggestion {
@@ -21,7 +21,13 @@ const norm = (s: string) =>
  * Reads only the data shipped with the site (no database), and the answer for a query can be cached.
  */
 export function GET(request: Request) {
-  const q = (new URL(request.url).searchParams.get('q') ?? '').slice(0, 60)
+  const params = new URL(request.url).searchParams
+  const q = (params.get('q') ?? '').slice(0, 60)
+  // "Mine only": keep subjects taught to this branch (and semester), plus the shared extras.
+  const mineBranch = findBranch((params.get('branch') ?? '').slice(0, 40))?.id
+  const mineSem = Number(params.get('sem')) || 0
+  const mine = (e: ReturnType<typeof allSubjects>[number]) =>
+    !mineBranch || e.usedIn.some((u) => !u.branch || (u.branch.id === mineBranch && (!mineSem || u.semester.sem === mineSem)))
   const terms = norm(q).split(' ').filter(Boolean)
   if (terms.join('').length < 2) return NextResponse.json({ items: [] })
   const hit = (text: string) => {
@@ -31,7 +37,9 @@ export function GET(request: Request) {
 
   const subjects: Suggestion[] = []
   const chapters: Suggestion[] = []
-  for (const { subject, branch, semester } of allSubjects()) {
+  for (const entry of allSubjects()) {
+    const { subject, branch, semester } = entry
+    if (!mine(entry)) continue
     if (subjects.length < 5 && hit(`${subject.name} ${subject.short} ${subject.code}`)) {
       subjects.push({ kind: 'subject', href: subjectHref(subject.code), title: subject.name, hint: `${subject.short}${branch ? ` · ${branch.short}` : ''} · Sem ${semester.sem}` })
     }
@@ -47,7 +55,9 @@ export function GET(request: Request) {
   const files: Suggestion[] = []
   for (const f of driveFiles) {
     if (files.length >= 5) break
-    const short = findSubject(f.subject)?.subject.short ?? ''
+    const owner = findSubject(f.subject)
+    if (owner && !mine(owner)) continue
+    const short = owner?.subject.short ?? ''
     if (hit(`${f.title} ${short}`)) files.push({ kind: 'file', href: `/view/d/${f.id}`, title: f.title, hint: `${short} · ${f.ext.toUpperCase()}` })
   }
 

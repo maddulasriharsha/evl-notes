@@ -3,6 +3,7 @@ import { Download, MessageCircle, ThumbsUp } from 'lucide-react'
 import { SelectOverlay } from '@/components/bulk-select'
 import { DriveMove } from '@/components/drive-move'
 import { FileTools } from '@/components/file-tools'
+import { LabelBadges, labelsOf } from '@/components/label-badges'
 import { ReadProgress } from '@/components/read-progress'
 import { StarBadge } from '@/components/star-rating'
 import { Thumb, type ThumbIcon } from '@/components/thumb'
@@ -65,7 +66,7 @@ export function UploadFileCard({ file, subject, unit, branchTag, by }: { file: N
   return (
     <div className="fx-reveal group relative flex">
       <SelectOverlay item={{ id: file.id, kind: 'u', name: file.name, subject, unit }} />
-      <FileTools id={file.id} ownerId={file.owner_id} name={file.name} subject={subject} unit={unit} variant="card" tagged={file.tags?.includes('questions')} />
+      <FileTools id={file.id} ownerId={file.owner_id} name={file.name} subject={subject} unit={unit} variant="card" tagged={file.tags?.includes('questions')} tags={file.tags} />
       <Link href={`/view/u/${file.id}`} className={CARD}>
         <Thumb src={thumb} icon={kind ? (kind === 'presentation' ? 'slides' : 'doc') : isPdf ? 'pdf' : 'image'} label={type} badge={type} />
         <div className="flex flex-1 flex-col gap-2 border-t border-line p-3">
@@ -78,6 +79,7 @@ export function UploadFileCard({ file, subject, unit, branchTag, by }: { file: N
             </span>
             <ByLine by={by} />
             <BranchTag tag={branchTag} />
+            <LabelBadges {...labelsOf(file.tags)} />
             <StarBadge avg={file.rating_avg} count={file.rating_count} />
             {file.helpful_count > 0 && (
               <span className="inline-flex items-center gap-0.5 font-medium text-ink-2">
@@ -113,7 +115,7 @@ export function DriveFileCard({ file, placeUnit, branchTag, by }: { file: DriveF
   return (
     <div className="fx-reveal group relative flex">
       <SelectOverlay item={{ id: file.id, kind: 'd', name: file.title, subject: file.subject, unit: placeUnit ?? file.unit ?? 0 }} />
-      <DriveMove id={file.id} name={file.title} subject={file.subject} unit={placeUnit ?? file.unit ?? 0} tagged={!!file.tagged} />
+      <DriveMove id={file.id} name={file.title} subject={file.subject} unit={placeUnit ?? file.unit ?? 0} tagged={!!file.tagged} style={file.style} edition={file.edition} />
       <Link href={`/view/d/${file.id}`} className={CARD}>
         <Thumb src={driveThumbUrl(file.id)} icon={iconFor(file.ext)} label={file.ext} badge={type} />
         <div className="flex flex-1 flex-col gap-2 border-t border-line p-3">
@@ -124,6 +126,7 @@ export function DriveFileCard({ file, placeUnit, branchTag, by }: { file: DriveF
             {file.pages ? <span className="text-xs text-ink-3">{plural(file.pages, 'page')}</span> : null}
             <ByLine by={by} />
             <BranchTag tag={branchTag} />
+            <LabelBadges style={file.style} edition={file.edition} />
           </div>
         </div>
       </Link>

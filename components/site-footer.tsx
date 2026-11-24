@@ -16,6 +16,7 @@ const GROUPS = [
     title: 'Contribute',
     links: [
       { href: '/upload', label: 'Upload notes' },
+      { href: '/textbooks', label: 'Textbooks' },
       { href: '/requests', label: 'Requests' },
       { href: '/contributors', label: 'Contributors' },
       { href: '/suggest', label: 'Suggest an idea' },

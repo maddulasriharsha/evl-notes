@@ -5,7 +5,7 @@ import { Moon, Sun } from 'lucide-react'
 
 type Theme = 'dark' | 'light'
 
-/** Switches between the dark (default) and light look. The choice is remembered on this device. */
+/** Switches between dark and light. It starts from the device's own setting; a choice made here is remembered on this device. */
 export function ThemeToggle({ className = '', withLabel = false }: { className?: string; withLabel?: boolean }) {
   const [theme, setTheme] = useState<Theme>('dark')
 

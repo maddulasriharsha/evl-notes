@@ -42,6 +42,15 @@ export async function refreshDriveFile(fileId: string, subjectCode: string, unit
   await refreshChapter(subjectCode, unit)
 }
 
+/** Refreshes the pages that list textbooks after staff add or remove one. */
+export async function refreshTextbooks(subjectCode: string) {
+  if (!(await currentUser())) return
+  const found = findSubject(subjectCode)
+  if (!found) return
+  for (const code of sharedCodes(found.subject.code)) revalidatePath(subjectHref(code))
+  revalidatePath('/textbooks')
+}
+
 export type DriveCheck =
   | { ok: true; id: string; kind: DriveLinkKind; title: string | null }
   | { ok: false; message: string }

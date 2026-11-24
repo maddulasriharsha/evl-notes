@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { HelpCircle, Loader2, Pencil, Trash2 } from 'lucide-react'
 import { refreshFile } from '@/app/upload/actions'
 import { ExamTagButton } from '@/components/exam-tag'
+import { labelsOf } from '@/components/label-badges'
+import { LabelMenu } from '@/components/label-menu'
 import { MoveFileButton } from '@/components/move-file'
 import { PAPERS_UNIT } from '@/lib/curriculum'
 import { hasSession, supabaseBrowser } from '@/lib/supabase/browser'
@@ -57,6 +59,7 @@ export function FileTools({
   variant,
   after,
   tagged = false,
+  tags,
 }: {
   id: string
   ownerId: string
@@ -68,6 +71,8 @@ export function FileTools({
   after?: string
   /** Already tagged "questions" (it is listed in the Question bank). */
   tagged?: boolean
+  /** The note's tags, for its Typed / Handwritten and R25 / Old labels. */
+  tags?: readonly string[]
 }) {
   const viewer = useViewer()
   const router = useRouter()
@@ -114,6 +119,21 @@ export function FileTools({
     router.refresh()
   }
 
+  async function saveLabels(style: 'typed' | 'handwritten' | null, edition: 'r25' | 'old' | null) {
+    const db = supabaseBrowser()
+    const was = labelsOf(tags)
+    if ((was.style ?? null) !== style) {
+      const { error } = await db.rpc('set_file_style', { p_file: id, p_style: style })
+      if (error) throw new Error(error.message)
+    }
+    if (isStaff && (was.edition ?? null) !== edition) {
+      const { error } = await db.rpc('staff_set_file_edition', { p_file: id, p_edition: edition })
+      if (error) throw new Error(error.message)
+    }
+    await refreshFile(id, subject, unit).catch(() => undefined)
+    router.refresh()
+  }
+
   async function remove() {
     const who = byStaff ? ' It is someone else’s note; the owner can restore it from My notes.' : ''
     if (!confirm(`Delete “${name}”? It will disappear from the site.${who}`)) return
@@ -132,6 +152,7 @@ export function FileTools({
   const buttons = (
     <>
       {unit === PAPERS_UNIT && <ExamTagButton title={name} save={setTitle} variant={variant} />}
+      <LabelMenu style={labelsOf(tags).style} edition={labelsOf(tags).edition} canEdition={isStaff} save={saveLabels} variant={variant} />
       {isStaff && (
         <button
           type="button"

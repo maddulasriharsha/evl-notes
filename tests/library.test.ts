@@ -23,4 +23,11 @@ describe('Drive library', () => {
     expect(tagged.filesFor(f.subject, 7).some((x) => x.id === f.id && x.tagged)).toBe(true)
     expect(tagged.filesFor(f.subject, f.unit!).some((x) => x.id === f.id)).toBe(true)
   })
+
+  it('carries the typed/handwritten and R25/old labels onto the file', () => {
+    const f = driveFiles[0]!
+    const lib = libraryWith(new Map(), new Map(), new Set(), new Set(), new Map([[f.id, { style: 'handwritten', edition: 'old' }]]))
+    expect(lib.file(f.id)).toMatchObject({ style: 'handwritten', edition: 'old' })
+    expect(libraryWith(new Map()).file(f.id)?.style).toBeUndefined()
+  })
 })

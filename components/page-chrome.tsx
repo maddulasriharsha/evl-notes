@@ -60,6 +60,7 @@ export function PageChrome() {
 
 const NAV = [
   { href: '/#branches', label: 'Branches', on: (p: string) => p.startsWith('/b/') || p.startsWith('/s/') || p.startsWith('/sem/') },
+  { href: '/textbooks', label: 'Textbooks', on: (p: string) => p.startsWith('/textbooks') },
   { href: '/contributors', label: 'Contributors', on: (p: string) => p.startsWith('/contributors') },
   { href: '/requests', label: 'Requests', on: (p: string) => p.startsWith('/requests') },
 ]

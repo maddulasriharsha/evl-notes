@@ -7,6 +7,8 @@ import { ChapterNav } from '@/components/chapter-nav'
 import { CountUp } from '@/components/count-up'
 import { FollowButton } from '@/components/community-buttons'
 import { QrButton } from '@/components/qr-button'
+import { TextbookList } from '@/components/textbook-list'
+import { textbooksFor } from '@/lib/textbooks'
 import { SubjectCrumbs } from '@/components/subject-crumbs'
 import { ButtonLink, Container, SectionHeading } from '@/components/ui'
 import { allSubjects, completeHref, findSubject, PAPERS_UNIT, QUESTION_BANK_UNIT, sectionHref, sectionLabel, sectionMark, sectionsOf, sectionTitle, semesterHref, subjectCrumbs, subjectHref, subjectUses } from '@/lib/curriculum'
@@ -48,7 +50,7 @@ export default async function SubjectPage({ params }: PageProps<'/s/[code]'>) {
   const found = findSubject((await params).code)
   if (!found) notFound()
   const { subject } = found
-  const [counts, lib] = await Promise.all([countsForSubject(subject.code), liveLibrary()])
+  const [counts, lib, books] = await Promise.all([countsForSubject(subject.code), liveLibrary(), textbooksFor(subject.code)])
   const at = (unit: number) => (counts[unit] ?? 0) + lib.count(subject.code, unit)
   const chapters = sectionsOf(subject).filter((u) => u !== 0 && u !== QUESTION_BANK_UNIT && u !== PAPERS_UNIT)
   const chapterFiles = chapters.reduce((n, u) => n + at(u), 0)
@@ -166,6 +168,11 @@ export default async function SubjectPage({ params }: PageProps<'/s/[code]'>) {
             </Link>
           ))}
         </div>
+
+        <section id="textbooks" className="mt-12 scroll-mt-36">
+          <SectionHeading title="Textbooks & references" hint="Books to read alongside the notes. We list them and link out; we do not host them." />
+          <TextbookList subject={subject.code} books={books} />
+        </section>
 
         {chapters.length > 0 && (
           <section className="mt-12">

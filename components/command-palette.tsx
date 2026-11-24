@@ -28,6 +28,8 @@ export function CommandPalette() {
   const [busy, setBusy] = useState(false)
   const [at, setAt] = useState(0)
   const [branch, setBranch] = useState<string | null>(null)
+  const [sem, setSem] = useState(0)
+  const [all, setAll] = useState(false)
   const input = useRef<HTMLInputElement>(null)
   const list = useRef<HTMLUListElement>(null)
 
@@ -59,6 +61,8 @@ export function CommandPalette() {
     setAt(0)
     try {
       setBranch(localStorage.getItem('vj-branch'))
+      setSem(Number(localStorage.getItem('vj-sem')) || 0)
+      setAll(localStorage.getItem('vj-all') === '1')
     } catch {
       setBranch(null)
     }
@@ -81,7 +85,8 @@ export function CommandPalette() {
     setBusy(true)
     const stop = new AbortController()
     const t = setTimeout(() => {
-      fetch(`/api/suggest?q=${encodeURIComponent(text)}`, { signal: stop.signal })
+      const mine = branch && !all ? `&branch=${encodeURIComponent(branch)}${sem ? `&sem=${sem}` : ''}` : ''
+      fetch(`/api/suggest?q=${encodeURIComponent(text)}${mine}`, { signal: stop.signal })
         .then((r) => (r.ok ? r.json() : { items: [] }))
         .then((d: { items: Suggestion[] }) => {
           setFound((d.items ?? []).map((s) => ({ href: s.href, title: s.title, hint: s.hint, icon: ICON[s.kind] })))
@@ -94,7 +99,7 @@ export function CommandPalette() {
       clearTimeout(t)
       stop.abort()
     }
-  }, [q, open])
+  }, [q, open, branch, sem, all])
 
   if (!open) return null
 
@@ -115,6 +120,16 @@ export function CommandPalette() {
           { href: `/search?q=${encodeURIComponent(text)}`, title: `Search everything for “${text}”`, hint: 'Includes notes uploaded by classmates', icon: Search },
         ]
   const pick = Math.min(at, rows.length - 1)
+  const filtering = !!branch && !all
+  function toggleAll() {
+    const next = !all
+    setAll(next)
+    try {
+      localStorage.setItem('vj-all', next ? '1' : '0')
+    } catch {
+      /* ignore */
+    }
+  }
 
   function go(row: Row | undefined) {
     if (!row) return
@@ -156,6 +171,16 @@ export function CommandPalette() {
           />
           <kbd className="hidden shrink-0 rounded-md border border-line px-1.5 py-0.5 text-[11px] text-ink-3 sm:block">Esc</kbd>
         </div>
+        {branch && (
+          <div className="flex items-center gap-2 border-b border-line px-4 py-2 text-xs text-ink-3">
+            <span className="min-w-0 flex-1 truncate">
+              {filtering ? `Showing ${branch.toUpperCase()}${sem ? ` · Sem ${sem}` : ''} subjects` : 'Showing every branch'}
+            </span>
+            <button type="button" onClick={toggleAll} className="shrink-0 rounded-md border border-line px-2 py-1 font-medium text-ink-2 hover:text-ink">
+              {filtering ? 'Browse all branches' : 'Only my subjects'}
+            </button>
+          </div>
+        )}
         <ul ref={list} className="max-h-[52vh] overflow-y-auto p-2">
           {rows.map((row, i) => {
             const Icon = row.icon

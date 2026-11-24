@@ -24,7 +24,12 @@ export interface DriveFile {
   also?: { subject: string; unit: number | null }[]
   /** Tagged "questions" by an admin: also listed in the subject's Question bank. */
   tagged?: boolean
+  /** Set by an admin: how the notes were made, and which syllabus they follow. */
+  style?: 'typed' | 'handwritten'
+  edition?: 'r25' | 'old'
 }
+
+export type DriveLabel = { style?: 'typed' | 'handwritten' | null; edition?: 'r25' | 'old' | null }
 
 export const driveFiles = data as DriveFile[]
 
@@ -38,6 +43,7 @@ function buildIndex(
   titles?: ReadonlyMap<string, string>,
   hidden?: ReadonlySet<string>,
   tagged?: ReadonlySet<string>,
+  labels?: ReadonlyMap<string, DriveLabel>,
 ) {
   const bySubject = new Map<string, Entry[]>()
   const byId = new Map<string, DriveFile>()
@@ -46,7 +52,17 @@ function buildIndex(
     if (hidden?.has(original.id)) continue
     const retitled = titles?.get(original.id)
     const isTagged = tagged?.has(original.id)
-    const f = retitled || isTagged ? { ...original, ...(retitled ? { title: retitled } : {}), ...(isTagged ? { tagged: true } : {}) } : original
+    const label = labels?.get(original.id)
+    const f =
+      retitled || isTagged || label
+        ? {
+            ...original,
+            ...(retitled ? { title: retitled } : {}),
+            ...(isTagged ? { tagged: true } : {}),
+            ...(label?.style ? { style: label.style } : {}),
+            ...(label?.edition ? { edition: label.edition } : {}),
+          }
+        : original
     const move = moves?.get(f.id)
     if (move) {
       const moved: Entry = { ...f, subject: move.subject, unit: move.unit, forced: true }
@@ -123,8 +139,9 @@ export function libraryWith(
   titles?: ReadonlyMap<string, string>,
   hidden: ReadonlySet<string> = new Set(),
   tagged?: ReadonlySet<string>,
+  labels?: ReadonlyMap<string, DriveLabel>,
 ) {
-  const index = buildIndex(moves, titles, hidden, tagged)
+  const index = buildIndex(moves, titles, hidden, tagged, labels)
   return {
     files: driveFiles.filter((f) => !hidden.has(f.id)).map((f) => index.byId.get(f.id) ?? f),
     /** Taken off the site by an admin. */
