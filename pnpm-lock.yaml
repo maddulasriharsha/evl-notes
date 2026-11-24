@@ -182,7 +182,7 @@ importers:
         specifier: ^0.544.0
         version: 0.544.0(react@19.3.0)
       next:
-        specifier: 16.4.6
+        specifier: ^16.4.6
         version: 16.4.6(@types/node@26.6.4)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       pdf-lib:
         specifier: ^1.17.1
