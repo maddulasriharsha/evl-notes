@@ -13,7 +13,6 @@ import {
 import { BranchPrompt } from '@/components/branch-prompt'
 import { CountUp } from '@/components/count-up'
 import { HeroStars } from '@/components/hero-stars'
-import { LogoMark } from '@/components/logo'
 import { MarkMyBranch } from '@/components/page-chrome'
 import { SearchBox } from '@/components/search-box'
 import { ContinueStudying } from '@/components/study-history'
@@ -66,7 +65,6 @@ export default async function Home() {
           <HeroStars />
         </div>
         <div className="relative mx-auto flex min-h-[610px] max-w-5xl flex-col items-center px-4 pt-12 pb-10 text-center sm:min-h-[630px] sm:pt-20">
-          <LogoMark className="rise mb-6 size-16 shrink-0 shadow-[0_0_40px_-8px_rgba(139,92,246,0.7)] sm:size-20" />
           <Link
             href="/#branches"
             className="rise inline-flex items-center gap-2 rounded-full border border-line bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-ink-2 backdrop-blur hover:text-ink"

@@ -15,9 +15,6 @@ export function SiteHeader() {
           <LogoMark className="size-7 shrink-0 transition duration-500 group-hover:-rotate-12 group-hover:scale-110" />
           <span className="font-display text-[1.05rem] font-bold tracking-tight whitespace-nowrap">VJNOTES</span>
         </Link>
-        <span className="hidden items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-[11px] font-medium whitespace-nowrap text-ink-2 xl:inline-flex">
-          <span className="size-1.5 rounded-full bg-accent shadow-[0_0_8px_var(--accent)]" /> VNR VJIET
-        </span>
         <NavLinks />
         <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
           <PaletteButton />
