@@ -11,6 +11,7 @@ const securityHeaders = [
 const config: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  experimental: { agentUpgrade: 'security' },
   async headers() {
     const week = { key: 'Cache-Control', value: 'public, max-age=604800, stale-while-revalidate=86400' }
     return [

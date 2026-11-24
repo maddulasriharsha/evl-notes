@@ -24,7 +24,7 @@
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.1.0",
     "lucide-react": "^0.544.0",
-    "next": "^16.4.0",
+    "next": "^16.4.6",
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^6.4.299",
     "qrcode": "^1.5.4",
