@@ -41,3 +41,10 @@ Cloudflare Turnstile instead (free), create a Turnstile widget at <https://dash.
 ## When the 300-a-day limit is reached
 The sign-up form shows a message explaining the limit and pointing to Google sign-in, which is not
 affected. The counter resets daily.
+
+## Forgot password (same Brevo setup)
+"Forgot your password? Email me a code" on the sign-in form sends a 6-digit code through Brevo
+(`app/api/password/code/route.ts`). Supabase creates the one-time recovery code and we deliver it, so no extra
+setup beyond the Brevo keys above. The person enters the code and a new password and is signed in. The answer
+never says whether an address has an account. Google-only members can use it to set a password. Without Brevo
+keys the form tells people to write to the owner instead.

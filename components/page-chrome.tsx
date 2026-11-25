@@ -62,7 +62,8 @@ const NAV = [
   { href: '/#branches', label: 'Branches', on: (p: string) => p.startsWith('/b/') || p.startsWith('/s/') || p.startsWith('/sem/') },
   { href: '/textbooks', label: 'Textbooks', on: (p: string) => p.startsWith('/textbooks') },
   { href: '/contributors', label: 'Contributors', on: (p: string) => p.startsWith('/contributors'), wide: 'hidden lg:inline-flex' },
-  { href: '/requests', label: 'Requests', on: (p: string) => p.startsWith('/requests'), wide: 'hidden xl:inline-flex' },
+  // The exam schedule is a main section: it gets its own highlighted pill (Requests moved to the account menu and footer).
+  { href: '/exams', label: 'Exams', on: (p: string) => p.startsWith('/exams'), wide: 'nav-exam' },
 ]
 
 /** The top bar's links, with a mark under the section you are in. */

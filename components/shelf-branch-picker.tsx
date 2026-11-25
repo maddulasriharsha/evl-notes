@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useViewer } from '@/components/file-tools'
+import { Select } from '@/components/select'
 import { supabaseBrowser } from '@/lib/supabase/browser'
 
 /** Staff-only picker in a shelf's header: which branch this member's notes belong to. */
@@ -20,20 +21,13 @@ export function ShelfBranchPicker({ userId, branch, options }: { userId: string;
   }
 
   return (
-    <select
-      aria-label="Branch of this member"
-      title="Branch of this member (staff only). Takes effect within a minute."
+    <Select
+      label="Branch of this member"
       value={value}
-      disabled={busy}
-      onChange={(e) => void change(e.target.value)}
-      className="h-8 rounded-lg border border-line bg-bg px-2 text-xs text-ink-2"
-    >
-      <option value="">Branch: not set</option>
-      {options.map((o) => (
-        <option key={o.id} value={o.id}>
-          {o.short}
-        </option>
-      ))}
-    </select>
+      placeholder="Branch: not set"
+      className={`w-44 ${busy ? 'pointer-events-none opacity-60' : ''}`}
+      options={[{ value: '', label: 'Branch: not set' }, ...options.map((o) => ({ value: o.id, label: o.short }))]}
+      onChange={(v) => void change(v)}
+    />
   )
 }

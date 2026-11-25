@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { GraduationCap, X } from 'lucide-react'
+import { Select } from '@/components/select'
 
 const SEMS = [1, 2, 3, 4, 5, 6, 7, 8]
 
@@ -56,27 +57,22 @@ export function BranchPrompt({ branches }: { branches: { id: string; short: stri
           <p className="font-semibold">Which branch and semester are you in?</p>
           <p className="mt-0.5 text-sm text-ink-2">We remember it on this device so search shows your subjects first. You can still browse everything.</p>
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <select
+            <Select
               value={branch}
-              onChange={(e) => setBranch(e.target.value)}
-              aria-label="Branch"
-              className="h-10 min-w-0 rounded-xl border border-line bg-bg px-3 text-sm"
-            >
-              <option value="">Branch…</option>
-              {branches.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.short} · {b.name}
-                </option>
-              ))}
-            </select>
-            <select value={sem} onChange={(e) => setSem(Number(e.target.value))} aria-label="Semester" className="h-10 rounded-xl border border-line bg-bg px-3 text-sm">
-              <option value={0}>Semester…</option>
-              {SEMS.map((s) => (
-                <option key={s} value={s}>
-                  Semester {s}
-                </option>
-              ))}
-            </select>
+              onChange={setBranch}
+              label="Branch"
+              placeholder="Branch…"
+              className="w-full sm:w-72"
+              options={branches.map((b) => ({ value: b.id, label: b.short, hint: b.name }))}
+            />
+            <Select
+              value={sem || ''}
+              onChange={setSem}
+              label="Semester"
+              placeholder="Semester…"
+              className="w-40"
+              options={SEMS.map((s) => ({ value: s, label: `Semester ${s}` }))}
+            />
             <button type="button" disabled={!branch} onClick={save} className="btn-primary h-10 rounded-xl px-4 text-sm font-semibold disabled:opacity-50">
               Save
             </button>

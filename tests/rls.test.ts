@@ -888,6 +888,22 @@ describe('textbooks', () => {
   })
 })
 
+describe('maintenance mode', () => {
+  it('is readable by everyone, off by default, and only an admin can switch it', async () => {
+    const start = await as(null, `select value from public.site_settings where key = 'maintenance'`)
+    expect(start.rows[0]!.value).toMatchObject({ on: false })
+    await fails(B, `select public.admin_set_maintenance(true, 'x', 'y')`)
+    await fails(null, `select public.admin_set_maintenance(true, 'x', 'y')`)
+    await fails(B, `update public.site_settings set value = '{"on": true}'::jsonb where key = 'maintenance'`)
+    await as(ADMIN, `select public.admin_set_maintenance(true, '  Upgrading the servers  ', ' back at 6 PM ')`)
+    const on = await as(null, `select value from public.site_settings where key = 'maintenance'`)
+    expect(on.rows[0]!.value).toMatchObject({ on: true, message: 'Upgrading the servers', back: 'back at 6 PM' })
+    await as(ADMIN, `select public.admin_set_maintenance(false, null, null)`)
+    const off = await as(null, `select value from public.site_settings where key = 'maintenance'`)
+    expect(off.rows[0]!.value).toMatchObject({ on: false })
+  })
+})
+
 describe('admins move Google Drive library files', () => {
   const DRIVE_ID = '1p6KUg1olQgaUrA1b8M8KQIDulXp9X1v_'
 

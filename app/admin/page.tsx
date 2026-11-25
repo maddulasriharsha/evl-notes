@@ -5,6 +5,8 @@ import { CommentModButtons, FileModButtons, ReportActions, SuggestionStatusButto
 import { AdminHideToggle } from '@/components/admin-hide-toggle'
 import { AnnouncementManager, type AnnouncementRow } from '@/components/announcement-manager'
 import { BackupPanel } from '@/components/backup-panel'
+import { MaintenancePanel } from '@/components/maintenance-panel'
+import { maintenanceState } from '@/lib/maintenance'
 import { BulkBar, BulkProvider, BulkToggle, RowCheck, type BulkItem } from '@/components/bulk-select'
 import { DailyChart } from '@/components/daily-chart'
 import { DriveRestore } from '@/components/drive-move'
@@ -32,6 +34,7 @@ const allTabs = [
   { id: 'shelves', label: 'Shelves', adminOnly: false },
   { id: 'announcements', label: 'Announcements', adminOnly: false },
   { id: 'backup', label: 'Backup', adminOnly: true, ownerOnly: true },
+  { id: 'maintenance', label: 'Maintenance', adminOnly: true },
 ] as const
 type Tab = (typeof allTabs)[number]['id']
 
@@ -597,6 +600,12 @@ export default async function AdminPage({ searchParams }: PageProps<'/admin'>) {
         status={await backupStatus()}
       />
     )
+  }
+
+  if (tab === 'maintenance' && isAdmin) {
+    // The settings table arrives with run-this-site-settings.sql; until then the panel explains.
+    const probe = await supabase.from('site_settings').select('key').limit(1)
+    body = <MaintenancePanel initial={await maintenanceState(true)} ready={!probe.error} />
   }
 
   if (tab === 'announcements') {

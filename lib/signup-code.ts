@@ -49,19 +49,20 @@ export function codeIsValid(email: string, code: string, token: string) {
 export type SendResult = 'ok' | 'quota' | 'failed'
 
 /** Sends the code through Brevo's HTTP API (free: 300 emails a day). */
-export async function sendCodeEmail(to: string, code: string): Promise<SendResult> {
+export async function sendCodeEmail(to: string, code: string, kind: 'signup' | 'reset' = 'signup'): Promise<SendResult> {
+  const reset = kind === 'reset'
   const res = await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
     headers: { 'api-key': process.env.BREVO_API_KEY!, 'content-type': 'application/json', accept: 'application/json' },
     body: JSON.stringify({
       sender: { name: 'VJNOTES', email: process.env.BREVO_SENDER_EMAIL },
       to: [{ email: to }],
-      subject: `${code} is your VJNOTES code`,
+      subject: reset ? `${code} is your VJNOTES password reset code` : `${code} is your VJNOTES code`,
       htmlContent: `<div style="font-family:Arial,sans-serif;max-width:420px">
-        <h2 style="margin:0 0 8px">Verify your email</h2>
-        <p>Enter this code on VJNOTES to finish creating your account:</p>
+        <h2 style="margin:0 0 8px">${reset ? 'Reset your password' : 'Verify your email'}</h2>
+        <p>${reset ? 'Enter this code on VJNOTES, then choose a new password:' : 'Enter this code on VJNOTES to finish creating your account:'}</p>
         <p style="font-size:32px;letter-spacing:6px;font-weight:700;margin:16px 0">${code}</p>
-        <p style="color:#666;font-size:13px">It works for 10 minutes. If you did not ask for this, ignore this email.</p>
+        <p style="color:#666;font-size:13px">${reset ? 'It works for one hour and only once. If you did not ask for this, ignore this email; your password has not changed.' : 'It works for 10 minutes. If you did not ask for this, ignore this email.'}</p>
       </div>`,
     }),
   }).catch(() => null)

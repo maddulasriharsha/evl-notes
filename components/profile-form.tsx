@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
+import { Select } from '@/components/select'
 import { branches } from '@/lib/curriculum'
 import { supabaseBrowser } from '@/lib/supabase/browser'
 
@@ -72,28 +73,21 @@ export function ProfileForm({
       </label>
       <label className="block">
         <span className="text-sm font-medium">Your branch</span>
-        <select
+        <Select
           value={branch}
-          onChange={(e) => {
-            setBranch(e.target.value)
+          onChange={(v) => {
+            setBranch(v)
             setSaved(false)
           }}
-          required
-          className="mt-1.5 h-12 w-full rounded-xl border border-line bg-bg px-3 outline-none focus:border-accent"
-        >
-          <option value="" disabled>
-            Choose your branch
-          </option>
-          {branches.map((b) => (
-            <option key={b.id} value={b.id}>
-              {b.short} · {b.name}
-            </option>
-          ))}
-        </select>
+          label="Your branch"
+          placeholder="Choose your branch"
+          className="mt-1.5 w-full"
+          options={branches.map((b) => ({ value: b.id, label: b.short, hint: b.name }))}
+        />
         <span className="mt-1.5 block text-xs text-ink-3">Used to show your branch&rsquo;s notes first in subjects shared with other branches.</span>
       </label>
       <div className="flex items-center gap-3">
-        <button type="submit" disabled={busy} className="inline-flex h-11 items-center gap-2 rounded-xl bg-ink px-4 text-sm font-medium text-bg hover:opacity-90 disabled:opacity-60">
+        <button type="submit" disabled={busy || !branch}className="inline-flex h-11 items-center gap-2 rounded-xl bg-ink px-4 text-sm font-medium text-bg hover:opacity-90 disabled:opacity-60">
           {busy && <Loader2 className="size-4 animate-spin" />} {existing ? 'Save' : 'Continue'}
         </button>
         {saved && <span className="text-sm text-ok">Saved</span>}

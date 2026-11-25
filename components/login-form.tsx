@@ -18,7 +18,7 @@ function GoogleIcon() {
   )
 }
 
-type Mode = 'signin' | 'signup' | 'link' | 'code' | 'verify'
+type Mode = 'signin' | 'signup' | 'link' | 'code' | 'verify' | 'forgot' | 'reset'
 
 const MIN_PASSWORD = 8
 
@@ -186,6 +186,56 @@ export function LoginForm({ next }: { next: string }) {
     await done('email')
   }
 
+  /** Forgot password, step 1: email a 6-digit code (the server answers the same whether or not the address has an account). */
+  async function sendReset(e: React.FormEvent) {
+    e.preventDefault()
+    setError(null)
+    setInfo(null)
+    setBusy(true)
+    const res = await fetch('/api/password/code', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: email.trim(), proof }),
+    }).catch(() => null)
+    const out = res ? ((await res.json().catch(() => ({}))) as { required?: boolean; reason?: string }) : {}
+    setBusy(false)
+    if (!res) return setError('Could not reach the server. Check your connection and try again.')
+    if (!res.ok) {
+      setProofKey((k) => k + 1)
+      if (out.reason === 'quota') return setQuota(true)
+      if (out.reason === 'human') return setError('Please answer the quick check correctly, then try again.')
+      if (out.reason === 'busy') return setError('Too many codes were requested. Wait a few minutes and try again.')
+      if (out.reason === 'email') return setError('That email address does not look right. Check it and try again.')
+      return setError('Could not send the code. Please try again in a moment.')
+    }
+    if (!out.required) {
+      return setError('Automatic reset emails are not switched on yet. Write to vnrvjiet.notes@gmail.com from the email you signed up with and an admin will reset it.')
+    }
+    setCode('')
+    setPassword('')
+    setInfo(`If ${email.trim()} has an account, we emailed it a 6-digit code. It can take a minute; check spam too.`)
+    setMode('reset')
+  }
+
+  /** Step 2: the code signs the person in, then they choose a new password. */
+  async function setNewPassword(e: React.FormEvent) {
+    e.preventDefault()
+    setError(null)
+    setInfo(null)
+    if (password.length < MIN_PASSWORD) return setError(`Use at least ${MIN_PASSWORD} characters.`)
+    setBusy(true)
+    const supabase = supabaseBrowser()
+    const check = await supabase.auth.verifyOtp({ email: email.trim(), token: code.trim(), type: 'recovery' })
+    if (check.error) {
+      setBusy(false)
+      return setError('That code is wrong or has expired. Check it, or go back and request a new one.')
+    }
+    const { error } = await supabase.auth.updateUser({ password })
+    setBusy(false)
+    if (error) return setError(authMessage(error.message))
+    await done('password')
+  }
+
   const emailField = (
     <label className="block">
       <span className="text-sm font-medium">Email</span>
@@ -266,13 +316,15 @@ export function LoginForm({ next }: { next: string }) {
               {busy ? <Loader2 className="size-4 animate-spin" /> : <>{mode === 'signin' ? 'Sign in' : 'Create account'} <ArrowRight className="size-4" /></>}
             </button>
           </form>
-          <p className="rounded-xl bg-surface-2 px-3 py-2.5 text-center text-sm text-ink-2">
-            Forgot your password? Write to{' '}
-            <a href="mailto:vnrvjiet.notes@gmail.com?subject=VJNOTES%20password%20help" className="font-semibold text-ink underline underline-offset-4">
-              vnrvjiet.notes@gmail.com
-            </a>{' '}
-            from the email you signed up with, and an admin will reset it for you.
-          </p>
+          {mode === 'signin' && (
+            <button
+              type="button"
+              onClick={() => switchTo('forgot')}
+              className="w-full rounded-xl bg-surface-2 px-3 py-2.5 text-center text-sm font-medium text-ink-2 transition hover:text-ink"
+            >
+              Forgot your password? <span className="font-semibold text-accent underline underline-offset-4">Email me a code</span>
+            </button>
+          )}
           <button type="button" onClick={() => switchTo('link')} className="w-full text-sm text-ink-3 hover:text-ink">
             Signed up with Google, or no password yet? Email me a sign-in link
           </button>
@@ -288,6 +340,64 @@ export function LoginForm({ next }: { next: string }) {
           <p className="text-xs text-ink-3">After signing in you can set a new password on &ldquo;My notes&rdquo;.</p>
           <button type="button" onClick={() => switchTo('signin')} className="w-full text-sm text-ink-3 hover:text-ink">
             Back to password sign-in
+          </button>
+        </form>
+      )}
+
+      {mode === 'forgot' && (
+        <form onSubmit={sendReset} className="space-y-3">
+          <p className="text-sm text-ink-2">Enter the email you signed up with. We will email you a 6-digit code to choose a new password.</p>
+          {emailField}
+          <HumanCheck onChange={setProof} resetKey={proofKey} />
+          <button type="submit" disabled={busy || (!proof.answer && !proof.turnstile)} className={primary}>
+            {busy ? <Loader2 className="size-4 animate-spin" /> : <>Email me a code <ArrowRight className="size-4" /></>}
+          </button>
+          <button type="button" onClick={() => switchTo('signin')} className="w-full text-sm text-ink-3 hover:text-ink">
+            Back to sign in
+          </button>
+        </form>
+      )}
+
+      {mode === 'reset' && (
+        <form onSubmit={setNewPassword} className="space-y-3">
+          <input
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            value={code}
+            onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 10))}
+            placeholder="6-digit code"
+            aria-label="Code from your email"
+            className="h-12 w-full rounded-xl border border-line bg-bg px-4 text-center font-mono text-lg tracking-[0.3em] outline-none focus:border-accent"
+          />
+          <label className="block">
+            <span className="text-sm font-medium">New password</span>
+            <div className="relative mt-1.5">
+              <KeyRound className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-ink-3" />
+              <input
+                type={show ? 'text' : 'password'}
+                required
+                minLength={MIN_PASSWORD}
+                autoComplete="new-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={`At least ${MIN_PASSWORD} characters`}
+                className="h-12 w-full rounded-xl border border-line bg-bg pr-11 pl-10 outline-none focus:border-accent"
+              />
+              <button
+                type="button"
+                onClick={() => setShow((s) => !s)}
+                aria-label={show ? 'Hide password' : 'Show password'}
+                className="absolute top-1/2 right-2 grid size-8 -translate-y-1/2 place-items-center rounded-lg text-ink-3 hover:text-ink"
+              >
+                {show ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              </button>
+            </div>
+          </label>
+          <button type="submit" disabled={busy || code.length < 6 || password.length < MIN_PASSWORD} className={primary}>
+            {busy ? <Loader2 className="size-4 animate-spin" /> : 'Set new password and sign in'}
+          </button>
+          <button type="button" onClick={() => switchTo('forgot')} className="w-full text-sm text-ink-3 hover:text-ink">
+            No code? Send a new one
           </button>
         </form>
       )}

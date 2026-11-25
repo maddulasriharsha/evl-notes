@@ -35,7 +35,16 @@ export function Intro() {
           </span>
           <span className="intro-r">NOTES</span>
         </div>
+        <p className="intro-tag">Notes for every branch · VNR VJIET</p>
       </div>
+      {/* Sparks thrown out where the dash becomes the mark. */}
+      <div className="intro-sparks">
+        {Array.from({ length: 10 }, (_, i) => (
+          <span key={i} style={{ '--a': `${i * 36}deg`, '--d': `${i % 2 ? 5.2 : 3.6}rem` } as React.CSSProperties} />
+        ))}
+      </div>
+      <div className="intro-bar" />
+      <span className="intro-skip">Tap to skip</span>
       <IntroAim />
     </div>
   )
