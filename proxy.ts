@@ -10,7 +10,7 @@ const SESSION = /^\/(upload|me|saved|api\/admin|admin|login|auth)(\/|$)/
  * Still reachable during maintenance, so an admin can sign in and switch it off again, and so
  * health checks, the daily backup job and the app shell keep working.
  */
-const OPEN = /^\/(maintenance|login|auth|admin|api\/(health|cron|admin|password)|_next|_vercel|sw\.js|manifest|pwa|icon|favicon|robots|sitemap|apple-icon)/
+const OPEN = /^\/(maintenance|login|auth|admin|api\/(health|cron|admin|password|maintenance)|_next|_vercel|sw\.js|manifest|pwa|icon|favicon|robots|sitemap|apple-icon)/
 
 /** True for a signed-in admin (read-only check of the session; nothing is written to cookies). */
 async function isAdmin(request: NextRequest) {

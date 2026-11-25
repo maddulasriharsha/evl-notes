@@ -702,6 +702,22 @@ html:has(.mt-screen) footer {
   display: none !important;
 }
 .mt-screen {
+  /* A space scene: always the dark palette, even when the visitor chose the light theme. */
+  --bg: #050506;
+  --surface: #0d0d11;
+  --surface-2: #17171d;
+  --ink: #f5f5f7;
+  --ink-2: #a3a3ad;
+  --ink-3: #6d6d78;
+  --line: #1d1d24;
+  --line-strong: #2d2d36;
+  --accent: #a78bfa;
+  --accent-ink: #0b0712;
+  --accent-soft: #1c1530;
+  --gold: #e9b44c;
+  --gold-soft: #2a2112;
+  --ok: #4cc38a;
+  color-scheme: dark;
   position: fixed;
   inset: 0;
   z-index: 90;
@@ -907,6 +923,96 @@ html:has(.mt-screen) footer {
   }
   .mt-line {
     width: 100%;
+    animation: none;
+  }
+}
+
+/* Fun facts under the maintenance page */
+.mt-facts {
+  margin-top: 1.5rem;
+  width: min(100%, 30rem);
+  border: 1px solid var(--line-strong);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  padding: 0.9rem 1.1rem 0;
+  text-align: left;
+  overflow: hidden;
+}
+.mt-facts-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.mt-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 9999px;
+  background: var(--accent-soft);
+  padding: 0.2rem 0.65rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.mt-tag-joke {
+  background: var(--gold-soft);
+  color: var(--gold);
+}
+.mt-next {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  color: var(--ink-3);
+  transition: color 0.2s;
+}
+.mt-next:hover {
+  color: var(--ink);
+}
+.mt-fact-text {
+  min-height: 3.6em;
+  margin-top: 0.7rem;
+  font-size: 1rem;
+  line-height: 1.55;
+  color: var(--ink);
+  animation: mt-fact-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.mt-fact-bar {
+  margin: 0.9rem -1.1rem 0;
+  height: 3px;
+  background: var(--surface-2);
+}
+.mt-fact-bar span {
+  display: block;
+  height: 100%;
+  width: 100%;
+  transform-origin: left;
+  background: linear-gradient(90deg, var(--accent), transparent);
+  animation: mt-fact-bar linear forwards;
+}
+@keyframes mt-fact-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+    filter: blur(4px);
+  }
+}
+@keyframes mt-fact-bar {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mt-fact-text,
+  .mt-fact-bar span {
     animation: none;
   }
 }
@@ -1368,4 +1474,43 @@ html[data-deep] .to-top {
   .skip-link {
     display: none !important;
   }
+}
+
+/* ---------- Lite mode (components/lite-toggle.tsx): fewer effects for slow phones and Data Saver ---------- */
+html.lite canvas[aria-hidden='true'],
+html.lite .horizon,
+html.lite .horizon-haze,
+html.lite .intro-screen {
+  display: none !important;
+}
+html.lite *,
+html.lite *::before,
+html.lite *::after {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  animation-duration: 0.01ms !important;
+  animation-delay: 0s !important;
+  animation-iteration-count: 1 !important;
+  scroll-behavior: auto !important;
+}
+html.lite .glass-bar {
+  background: var(--surface);
+}
+
+/* ---------- Press feel on cards and buttons ---------- */
+.branch-card,
+.btn-primary,
+.btn-ghost {
+  transition-property: transform, box-shadow, border-color, background-color, color, opacity;
+}
+@media (hover: hover) {
+  .branch-card:hover {
+    transform: translateY(-3px);
+  }
+}
+.branch-card:active,
+.btn-primary:active,
+.btn-ghost:active {
+  transform: scale(0.97);
+  transition-duration: 0.08s;
 }

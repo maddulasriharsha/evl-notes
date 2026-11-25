@@ -1,6 +1,7 @@
 import Link from '@/components/link'
+import { BackLink } from '@/components/back-link'
 import { LogoMark } from '@/components/logo'
-import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { ReaderMode } from '@/components/reader-mode'
 import { ViewerStage } from '@/components/viewer-stage'
 
@@ -23,9 +24,7 @@ export function ViewerShell({ nav, children }: { nav: ViewerNav; children: React
       <ReaderMode />
       <div className="border-b border-line bg-surface">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2 sm:px-6 sm:py-3">
-          <Link href={nav.back.href} className="grid size-10 shrink-0 place-items-center rounded-xl border border-line hover:bg-surface-2" aria-label={`Back to ${nav.back.label}`}>
-            <ArrowLeft className="size-4" />
-          </Link>
+          <BackLink href={nav.back.href} label={nav.back.label} />
           <Link href="/" aria-label="VJNOTES home" className="hidden size-10 shrink-0 place-items-center rounded-xl hover:bg-surface-2 sm:grid">
             <LogoMark className="size-6" />
           </Link>

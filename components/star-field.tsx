@@ -18,7 +18,7 @@ export function StarField() {
   useEffect(() => {
     const canvas = ref.current
     const ctx = canvas?.getContext('2d')
-    if (!canvas || !ctx) return
+    if (!canvas || !ctx || document.documentElement.classList.contains('lite')) return
     const calm = matchMedia('(prefers-reduced-motion: reduce)').matches
     let w = 0
     let h = 0

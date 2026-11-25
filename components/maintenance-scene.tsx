@@ -1,5 +1,6 @@
 import { Clock, Hourglass, MousePointerClick } from 'lucide-react'
 import { DownFor, Maintenance3D } from '@/components/maintenance-3d'
+import { MaintenanceFacts, MaintenanceWatch } from '@/components/maintenance-extras'
 
 /**
  * What everyone but admins sees while maintenance mode is on: a galaxy of notes (tilts with your cursor, hover the pages, click for a shockwave), a boot log that types itself out, and a live "down for" timer.
@@ -12,9 +13,9 @@ const LOG: { tag: 'ok' | 'wait'; text: string }[] = [
   { tag: 'wait', text: 'bringing the site back' },
 ]
 
-export function MaintenanceScene({ message, back, since }: { message?: string; back?: string; since?: string }) {
+export function MaintenanceScene({ message, back, since, until, preview }: { message?: string; back?: string; since?: string; until?: string; preview?: boolean }) {
   return (
-    <div className="mt-screen" role="status" aria-live="polite">
+    <div className="mt-screen">
       <div className="mt-grid" aria-hidden="true" />
       <div className="mt-glow" aria-hidden="true" />
       <main className="mt-main">
@@ -48,12 +49,15 @@ export function MaintenanceScene({ message, back, since }: { message?: string; b
               <Hourglass className="size-4" /> Down for <DownFor since={since} />
             </p>
           )}
+          <MaintenanceWatch until={until} preview={preview} />
           {back?.trim() && (
             <p>
               <Clock className="size-4" /> Expected back {back.trim()}
             </p>
           )}
         </div>
+
+        <MaintenanceFacts />
       </main>
       <p className="mt-credit">Created by: Sriharsha Reddy (EVL)</p>
     </div>

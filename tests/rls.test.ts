@@ -889,18 +889,28 @@ describe('textbooks', () => {
 })
 
 describe('maintenance mode', () => {
-  it('is readable by everyone, off by default, and only an admin can switch it', async () => {
+  it('is readable by everyone, off by default, and only an admin can switch or schedule it', async () => {
     const start = await as(null, `select value from public.site_settings where key = 'maintenance'`)
     expect(start.rows[0]!.value).toMatchObject({ on: false })
-    await fails(B, `select public.admin_set_maintenance(true, 'x', 'y')`)
-    await fails(null, `select public.admin_set_maintenance(true, 'x', 'y')`)
+    await fails(B, `select public.admin_set_maintenance(true, 'x', 'y', null, null)`)
+    await fails(null, `select public.admin_set_maintenance(true, 'x', 'y', null, null)`)
     await fails(B, `update public.site_settings set value = '{"on": true}'::jsonb where key = 'maintenance'`)
-    await as(ADMIN, `select public.admin_set_maintenance(true, '  Upgrading the servers  ', ' back at 6 PM ')`)
+    await as(ADMIN, `select public.admin_set_maintenance(true, '  Upgrading the servers  ', ' back at 6 PM ', null, null)`)
     const on = await as(null, `select value from public.site_settings where key = 'maintenance'`)
     expect(on.rows[0]!.value).toMatchObject({ on: true, message: 'Upgrading the servers', back: 'back at 6 PM' })
-    await as(ADMIN, `select public.admin_set_maintenance(false, null, null)`)
+    expect((on.rows[0]!.value as Record<string, unknown>).until).toBeNull()
+    await as(ADMIN, `select public.admin_set_maintenance(false, null, null, null, null)`)
     const off = await as(null, `select value from public.site_settings where key = 'maintenance'`)
     expect(off.rows[0]!.value).toMatchObject({ on: false })
+  })
+
+  it('keeps a scheduled start and an automatic end, and rejects an end before the start', async () => {
+    await fails(ADMIN, `select public.admin_set_maintenance(true, 'x', '', now() + interval '2 hours', now() + interval '1 hour')`)
+    await as(ADMIN, `select public.admin_set_maintenance(true, 'Planned work', '', now() + interval '1 hour', now() + interval '3 hours')`)
+    const row = await as(null, `select (value->>'starts')::timestamptz as starts, (value->>'until')::timestamptz as until_at from public.site_settings where key = 'maintenance'`)
+    const { starts, until_at } = row.rows[0] as { starts: Date; until_at: Date }
+    expect(new Date(until_at).getTime() - new Date(starts).getTime()).toBe(2 * 3600 * 1000)
+    await as(ADMIN, `select public.admin_set_maintenance(false, null, null, null, null)`)
   })
 })
 

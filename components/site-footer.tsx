@@ -1,5 +1,6 @@
 import Link from '@/components/link'
 import { InstallButton } from '@/components/install-button'
+import { LiteToggle } from '@/components/lite-toggle'
 import { LogoMark } from '@/components/logo'
 import { ThemeToggle } from '@/components/theme-toggle'
 
@@ -48,6 +49,7 @@ export function SiteFooter() {
           <div className="mt-5 flex flex-wrap items-center gap-2 text-sm">
             <ThemeToggle withLabel className="btn-ghost inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-ink-2 hover:text-ink" />
             <InstallButton className="btn-ghost inline-flex h-9 items-center gap-1.5 rounded-lg px-3 font-medium text-ink-2 hover:text-ink" />
+            <LiteToggle className="btn-ghost inline-flex h-9 items-center gap-1.5 rounded-lg px-3 font-medium text-ink-2 hover:text-ink" />
           </div>
         </div>
         <nav aria-label="Footer" className="grid grid-cols-2 gap-8 sm:grid-cols-3">

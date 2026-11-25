@@ -11,6 +11,7 @@ import {
   Users,
 } from 'lucide-react'
 import { BranchPrompt } from '@/components/branch-prompt'
+import { BranchCta, ContinueChip, StudyStreak } from '@/components/home-shortcuts'
 import { CountUp } from '@/components/count-up'
 import { HeroStars } from '@/components/hero-stars'
 import { MarkMyBranch } from '@/components/page-chrome'
@@ -87,13 +88,13 @@ export default async function Home() {
             <SearchBox compact />
           </div>
           <div className="rise rise-4 mt-5 flex flex-wrap items-center justify-center gap-3">
-            <Link href="#branches" className="btn-primary inline-flex h-11 items-center gap-2 rounded-xl px-5 text-sm font-semibold">
-              <BookOpen className="size-4" /> Pick your branch
-            </Link>
+            <BranchCta branches={branches.map((b) => ({ id: b.id, short: b.short }))} />
             <Link href="/upload" className="btn-ghost inline-flex h-11 items-center gap-2 rounded-xl px-5 text-sm font-semibold">
               <CloudUpload className="size-4" /> Upload yours
             </Link>
           </div>
+          <ContinueChip />
+          <StudyStreak className="rise mt-3" />
         </div>
       </section>
 

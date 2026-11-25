@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { preloadModule } from 'react-dom'
-import { Flag, ListChecks, Loader2, Minus, Plus } from 'lucide-react'
+import { BookOpen, Flag, ListChecks, Loader2, Minus, Plus, ScrollText } from 'lucide-react'
 import type { PDFDocumentProxy } from 'pdfjs-dist'
 import { MarksPanel, PageMarkButtons, readProgress, usePageMarks, writeProgress } from '@/components/page-tools'
 import { supabaseBrowser } from '@/lib/supabase/browser'
@@ -23,6 +23,23 @@ export function PdfViewer({ url, downloadHref, fileId }: { url: string; download
   const [page, setPage] = useState(1)
   const [panel, setPanel] = useState(false)
   const [resumed, setResumed] = useState<number | null>(null)
+  // 'scroll' is the usual continuous page; 'page' snaps one page at a time and turns on a tap at the left or right edge.
+  const [mode, setMode] = useState<'scroll' | 'page'>('scroll')
+  useEffect(() => {
+    try {
+      if (localStorage.getItem('vj-read-mode') === 'page') setMode('page')
+    } catch {
+      /* storage unavailable */
+    }
+  }, [])
+  const chooseMode = (m: 'scroll' | 'page') => {
+    setMode(m)
+    try {
+      localStorage.setItem('vj-read-mode', m)
+    } catch {
+      /* storage unavailable */
+    }
+  }
   const restored = useRef(false)
   const tools = usePageMarks(fileId)
   const userId = tools.viewer?.id
@@ -51,6 +68,16 @@ export function PdfViewer({ url, downloadHref, fileId }: { url: string; download
       }
     })()
   }, [doc, width, fileId, userId])
+
+  const onTap = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (mode !== 'page' || !doc) return
+    if (window.getSelection()?.toString()) return
+    if ((e.target as HTMLElement).closest('button, a')) return
+    const r = e.currentTarget.getBoundingClientRect()
+    const x = (e.clientX - r.left) / r.width
+    if (x > 0.72) goTo(Math.min(doc.numPages, page + 1))
+    else if (x < 0.28) goTo(Math.max(1, page - 1))
+  }
 
   // Which page is at the top of the view.
   const onScroll = () => {
@@ -108,7 +135,7 @@ export function PdfViewer({ url, downloadHref, fileId }: { url: string; download
 
   return (
     <div className="absolute inset-0">
-    <div ref={box} onScroll={onScroll} className="absolute inset-0 overflow-auto overscroll-contain">
+    <div ref={box} onScroll={onScroll} onClick={onTap} className={`absolute inset-0 overflow-auto overscroll-contain ${mode === 'page' ? 'snap-y snap-mandatory' : ''}`}>
       {error ? (
         <div className="grid h-full place-items-center p-6 text-center text-sm text-ink-2">
           <div>
@@ -124,7 +151,7 @@ export function PdfViewer({ url, downloadHref, fileId }: { url: string; download
         <>
           <div className="flex flex-col items-center gap-4 px-4 py-6">
             {Array.from({ length: doc.numPages }, (_, i) => (
-              <PdfPage key={i} doc={doc} index={i + 1} width={pageWidth} flags={tools.marks.filter((m) => m.kind === 'flag' && m.page === i + 1)} onFlags={() => setPanel(true)} />
+              <PdfPage key={i} doc={doc} index={i + 1} width={pageWidth} snap={mode === 'page'} flags={tools.marks.filter((m) => m.kind === 'flag' && m.page === i + 1)} onFlags={() => setPanel(true)} />
             ))}
           </div>
         </>
@@ -157,6 +184,16 @@ export function PdfViewer({ url, downloadHref, fileId }: { url: string; download
               </button>
               <button type="button" onClick={() => setZoom((z) => Math.min(3, z + 0.25))} className="grid size-9 place-items-center rounded-full hover:bg-surface-2" aria-label="Zoom in">
                 <Plus className="size-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => chooseMode(mode === 'page' ? 'scroll' : 'page')}
+                aria-pressed={mode === 'page'}
+                title={mode === 'page' ? 'Page mode: tap the left or right edge to turn pages. Tap to go back to scrolling.' : 'Switch to page mode: tap the edges to turn pages'}
+                className={`ml-1 inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-xs font-medium hover:bg-surface-2 ${mode === 'page' ? 'bg-accent-soft text-accent' : ''}`}
+              >
+                {mode === 'page' ? <BookOpen className="size-4" /> : <ScrollText className="size-4" />}
+                <span className="hidden sm:inline">{mode === 'page' ? 'Pages' : 'Scroll'}</span>
               </button>
               <label className="flex items-center gap-1 pl-2 text-xs text-ink-3">
                 <span className="sr-only">Page</span>
@@ -196,12 +233,14 @@ function PdfPage({
   doc,
   index,
   width,
+  snap,
   flags,
   onFlags,
 }: {
   doc: PDFDocumentProxy
   index: number
   width: number
+  snap: boolean
   flags: { id: string; note: string | null }[]
   onFlags: () => void
 }) {
@@ -241,7 +280,7 @@ function PdfPage({
   }, [doc, index, visible, width])
 
   return (
-    <div ref={holder} data-pdf-page={index} className="relative overflow-hidden rounded-md bg-white shadow-card" style={{ width, height: width * ratio }}>
+    <div ref={holder} data-pdf-page={index} className={`relative overflow-hidden rounded-md bg-white shadow-card ${snap ? 'scroll-mt-4 snap-start' : ''}`} style={{ width, height: width * ratio }}>
       <canvas ref={canvas} className="block size-full" aria-label={`Page ${index}`} />
       {flags.length > 0 && (
         <button

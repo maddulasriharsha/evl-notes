@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Bookmark, BookOpen, CornerDownLeft, FileText, GraduationCap, Home, Layers, Search, Upload, Users } from 'lucide-react'
+import { Bookmark, BookOpen, CalendarClock, CornerDownLeft, FileText, GraduationCap, History, Home, Layers, Search, Upload, Users } from 'lucide-react'
 import type { Suggestion } from '@/app/api/suggest/route'
 
 export const OPEN_PALETTE = 'vj:open-palette'
@@ -15,6 +15,28 @@ interface Row {
 }
 
 const ICON = { subject: BookOpen, chapter: Layers, file: FileText } as const
+
+const RECENT = 'vj-recent'
+type Saved = { href: string; title: string; hint: string }
+
+function readRecent(): Saved[] {
+  try {
+    const raw = JSON.parse(localStorage.getItem(RECENT) ?? '[]')
+    return Array.isArray(raw)
+      ? raw.filter((e): e is Saved => typeof e?.href === 'string' && typeof e?.title === 'string' && typeof e?.hint === 'string').slice(0, 5)
+      : []
+  } catch {
+    return []
+  }
+}
+
+function remember(item: Saved) {
+  try {
+    localStorage.setItem(RECENT, JSON.stringify([item, ...readRecent().filter((e) => e.href !== item.href)].slice(0, 5)))
+  } catch {
+    /* storage unavailable */
+  }
+}
 
 /**
  * Ctrl+K (or ⌘K, or "/") from anywhere: a floating box that jumps to any subject, chapter or
@@ -30,6 +52,7 @@ export function CommandPalette() {
   const [branch, setBranch] = useState<string | null>(null)
   const [sem, setSem] = useState(0)
   const [all, setAll] = useState(false)
+  const [recent, setRecent] = useState<Saved[]>([])
   const input = useRef<HTMLInputElement>(null)
   const list = useRef<HTMLUListElement>(null)
 
@@ -59,6 +82,7 @@ export function CommandPalette() {
     setQ('')
     setFound([])
     setAt(0)
+    setRecent(readRecent())
     try {
       setBranch(localStorage.getItem('vj-branch'))
       setSem(Number(localStorage.getItem('vj-sem')) || 0)
@@ -107,13 +131,14 @@ export function CommandPalette() {
   const pages: Row[] = [
     { href: '/', title: 'Home', hint: 'Start page', icon: Home },
     { href: branch ? `/b/${branch}` : '/#branches', title: 'My branch', hint: branch ? 'The branch you last opened' : 'Pick your branch', icon: GraduationCap },
+    { href: '/exams', title: 'Exam schedule', hint: 'Dates for every year and branch', icon: CalendarClock },
     { href: '/upload', title: 'Upload notes', hint: 'Share yours with the class', icon: Upload },
     { href: '/saved', title: 'Saved notes', hint: 'Files you bookmarked', icon: Bookmark },
     { href: '/contributors', title: 'Contributors', hint: 'Who shared the most', icon: Users },
   ]
   const rows: Row[] =
     text.length < 2
-      ? pages
+      ? [...recent.map((r) => ({ ...r, icon: History })), ...pages]
       : [
           ...found,
           ...pages.filter((p) => p.title.toLowerCase().includes(text.toLowerCase())),
@@ -133,6 +158,8 @@ export function CommandPalette() {
 
   function go(row: Row | undefined) {
     if (!row) return
+    // Subjects, chapters and files you open from a search are remembered for next time.
+    if (found.some((f) => f.href === row.href)) remember({ href: row.href, title: row.title, hint: row.hint })
     setOpen(false)
     router.push(row.href)
   }
@@ -198,7 +225,7 @@ export function CommandPalette() {
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-medium">{row.title}</span>
-                    <span className="block truncate text-xs text-ink-3">{row.hint}</span>
+                    <span className="block truncate text-xs text-ink-3">{recent.some((r) => r.href === row.href) && text.length < 2 ? `Recent · ${row.hint}` : row.hint}</span>
                   </span>
                   {on && <CornerDownLeft className="size-4 shrink-0 text-accent" />}
                 </button>

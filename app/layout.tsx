@@ -49,7 +49,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" data-scroll-behavior="smooth" className={`${inter.variable} ${syne.variable}`} suppressHydrationWarning>
       <body className="flex min-h-dvh flex-col font-sans antialiased">
         <Script id="vj-theme" strategy="beforeInteractive">
-          {`try{var t=localStorage.getItem('vj-theme');if(t!=='light'&&t!=='dark')t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';document.documentElement.dataset.theme=t}catch(e){}var d=document.documentElement;d.classList.add('fx');try{if(!sessionStorage.getItem('vj-intro')&&!matchMedia('(prefers-reduced-motion: reduce)').matches){sessionStorage.setItem('vj-intro','1');d.classList.add('intro')}}catch(e){}`}
+          {`try{var t=localStorage.getItem('vj-theme');if(t!=='light'&&t!=='dark')t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';document.documentElement.dataset.theme=t}catch(e){}var d=document.documentElement;d.classList.add('fx');try{var l=localStorage.getItem('vj-lite');if(l==='1'||(l===null&&navigator.connection&&navigator.connection.saveData))d.classList.add('lite')}catch(e){}try{if(!d.classList.contains('lite')&&!sessionStorage.getItem('vj-intro')&&!matchMedia('(prefers-reduced-motion: reduce)').matches){sessionStorage.setItem('vj-intro','1');d.classList.add('intro')}}catch(e){}`}
         </Script>
         <a href="#content" className="skip-link btn-primary">
           Skip to content
