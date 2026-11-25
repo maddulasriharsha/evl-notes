@@ -11,5 +11,5 @@ export default async function MaintenancePage({ searchParams }: PageProps<'/main
   const sp = await searchParams
   const state = await maintenanceState(true)
   if (!state.on && sp.preview !== '1') redirect('/')
-  return <MaintenanceScene message={state.message} back={state.back} />
+  return <MaintenanceScene message={state.message} back={state.back} since={state.since ?? (sp.preview === '1' ? new Date(Date.now() - 754_000).toISOString() : undefined)} />
 }
