@@ -9,13 +9,17 @@ import { MoreHorizontal } from 'lucide-react'
  */
 export function MoreMenu({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false)
-  const [at, setAt] = useState({ top: 0, right: 12 })
+  // Opens downward from the button, or upward when the button is in the lower half (the phone bar sits at the bottom).
+  const [at, setAt] = useState<{ top?: number; bottom?: number; right: number }>({ top: 0, right: 12 })
   const button = useRef<HTMLButtonElement>(null)
   const panel = useRef<HTMLDivElement>(null)
 
   function toggle() {
     const r = button.current?.getBoundingClientRect()
-    if (r) setAt({ top: r.bottom + 8, right: Math.max(8, window.innerWidth - r.right) })
+    if (r) {
+      const right = Math.max(8, window.innerWidth - r.right)
+      setAt(r.top > window.innerHeight / 2 ? { bottom: window.innerHeight - r.top + 8, right } : { top: r.bottom + 8, right })
+    }
     setOpen((o) => !o)
   }
 
@@ -51,7 +55,7 @@ export function MoreMenu({ children }: { children: React.ReactNode }) {
       {open && (
         <div
           ref={panel}
-          style={{ top: at.top, right: at.right }}
+          style={{ top: at.top, bottom: at.bottom, right: at.right }}
           className="fixed z-50 flex w-[min(92vw,20rem)] flex-wrap items-center gap-2 rounded-2xl border border-line bg-surface p-3 shadow-pop"
         >
           {children}

@@ -32,7 +32,10 @@ export function ViewerShell({ nav, children }: { nav: ViewerNav; children: React
             <p className="truncate text-sm font-semibold sm:text-base">{nav.title}</p>
             <div className="flex min-w-0 items-center truncate text-xs text-ink-3">{nav.meta}</div>
           </div>
-          <div className="flex max-w-full items-center gap-2 max-sm:w-full max-sm:overflow-x-auto max-sm:overscroll-x-contain max-sm:pb-0.5 [&>*]:shrink-0">
+          <div
+            data-quick-bar
+            className="flex max-w-full items-center gap-2 max-sm:fixed max-sm:inset-x-0 max-sm:bottom-0 max-sm:z-40 max-sm:max-w-none max-sm:overflow-x-auto max-sm:overscroll-x-contain max-sm:border-t max-sm:border-line max-sm:bg-surface/95 max-sm:px-3 max-sm:pt-2 max-sm:pb-[calc(0.5rem+env(safe-area-inset-bottom))] max-sm:shadow-[0_-10px_28px_-14px_rgba(0,0,0,0.55)] max-sm:backdrop-blur-xl [&>*]:shrink-0"
+          >
             {(nav.prev || nav.next) && (
               <div className="flex items-center rounded-xl border border-line">
                 <NavLink href={nav.prev} label="Previous file">
@@ -52,6 +55,8 @@ export function ViewerShell({ nav, children }: { nav: ViewerNav; children: React
       <ViewerStage prev={nav.prev} next={nav.next}>
         {children}
       </ViewerStage>
+      {/* Room for the phone action bar, so it never covers the end of a note. */}
+      <div className="h-[4.25rem] shrink-0 sm:hidden" aria-hidden="true" />
     </div>
   )
 }
