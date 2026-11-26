@@ -25,7 +25,7 @@ export async function refreshChapter(subjectCode: string, unit: number) {
     }
   }
   revalidatePath('/')
-  revalidatePath('/contributors')
+  revalidatePath('/leaderboard')
 }
 
 /** Same as refreshChapter, plus the note's own page (after a rename or delete). */

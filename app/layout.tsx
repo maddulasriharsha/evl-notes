@@ -16,6 +16,7 @@ import { MobileNav } from '@/components/mobile-nav'
 import { SiteFooter } from '@/components/site-footer'
 import { SiteHeader } from '@/components/site-header'
 import { VisitBeacon } from '@/components/visit-beacon'
+import { StreakCheckIn } from '@/components/streak-checkin'
 import { ServiceWorkerRegister } from '@/components/sw-register'
 import './globals.css'
 
@@ -71,6 +72,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ShortcutSheet />
         <ServiceWorkerRegister />
         <VisitBeacon />
+        <StreakCheckIn />
         <HistoryTracker />
         <Analytics />
         <SpeedInsights />

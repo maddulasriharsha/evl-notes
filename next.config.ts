@@ -12,6 +12,10 @@ const config: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   experimental: { agentUpgrade: 'security' },
+  async redirects() {
+    // The contributors page became the leaderboard; old links and bookmarks keep working.
+    return [{ source: '/contributors', destination: '/leaderboard', permanent: true }]
+  },
   async headers() {
     const week = { key: 'Cache-Control', value: 'public, max-age=604800, stale-while-revalidate=86400' }
     return [

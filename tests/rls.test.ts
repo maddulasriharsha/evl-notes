@@ -1067,3 +1067,107 @@ describe('star ratings and summaries', () => {
     expect((await as(null, `select summary from public.files where id = $1`, [RF])).rows).toEqual([{ summary: 'Unit 2 notes, solved examples' }])
   })
 })
+
+describe('study streak leaderboard', () => {
+  const key = (n: number) => `bbbbbbbb-0000-4000-8000-00000000000${n}`
+  type Me = { name: string; account: boolean; streak: number; best: number; days: number; today: boolean }
+  type Board = { players: { place: number; name: string; streak: number; me: boolean }[]; total: number; my_place: number | null }
+  const checkin = async (k: string, user: string | null = null) => (await as(user, `select public.streak_checkin($1) as r`, [k])).rows[0]!.r as Me
+  const board = async (k: string | null, user: string | null = null) => (await as(user, `select public.streak_board($1) as r`, [k])).rows[0]!.r as Board
+  /** Starts reading and pretends it began this many seconds ago. */
+  const read = async (k: string, seconds = 300, user: string | null = null) => {
+    await as(user, `select public.streak_start($1)`, [k])
+    await db.query(`update public.streak_reading set started_at = now() - make_interval(secs => $2) where key_hash = encode(sha256(convert_to($1, 'utf8')), 'hex')`, [k, seconds])
+  }
+  const study = async (k: string, user: string | null = null) => {
+    await read(k, 300, user)
+    return checkin(k, user)
+  }
+  /** Pretends the last counted day was this many days ago. */
+  const age = (name: string, days: number) =>
+    db.query(`update public.streak_players set last_day = (now() at time zone 'Asia/Kolkata')::date - $2::int where name = $1`, [name, days])
+
+  it('gives a signed-out visitor a word name without counting the visit', async () => {
+    const first = await checkin(key(1))
+    expect(first.name).toMatch(/^[A-Z][a-z]+( [A-Z][a-z]+)+$/)
+    expect(first).toMatchObject({ account: false, streak: 0, best: 0, days: 0, today: false })
+    expect(await checkin(key(1))).toEqual(first)
+  })
+
+  it('counts a day only after five minutes of reading, and only once', async () => {
+    await read(key(1), 120)
+    expect(await checkin(key(1))).toMatchObject({ streak: 0, today: false })
+    // Starting again does not move the start time.
+    await as(null, `select public.streak_start($1)`, [key(1)])
+    expect((await db.query(`select 1 from public.streak_reading`)).rows).toHaveLength(1)
+    const done = await study(key(1))
+    expect(done).toMatchObject({ streak: 1, best: 1, days: 1, today: true })
+    expect(await checkin(key(1))).toEqual(done)
+  })
+
+  it('grows on consecutive days, restarts after a gap and remembers the best', async () => {
+    const { name } = await checkin(key(1))
+    await age(name, 1)
+    expect(await study(key(1))).toMatchObject({ name, streak: 2, best: 2, days: 2 })
+    await age(name, 1)
+    expect(await study(key(1))).toMatchObject({ streak: 3, best: 3, days: 3 })
+    await age(name, 3)
+    await db.exec(`delete from public.streak_reading`)
+    expect(await checkin(key(1))).toMatchObject({ streak: 0, best: 3, today: false })
+    expect(await study(key(1))).toMatchObject({ name, streak: 1, best: 3, days: 4 })
+  })
+
+  it('lists only running streaks of two days or more and marks your own row', async () => {
+    const one = await study(key(1))
+    const two = await study(key(2))
+    expect(two.name).not.toBe(one.name)
+    expect((await board(key(1))).players).toHaveLength(0)
+    await age(two.name, 1)
+    await study(key(2))
+    const b = await board(key(2))
+    expect(b.players).toEqual([expect.objectContaining({ place: 1, name: two.name, streak: 2, me: true })])
+    expect(b).toMatchObject({ total: 1, my_place: 1 })
+    expect((await board(null)).players[0]!.me).toBe(false)
+    expect(JSON.stringify(b)).not.toContain(key(2))
+    await age(two.name, 2)
+    expect((await board(key(2))).players).toHaveLength(0)
+  })
+
+  it('lists a signed-in member by their own name, moving the browser streak to the account', async () => {
+    const mine = (await db.query<{ display_name: string }>(`select display_name from public.profiles where id = $1`, [A])).rows[0]!.display_name
+    const anon = await study(key(3))
+    await age(anon.name, 1)
+    await study(key(3))
+    // Signing in on that browser keeps the streak, now under the member's name, listed once.
+    expect(await checkin(key(3), A)).toMatchObject({ name: mine, account: true, streak: 2 })
+    const b = await board(key(3), A)
+    expect(b.players.filter((p) => p.me)).toEqual([expect.objectContaining({ name: mine, streak: 2 })])
+    expect(b.players.some((p) => p.name === anon.name)).toBe(false)
+    // Signed out again, the same browser is a stranger with no days of its own.
+    await db.exec(`delete from public.streak_reading`)
+    const after = await checkin(key(3))
+    expect(after.name).not.toBe(mine)
+    expect(after.streak).toBe(0)
+    // A second device joins the same account; its longer running streak is the one kept.
+    const other = await study(key(4))
+    await db.query(`update public.streak_players set current_streak = 7, best_streak = 7 where name = $1`, [other.name])
+    expect(await checkin(key(4), A)).toMatchObject({ name: mine, streak: 7, best: 7 })
+    expect((await db.query(`select 1 from public.streak_players where user_id = $1`, [A])).rows).toHaveLength(1)
+
+    // A blocked account is left off the board.
+    await db.query(`update public.profiles set banned_at = now() where id = $1`, [A])
+    expect((await board(null)).players.some((p) => p.name === mine)).toBe(false)
+    await db.query(`update public.profiles set banned_at = null where id = $1`, [A])
+    expect((await board(null)).players.some((p) => p.name === mine)).toBe(true)
+  })
+
+  it('cannot be read or edited directly', async () => {
+    for (const who of [null, A]) {
+      await fails(who, `select * from public.streak_players`)
+      await fails(who, `update public.streak_players set current_streak = 999`)
+      await fails(who, `select * from public.streak_reading`)
+      await fails(who, `update public.streak_reading set started_at = now() - interval '1 hour'`)
+      await fails(who, `select public.random_streak_name()`)
+    }
+  })
+})

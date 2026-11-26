@@ -134,7 +134,7 @@ export function CommandPalette() {
     { href: '/exams', title: 'Exam schedule', hint: 'Dates for every year and branch', icon: CalendarClock },
     { href: '/upload', title: 'Upload notes', hint: 'Share yours with the class', icon: Upload },
     { href: '/saved', title: 'Saved notes', hint: 'Files you bookmarked', icon: Bookmark },
-    { href: '/contributors', title: 'Contributors', hint: 'Who shared the most', icon: Users },
+    { href: '/leaderboard', title: 'Leaderboard', hint: 'Top contributors and study streaks', icon: Users },
   ]
   const rows: Row[] =
     text.length < 2

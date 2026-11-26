@@ -159,8 +159,8 @@ export function AccountButton() {
             <Link role="menuitem" href="/search" onClick={() => setOpen(false)} className={item}>
               <Search className="size-4 text-ink-3" /> Search
             </Link>
-            <Link role="menuitem" href="/contributors" onClick={() => setOpen(false)} className={item}>
-              <Users className="size-4 text-ink-3" /> Contributors
+            <Link role="menuitem" href="/leaderboard" onClick={() => setOpen(false)} className={item}>
+              <Users className="size-4 text-ink-3" /> Leaderboard
             </Link>
             <div className="my-1 h-px bg-line" />
             {shared}

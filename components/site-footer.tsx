@@ -20,7 +20,7 @@ const GROUPS = [
       { href: '/exams', label: 'Exam schedule' },
       { href: '/textbooks', label: 'Textbooks' },
       { href: '/requests', label: 'Requests' },
-      { href: '/contributors', label: 'Contributors' },
+      { href: '/leaderboard', label: 'Leaderboard' },
       { href: '/suggest', label: 'Suggest an idea' },
     ],
   },

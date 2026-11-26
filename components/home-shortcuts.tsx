@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { ArrowRight, BookOpen, Flame, History } from 'lucide-react'
 import Link from '@/components/link'
+import { cachedStreak, STREAK_EVENT } from '@/lib/streak'
 
 function read(key: string) {
   try {
@@ -55,53 +56,19 @@ export function ContinueChip() {
   )
 }
 
-const DAYS = 'vj-days'
-
-function todayKey() {
-  return new Date().toISOString().slice(0, 10)
-}
-
-/** Study days kept in this browser: today is added on every visit. */
-function days(): string[] {
-  try {
-    const raw = JSON.parse(read(DAYS) ?? '[]')
-    return Array.isArray(raw) ? raw.filter((d): d is string => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)) : []
-  } catch {
-    return []
-  }
-}
-
-/** Counts back from today (or yesterday) through consecutive days. */
-export function streakOf(list: string[], today = todayKey()) {
-  const set = new Set(list)
-  const day = (iso: string, back: number) => new Date(Date.parse(iso + 'T00:00:00Z') - back * 86_400_000).toISOString().slice(0, 10)
-  let start = set.has(today) ? 0 : set.has(day(today, 1)) ? 1 : -1
-  if (start < 0) return 0
-  let n = 0
-  while (set.has(day(today, start + n))) n++
-  return n
-}
-
-/** Quietly records that you studied today and shows your streak once it reaches two days. */
+/** Your streak, once it reaches two days, linking to the leaderboard. */
 export function StudyStreak({ className = '' }: { className?: string }) {
   const [n, setN] = useState(0)
   useEffect(() => {
-    const t = todayKey()
-    const list = days()
-    if (!list.includes(t)) {
-      list.push(t)
-      try {
-        localStorage.setItem(DAYS, JSON.stringify(list.sort().slice(-120)))
-      } catch {
-        /* storage unavailable */
-      }
-    }
-    setN(streakOf(list, t))
+    const show = () => setN(cachedStreak()?.streak ?? 0)
+    show()
+    window.addEventListener(STREAK_EVENT, show)
+    return () => window.removeEventListener(STREAK_EVENT, show)
   }, [])
   if (n < 2) return null
   return (
-    <p className={`inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold-soft px-3.5 py-1.5 text-sm font-medium text-gold ${className}`}>
-      <Flame className="size-4" /> {n}-day study streak
-    </p>
+    <Link href="/leaderboard?tab=streak" className={`inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold-soft px-3.5 py-1.5 text-sm font-medium text-gold ${className}`}>
+      <Flame className="size-4" /> {n}-day study streak <ArrowRight className="size-3.5" />
+    </Link>
   )
 }

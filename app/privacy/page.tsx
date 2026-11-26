@@ -18,6 +18,15 @@ const sections: { title: string; body: string[] }[] = [
     ],
   },
   {
+    title: 'Study streak',
+    body: [
+      'A day counts after five minutes of reading notes. Your browser times this itself and tells us when you started and when the five minutes are up; we do not store which notes you read. The start time is deleted after about a day.',
+      'If you are not signed in, your browser keeps a secret random key and the site gives it a made-up name such as “Cosmic Otter”. We store only that name, a scrambled form of the key, and your day counts. It is not linked to your real name or your IP address.',
+      'If you are signed in, the streak is saved with your account and shown under your display name. A streak you built on that browser before signing in moves to your account.',
+      'After two days in a row, the name and its day counts appear publicly on the leaderboard. If your browser sends “Do Not Track”, no streak is kept.',
+    ],
+  },
+  {
     title: 'What we store when you sign in',
     body: [
       'Your email address, used only to sign you in. It is never shown on the site or shared.',
@@ -50,7 +59,7 @@ export default function PrivacyPage() {
   return (
     <Container className="max-w-3xl py-12">
       <h1 className="font-display text-4xl font-semibold tracking-tight">Privacy policy</h1>
-      <p className="mt-2 text-sm text-ink-3">Last updated 13 October 2026</p>
+      <p className="mt-2 text-sm text-ink-3">Last updated 26 November 2026</p>
       <div className="mt-8 space-y-8">
         {sections.map((s) => (
           <section key={s.title}>

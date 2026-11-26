@@ -266,8 +266,8 @@ export default async function Home() {
                 <Link href="/upload" className="btn-primary inline-flex h-12 items-center gap-2 rounded-xl px-5 text-sm font-semibold">
                   <CloudUpload className="size-4" /> Upload notes
                 </Link>
-                <Link href="/contributors" className="btn-ghost inline-flex h-12 items-center gap-2 rounded-xl px-5 text-sm font-semibold">
-                  See contributors <ArrowRight className="size-4" />
+                <Link href="/leaderboard" className="btn-ghost inline-flex h-12 items-center gap-2 rounded-xl px-5 text-sm font-semibold">
+                  See the leaderboard <ArrowRight className="size-4" />
                 </Link>
               </div>
             </div>
