@@ -175,9 +175,13 @@ export function Uploader({
       })
     }
     setFinished(null)
+    const room = Math.max(0, MAX_FILES - items.filter((i) => i.stage !== 'done').length)
+    const kept = next.slice(0, room)
+    if (next.length > kept.length) {
+      bad.unshift(`Only ${MAX_FILES} files fit in one upload, so ${plural(next.length - kept.length, 'file')} ${next.length - kept.length === 1 ? 'was' : 'were'} left out. Upload these first, then add the rest.`)
+    }
     setRejected(bad)
-    const kept = next.slice(0, MAX_FILES)
-    setItems((cur) => [...cur.filter((i) => i.stage !== 'done'), ...next].slice(0, MAX_FILES))
+    setItems((cur) => [...cur.filter((i) => i.stage !== 'done'), ...kept].slice(0, MAX_FILES))
     void checkDuplicates(kept)
     if (!defaultPlace && kept.length > 0) {
       void autoSort(
@@ -748,41 +752,6 @@ export function Uploader({
           </p>
         )}
 
-        {hasPapers && (
-          <div className="mt-4 rounded-xl border border-line bg-bg px-4 py-3">
-            <p className="text-sm font-medium">Which exam is this paper from?</p>
-            <p className="text-xs text-ink-3">So it is filed under Mid PYQs or Sem PYQs, in the right year.</p>
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              {(Object.keys(EXAMS) as ExamKind[]).map((k) => (
-                <button
-                  key={k}
-                  type="button"
-                  disabled={running}
-                  onClick={() => setExam(k)}
-                  aria-pressed={exam === k}
-                  className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition ${exam === k ? 'border-accent bg-accent-soft text-ink' : 'border-line text-ink-2 hover:border-line-strong'}`}
-                >
-                  {EXAMS[k]}
-                </button>
-              ))}
-              <select
-                value={examYear}
-                disabled={running}
-                onChange={(e) => setExamYear(Number(e.target.value))}
-                aria-label="Exam year"
-                className="h-9 rounded-lg border border-line bg-surface px-2 text-sm"
-              >
-                {Array.from({ length: 6 }, (_, i) => new Date().getFullYear() - i).map((y) => (
-                  <option key={y} value={y}>
-                    {y}
-                  </option>
-                ))}
-              </select>
-            </div>
-            {!exam && <p className="mt-2 text-xs text-gold">Pick Mid 1, Mid 2 or Sem to continue.</p>}
-          </div>
-        )}
-
         {items.length > 0 && (chosen || plan.length > 0) && (
           <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-xl border border-line bg-bg px-4 py-3">
             <input type="checkbox" checked={autoName} disabled={running} onChange={(e) => setAutoName(e.target.checked)} className="mt-0.5 size-4 accent-[var(--accent)]" />
@@ -971,6 +940,40 @@ export function Uploader({
               })}
             </ul>
           )}
+          {hasPapers && (
+            <div className={`mb-3 rounded-xl border px-4 py-3 ${exam ? 'border-line bg-bg' : 'border-gold bg-gold-soft'}`}>
+              <p className="text-sm font-medium">Which exam is this paper from?</p>
+              <p className="text-xs text-ink-3">So it is filed under Mid PYQs or Sem PYQs, in the right year.</p>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                {(Object.keys(EXAMS) as ExamKind[]).map((k) => (
+                  <button
+                    key={k}
+                    type="button"
+                    disabled={running}
+                    onClick={() => setExam(k)}
+                    aria-pressed={exam === k}
+                    className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition ${exam === k ? 'border-accent bg-accent-soft text-ink' : 'border-line text-ink-2 hover:border-line-strong'}`}
+                  >
+                    {EXAMS[k]}
+                  </button>
+                ))}
+                <select
+                  value={examYear}
+                  disabled={running}
+                  onChange={(e) => setExamYear(Number(e.target.value))}
+                  aria-label="Exam year"
+                  className="h-9 rounded-lg border border-line bg-surface px-2 text-sm"
+                >
+                  {Array.from({ length: 6 }, (_, i) => new Date().getFullYear() - i).map((y) => (
+                    <option key={y} value={y}>
+                      {y}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {!exam && <p className="mt-2 text-xs text-gold">Pick Mid 1, Mid 2 or Sem to continue.</p>}
+            </div>
+          )}
           <button
             type="button"
             onClick={start}
@@ -984,11 +987,15 @@ export function Uploader({
                 ? 'Reading your files…'
                 : unplaced.length > 0
                   ? `Choose where ${plural(unplaced.length, 'file')} ${unplaced.length === 1 ? 'goes' : 'go'}`
-                  : pending.length + pendingLinks.length
-                    ? `${pending.length ? 'Upload' : 'Add'} ${summary}${chapterCount > 1 ? ` to ${chapterCount} chapters` : mergedCount > 0 ? ' (photos as 1 PDF)' : pending.length ? ` (${formatBytes(totalBytes)})` : ''}`
-                    : mode === 'drive'
-                      ? 'Add a Drive link'
-                      : 'Add files to upload'}
+                  : hasPapers && !exam
+                    ? 'Pick Mid 1, Mid 2 or Sem above'
+                    : pendingLinks.length > 0 && !defaultPlace
+                      ? 'Choose a chapter in Step 1 for the links'
+                      : pending.length + pendingLinks.length
+                        ? `${pending.length ? 'Upload' : 'Add'} ${summary}${chapterCount > 1 ? ` to ${chapterCount} chapters` : mergedCount > 0 ? ' (photos as 1 PDF)' : pending.length ? ` (${formatBytes(totalBytes)})` : ''}`
+                        : mode === 'drive'
+                          ? 'Add a Drive link'
+                          : 'Add files to upload'}
           </button>
           {finished && (
             <div className={`mt-4 flex flex-wrap items-center gap-3 rounded-xl px-4 py-3 text-sm ${failed ? 'bg-gold-soft text-gold' : 'bg-ok-soft text-ok'}`}>

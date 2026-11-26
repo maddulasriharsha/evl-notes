@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { ProfileForm } from '@/components/profile-form'
 import { Uploader } from '@/components/uploader'
 import { Container } from '@/components/ui'
-import { findSubject } from '@/lib/curriculum'
+import { findSubject, QUESTION_BANK_UNIT } from '@/lib/curriculum'
 import { supabaseConfigured } from '@/lib/env'
 import { currentProfile, supabaseServer } from '@/lib/supabase/server'
 
@@ -14,7 +14,8 @@ export default async function UploadPage({ searchParams }: PageProps<'/upload'>)
   const sp = await searchParams
   const subject = typeof sp.subject === 'string' ? findSubject(sp.subject)?.subject.code : undefined
   const unitRaw = typeof sp.unit === 'string' ? Number(sp.unit) : NaN
-  const unit = Number.isInteger(unitRaw) && unitRaw >= 0 && unitRaw <= 5 ? unitRaw : undefined
+  // Includes PYQs and the question bank; the uploader checks the subject really has that section.
+  const unit = Number.isInteger(unitRaw) && unitRaw >= 0 && unitRaw <= QUESTION_BANK_UNIT ? unitRaw : undefined
   const here = `/upload${subject ? `?subject=${subject}${unit !== undefined ? `&unit=${unit}` : ''}` : ''}`
 
   if (!supabaseConfigured) {
